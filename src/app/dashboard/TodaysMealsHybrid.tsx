@@ -20,6 +20,11 @@ export default function TodaysMealsHybrid({ children }: { children: React.ReactN
 
   // Показываем client data при обновлениях
   return (
-    <MealsList consumptions={clientConsumptions} isLoading={isLoading} title="Today's Meals" />
+    <MealsList
+      consumptions={clientConsumptions}
+      isLoading={isLoading}
+      title="Today's Meals"
+      showActions={true}
+    />
   );
 }

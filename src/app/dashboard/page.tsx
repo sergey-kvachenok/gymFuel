@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/route';
+import { authOptions } from '../../lib/auth';
 import { createTrpcServer } from '../../lib/trpc-server';
 import DashboardClient from './DashboardClient';
 import DailyStats from './DailyStats';

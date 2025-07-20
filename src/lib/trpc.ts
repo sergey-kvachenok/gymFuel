@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../app/api/auth/[...nextauth]/route';
+import { authOptions } from './auth';
 import { prisma } from './prisma';
 
 export const createContext = async () => {
