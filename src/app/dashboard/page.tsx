@@ -5,6 +5,7 @@ import DashboardClient from './DashboardClient';
 import DailyStats from './DailyStats';
 import TodaysMealsServer from './TodaysMealsServer';
 import TodaysMealsHybrid from './TodaysMealsHybrid';
+import GoalsProgress from './GoalsProgress';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -33,6 +34,9 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 flex flex-col items-center py-12 px-4">
       <div className="w-full max-w-4xl space-y-8">
+        {/* Goals Progress - показываем прогресс целей */}
+        <GoalsProgress currentStats={stats} />
+
         {/* Daily Stats - передаём готовые данные */}
         <DailyStats stats={stats} error={error} />
 

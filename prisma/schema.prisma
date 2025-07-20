@@ -14,35 +14,57 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
   name      String?
   password  String
-  products  Product[]
-  consumptions Consumption[]
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
+
+  // Relations
+  products      Product[]
+  consumptions  Consumption[]
+  nutritionGoals NutritionGoals?
 }
 
 model Product {
   id        Int      @id @default(autoincrement())
-  name      String
-  calories  Int      // на 100 г
-  protein   Float    // на 100 г
-  fat       Float    // на 100 г
-  carbs     Float    // на 100 г
-  user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  consumptions Consumption[]
+  name      String
+  calories  Float
+  protein   Float
+  fat       Float
+  carbs     Float
   createdAt DateTime @default(now())
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id])
+  consumptions Consumption[]
 }
 
 model Consumption {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  product   Product  @relation(fields: [productId], references: [id])
   productId Int
-  amount    Float    // в граммах
-  date      DateTime // день употребления
+  amount    Float
+  date      DateTime @default(now())
   createdAt DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model NutritionGoals {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  dailyCalories  Float    // Дневная цель по калориям
+  dailyProtein   Float    // Дневная цель по белкам (г)
+  dailyFat       Float    // Дневная цель по жирам (г)
+  dailyCarbs     Float    // Дневная цель по углеводам (г)
+  goalType       String   @default("maintain") // "gain", "lose", "maintain"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
 }
