@@ -3,6 +3,7 @@ import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
+import ConsumptionForm from './ConsumptionForm';
 
 export default function DashboardClient({ session }: { session: Session | null }) {
   if (!session) {
@@ -28,6 +29,9 @@ export default function DashboardClient({ session }: { session: Session | null }
             Track your nutrition and build muscle with custom products.
           </div>
         </div>
+
+        {/* Consumption Form */}
+        <ConsumptionForm />
 
         {/* Add Product Form */}
         <ProductForm />
