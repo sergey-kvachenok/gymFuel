@@ -19,101 +19,36 @@ on:
 jobs:
   # Auto-deploy to staging on main branch push (only if CI passed)
   deploy-staging:
-    runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
-    environment: staging
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Link Vercel project (staging)
-        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Run Database Migration (Staging)
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
-
-      - name: Deploy to Vercel (Staging)
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      is_production: false
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
 
   # Manual deploy to production
   deploy-production:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Link Vercel project (production)
-        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_PROD }} --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Run Database Migration (Production)
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
-
-      - name: Deploy to Vercel (Production)
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: production
+      is_production: true
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
   # Manual deploy to staging
   deploy-staging-manual:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Setup Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Link Vercel project (staging)
-        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Run Database Migration (Staging)
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
-
-      - name: Deploy to Vercel (Staging)
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      is_production: false
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
