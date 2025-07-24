@@ -2,15 +2,19 @@ name: Deploy to Environments
 
 on:
   push:
-    branches: [main, develop, staging]
-  pull_request:
     branches: [main]
-
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
-  # Lint and type check for all branches
+  # Lint and type check for all pushes
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -35,35 +39,14 @@ jobs:
       - name: Build application
         run: npm run build
 
-  # Deploy to development (develop branch)
-  deploy-development:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    environment: development
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@canary
-
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DEV }}
-
-      - name: Deploy to Vercel (Development)
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DEV }}
-
-  # Deploy to staging (staging branch)
+  # Auto-deploy to staging on main branch push
   deploy-staging:
-    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     needs: lint-and-test
     runs-on: ubuntu-latest
     environment: staging
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,25 +56,24 @@ jobs:
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
 
       - name: Deploy to Vercel (Staging)
         run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
 
       - name: Run Database Migration (Staging)
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
 
-  # Deploy to production (main branch)
+  # Manual deploy to production
   deploy-production:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     needs: lint-and-test
     runs-on: ubuntu-latest
     environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -101,13 +83,9 @@ jobs:
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
 
       - name: Deploy to Vercel (Production)
         run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
 
       - name: Run Database Migration (Production)
         run: npx prisma migrate deploy
@@ -119,11 +97,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
-  # Preview deployment for PRs
-  deploy-preview:
-    if: github.event_name == 'pull_request'
+  # Manual deploy to staging
+  deploy-staging-manual:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
     needs: lint-and-test
     runs-on: ubuntu-latest
+    environment: staging
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -131,7 +113,13 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@canary
 
-      - name: Deploy Preview to Vercel
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Staging)
         run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Run Database Migration (Staging)
+        run: npx prisma migrate deploy
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DEV }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
