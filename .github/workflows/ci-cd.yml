@@ -106,7 +106,7 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: 🔗 Link Vercel project (staging)
-        run: vercel link --yes --project=${{ env.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: 🗄️ Run database migrations (staging)
         run: npm run db:migrate:staging
@@ -161,7 +161,7 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: 🔗 Link Vercel project (production)
-        run: vercel link --yes --project=${{ env.VERCEL_PROJECT_ID_PRODUCTION }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_PRODUCTION }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: 🗄️ Run database migrations (production)
         run: npm run db:migrate:prod
@@ -202,7 +202,7 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: 🔗 Link Vercel project (staging)
-        run: vercel link --yes --project=${{ env.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: 🗄️ Run database migrations (staging)
         run: npm run db:migrate:staging
