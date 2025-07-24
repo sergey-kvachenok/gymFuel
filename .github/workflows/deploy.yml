@@ -22,52 +22,64 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     environment: staging
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@canary
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Deploy to Vercel (Staging)
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Setup Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Link Vercel project (staging)
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Run Database Migration (Staging)
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
 
+      - name: Deploy to Vercel (Staging)
+        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+
   # Manual deploy to production
   deploy-production:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     runs-on: ubuntu-latest
     environment: production
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@canary
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Deploy to Vercel (Production)
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Setup Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Link Vercel project (production)
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_PROD }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Run Database Migration (Production)
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Deploy to Vercel (Production)
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -79,23 +91,29 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
     runs-on: ubuntu-latest
     environment: staging
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@canary
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Deploy to Vercel (Staging)
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Setup Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Link Vercel project (staging)
+        run: vercel link --yes --project=${{ secrets.VERCEL_PROJECT_ID_STAGING }} --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Run Database Migration (Staging)
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+
+      - name: Deploy to Vercel (Staging)
+        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
