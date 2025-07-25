@@ -12,6 +12,10 @@ on:
         required: false
         type: boolean
         default: false
+      commit-sha:
+        description: 'Specific commit SHA to deploy (defaults to latest)'
+        required: false
+        type: string
     secrets:
       VERCEL_TOKEN:
         required: true
@@ -27,6 +31,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit-sha != '' && inputs.commit-sha || github.sha }}
+
+      - name: Display deployment info
+        run: |
+          echo "🚀 Deploying to: ${{ inputs.environment }}"
+          echo "📦 Commit SHA: ${{ inputs.commit-sha || github.sha }}"
+          echo "🔗 Commit URL: https://github.com/${{ github.repository }}/commit/${{ inputs.commit-sha || github.sha }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
