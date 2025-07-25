@@ -1,6 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc-client';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function ConsumptionForm() {
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -55,10 +58,9 @@ export default function ConsumptionForm() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <Card>
       <h2 className="text-xl font-bold mb-4">Add to Today&apos;s Meals</h2>
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <select
@@ -74,26 +76,19 @@ export default function ConsumptionForm() {
             ))}
           </select>
         </div>
-
         <div>
-          <input
+          <Input
             type="number"
             step="0.1"
             placeholder="Amount in grams"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
-
-        <button
-          type="submit"
-          disabled={createConsumption.isPending}
-          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
-        >
+        <Button type="submit" disabled={createConsumption.isPending} className="w-full">
           {createConsumption.isPending ? 'Adding...' : 'Add to Meals'}
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }

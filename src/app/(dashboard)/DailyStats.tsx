@@ -1,55 +1,49 @@
-type DailyStatsProps = {
-  stats: {
-    date: string;
-    totalCalories: number;
-    totalProtein: number;
-    totalFat: number;
-    totalCarbs: number;
-    consumptionsCount: number;
-  } | null;
-  error: string | null;
-};
+'use client';
 
-export default function DailyStats({ stats, error }: DailyStatsProps) {
+import { FC } from 'react';
+import { trpc } from '../../lib/trpc-client';
+import { statsFields } from '@/constants/DailyStats.constants';
+import StatsCardMessage from '@/components/GenericStatsCard';
+
+type StatsKey = 'totalCalories' | 'totalProtein' | 'totalFat' | 'totalCarbs';
+
+const DailyStats: FC = () => {
+  const { data: stats, error, isLoading } = trpc.consumption.getDailyStats.useQuery({});
+
+  if (isLoading) {
+    return <StatsCardMessage title="Daily Nutrition" message="Loading..." />;
+  }
+
   if (error) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
-        <h2 className="text-xl font-bold mb-4">Daily Nutrition</h2>
-        <div className="text-red-500">{error}</div>
-      </div>
+      <StatsCardMessage
+        title="Daily Nutrition"
+        message={error.message || String(error)}
+        color="text-red-500"
+      />
     );
   }
 
   if (!stats) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
-        <h2 className="text-xl font-bold mb-4">Daily Nutrition</h2>
-        <div className="text-gray-500">No data available</div>
-      </div>
-    );
+    return <StatsCardMessage title="Daily Nutrition" message="No data available" />;
   }
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border">
       <h2 className="text-xl font-bold mb-4">Daily Nutrition</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">{Math.round(stats.totalCalories)}</div>
-          <div className="text-sm text-gray-600">Calories</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.totalProtein.toFixed(1)}g</div>
-          <div className="text-sm text-gray-600">Protein</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-yellow-600">{stats.totalFat.toFixed(1)}g</div>
-          <div className="text-sm text-gray-600">Fat</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-red-600">{stats.totalCarbs.toFixed(1)}g</div>
-          <div className="text-sm text-gray-600">Carbs</div>
-        </div>
+        {statsFields.map((field) => (
+          <div className="text-center" key={field.title}>
+            <div className={`text-2xl font-bold ${field.color}`}>
+              {field.format(stats[field.key as StatsKey])}
+              {field.unit}
+            </div>
+            <div className="text-sm text-gray-600">{field.title}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+export default DailyStats;

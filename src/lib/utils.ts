@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export const calculateNutrients = (consumption: {
   amount: number;
   product: { calories: number; protein: number; fat: number; carbs: number };

@@ -5,6 +5,8 @@ import MealsList from './MealsList';
 export default function TodaysMeals() {
   const { data: consumptions, isLoading, error } = trpc.consumption.getByDate.useQuery({});
 
+  console.log('consumptions', consumptions);
+
   return (
     <MealsList
       consumptions={consumptions}

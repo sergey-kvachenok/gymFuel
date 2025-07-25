@@ -2,6 +2,9 @@
 import { FC, useState } from 'react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ConsumptionForm from './ConsumptionForm';
@@ -16,72 +19,51 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
   return (
     <div className="space-y-8">
       {/* Header with Navigation */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <Card className="p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName}!</h1>
             <p className="text-gray-600 mt-1">Track your nutrition and reach your goals</p>
           </div>
           <div className="flex gap-3">
-            <Link
-              href="/goals"
-              className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium"
-            >
-              Set Goals
+            <Link href="/goals">
+              <Button variant="secondary">Set Goals</Button>
             </Link>
-            <Link
-              href="/history"
-              className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium"
-            >
-              View History
+            <Link href="/history">
+              <Button variant="secondary">View History</Button>
             </Link>
-            <button
-              onClick={() => signOut()}
-              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
-            >
+            <Button variant="destructive" onClick={() => signOut()}>
               Logout
-            </button>
+            </Button>
           </div>
         </div>
-
         {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('consumption')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'consumption'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Add Consumption
-          </button>
-          <button
-            onClick={() => setActiveTab('products')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'products'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Manage Products
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'consumption' && (
-        <div className="space-y-6">
-          <ConsumptionForm />
-        </div>
-      )}
-
-      {activeTab === 'products' && (
-        <div className="space-y-6">
-          <ProductForm />
-          <ProductList />
-        </div>
-      )}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'consumption' | 'products')}
+          className="w-full"
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="consumption" className="flex-1">
+              Add Consumption
+            </TabsTrigger>
+            <TabsTrigger value="products" className="flex-1">
+              Manage Products
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="consumption">
+            <div className="space-y-6">
+              <ConsumptionForm />
+            </div>
+          </TabsContent>
+          <TabsContent value="products">
+            <div className="space-y-6">
+              <ProductForm />
+              <ProductList />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </Card>
     </div>
   );
 };

@@ -2,6 +2,9 @@
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc-client';
 import { calculateNutrients } from '../../lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 
 type Consumption = {
   id: number;
@@ -88,24 +91,24 @@ export default function MealsList({
   };
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <Card>
         <h2 className="text-xl font-bold mb-4">{title}</h2>
         <div className="text-gray-500">Loading meals...</div>
-      </div>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <Card>
         <h2 className="text-xl font-bold mb-4">{title}</h2>
         <div className="text-red-500">Error loading meals: {error}</div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <Card>
       <h2 className="text-xl font-bold mb-4">{title}</h2>
 
       {!consumptions || consumptions.length === 0 ? (
@@ -128,19 +131,17 @@ export default function MealsList({
                       Delete this meal? This action cannot be undone.
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={confirmDelete}
                         disabled={deleteMutation.isPending}
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
+                        variant="destructive"
+                        size="sm"
                       >
                         {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                      </button>
-                      <button
-                        onClick={cancelDelete}
-                        className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors text-sm"
-                      >
+                      </Button>
+                      <Button onClick={cancelDelete} variant="secondary" size="sm">
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : isEditing ? (
@@ -151,27 +152,25 @@ export default function MealsList({
                     </div>
                     <div className="flex items-center gap-3">
                       <label className="text-sm font-medium text-gray-700">Amount (g):</label>
-                      <input
+                      <Input
                         type="number"
                         value={editAmount}
                         onChange={(e) => setEditAmount(Number(e.target.value))}
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
-                        min="1"
+                        min={1}
+                        className="w-20 text-sm"
                       />
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           onClick={handleSave}
                           disabled={updateMutation.isPending || editAmount <= 0}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                          variant="default"
+                          size="sm"
                         >
                           {updateMutation.isPending ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                          onClick={handleCancel}
-                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors text-sm"
-                        >
+                        </Button>
+                        <Button onClick={handleCancel} variant="secondary" size="sm">
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -194,18 +193,20 @@ export default function MealsList({
                       </div>
                       {showActions && (
                         <div className="flex gap-1">
-                          <button
+                          <Button
                             onClick={() => handleEdit(consumption)}
-                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs"
+                            variant="secondary"
+                            size="sm"
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleDelete(consumption.id)}
-                            className="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs"
+                            variant="destructive"
+                            size="sm"
                           >
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -216,6 +217,6 @@ export default function MealsList({
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc-client';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default function ProductForm() {
   const [name, setName] = useState('');
@@ -52,64 +55,51 @@ export default function ProductForm() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <Card>
       <h2 className="text-xl font-bold mb-4">Add New Product</h2>
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
+        <Input
           type="text"
           placeholder="Product name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
-
         <div className="grid grid-cols-2 gap-4">
-          <input
+          <Input
             type="number"
             placeholder="Calories (per 100g)"
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
-          <input
+          <Input
             type="number"
             step="0.1"
             placeholder="Protein (g)"
             value={protein}
             onChange={(e) => setProtein(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
-          <input
+          <Input
             type="number"
             step="0.1"
             placeholder="Fat (g)"
             value={fat}
             onChange={(e) => setFat(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
-          <input
+          <Input
             type="number"
             step="0.1"
             placeholder="Carbs (g)"
             value={carbs}
             onChange={(e) => setCarbs(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
         </div>
-
-        <button
-          type="submit"
-          disabled={createProduct.isPending}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60"
-        >
+        <Button type="submit" disabled={createProduct.isPending} className="w-full">
           {createProduct.isPending ? 'Adding...' : 'Add Product'}
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }
