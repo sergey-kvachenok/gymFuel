@@ -1,19 +1,10 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../lib/auth';
 import { createTrpcServer } from '../../lib/trpc-server';
-import DashboardClient from './DashboardClient';
 import DailyStats from './DailyStats';
 import TodaysMealsServer from './TodaysMealsServer';
 import TodaysMealsHybrid from './TodaysMealsHybrid';
 import GoalsProgress from './GoalsProgress';
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return <div className="flex min-h-screen items-center justify-center">Please login</div>;
-  }
-
   // Создаём один trpc server и загружаем все данные параллельно
   let stats = null;
   let meals = null;
@@ -44,9 +35,6 @@ export default async function DashboardPage() {
         <TodaysMealsHybrid>
           <TodaysMealsServer meals={meals} error={error} />
         </TodaysMealsHybrid>
-
-        {/* Client Components */}
-        <DashboardClient session={session} />
       </div>
     </div>
   );

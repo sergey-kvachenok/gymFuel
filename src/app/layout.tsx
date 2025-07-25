@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import { authOptions } from '../lib/auth';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
+import { getServerSession } from 'next-auth';
+import { DashboardClient } from './(dashboard)/DashboardClient';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -26,16 +29,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
+  const userName = session?.user?.name || session?.user?.email || '';
+
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <EnvironmentBanner />
-        <Providers>{children}</Providers>
+      <body className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-pink-50">
+        <Providers>
+          <main className="max-w-[800px] w-full px-4">
+            <EnvironmentBanner />
+            <DashboardClient userName={userName} />
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

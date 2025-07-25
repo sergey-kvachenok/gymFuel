@@ -1,17 +1,16 @@
 'use client';
-import { useState } from 'react';
+import { FC, useState } from 'react';
 import { signOut } from 'next-auth/react';
-import type { Session } from 'next-auth';
 import Link from 'next/link';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ConsumptionForm from './ConsumptionForm';
 
 interface DashboardClientProps {
-  session: Session;
+  userName: string;
 }
 
-export default function DashboardClient({ session }: DashboardClientProps) {
+export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => {
   const [activeTab, setActiveTab] = useState<'consumption' | 'products'>('consumption');
 
   return (
@@ -20,9 +19,7 @@ export default function DashboardClient({ session }: DashboardClientProps) {
       <div className="bg-white rounded-2xl shadow-lg p-6 border">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {session.user?.name || session.user?.email}!
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName}!</h1>
             <p className="text-gray-600 mt-1">Track your nutrition and reach your goals</p>
           </div>
           <div className="flex gap-3">
@@ -87,4 +84,4 @@ export default function DashboardClient({ session }: DashboardClientProps) {
       )}
     </div>
   );
-}
+};
