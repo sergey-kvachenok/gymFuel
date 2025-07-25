@@ -126,8 +126,8 @@ jobs:
       commit-sha: ${{ needs.check-staging-safety.outputs['staging-commit'] }}
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PRODUCTION }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
 
   # Manual deploy to staging (no CI check needed)
   deploy-staging-manual:
