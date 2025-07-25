@@ -3,7 +3,7 @@ import DailyStats from './DailyStats';
 import TodaysMealsServer from './TodaysMealsServer';
 import TodaysMealsHybrid from './TodaysMealsHybrid';
 import GoalsProgress from './GoalsProgress';
-import TodaysMeals from './TodaysMeals';
+import ConsumptionManager from './ConsumptionManager';
 
 export default async function DashboardPage() {
   // Создаём один trpc server и загружаем все данные параллельно
@@ -26,10 +26,11 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 flex flex-col items-center py-12 px-4">
       <div className="w-full max-w-4xl space-y-8">
+        <ConsumptionManager />
         {/* Goals Progress - показываем прогресс целей */}
         <GoalsProgress currentStats={stats} />
         {/* Daily Stats - передаём готовые данные */}
-        <DailyStats stats={stats} error={error} />
+        <DailyStats />
         {/* Today's Meals - передаём готовые данные */}
 
         <TodaysMealsHybrid>

@@ -1,21 +1,15 @@
 'use client';
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import ProductForm from './ProductForm';
-import ProductList from './ProductList';
-import ConsumptionForm from './ConsumptionForm';
 
 interface DashboardClientProps {
   userName: string;
 }
 
 export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => {
-  const [activeTab, setActiveTab] = useState<'consumption' | 'products'>('consumption');
-
   return (
     <div className="space-y-8">
       {/* Header with Navigation */}
@@ -37,32 +31,6 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
             </Button>
           </div>
         </div>
-        {/* Tab Navigation */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as 'consumption' | 'products')}
-          className="w-full"
-        >
-          <TabsList className="w-full">
-            <TabsTrigger value="consumption" className="flex-1">
-              Add Consumption
-            </TabsTrigger>
-            <TabsTrigger value="products" className="flex-1">
-              Manage Products
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="consumption">
-            <div className="space-y-6">
-              <ConsumptionForm />
-            </div>
-          </TabsContent>
-          <TabsContent value="products">
-            <div className="space-y-6">
-              <ProductForm />
-              <ProductList />
-            </div>
-          </TabsContent>
-        </Tabs>
       </Card>
     </div>
   );

@@ -4,9 +4,10 @@ import { trpc } from '../../lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import ProductCombobox, { ProductOption } from '@/components/ui/ProductCombobox';
 
 export default function ConsumptionForm() {
-  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
 
@@ -19,7 +20,7 @@ export default function ConsumptionForm() {
       utils.consumption.getDailyStats.invalidate();
       utils.consumption.getByDate.invalidate();
       // Очищаем форму
-      setSelectedProductId('');
+      setSelectedProduct(null);
       setAmount('');
       setError('');
     },
@@ -32,7 +33,7 @@ export default function ConsumptionForm() {
     e.preventDefault();
     setError('');
 
-    const productId = parseInt(selectedProductId);
+    const productId = selectedProduct?.id;
     const amountNum = parseFloat(amount);
 
     if (!productId || isNaN(amountNum) || amountNum <= 0) {
@@ -58,34 +59,28 @@ export default function ConsumptionForm() {
   }
 
   return (
-    <Card>
-      <h2 className="text-xl font-bold mb-4">Add to Today&apos;s Meals</h2>
-      {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <select
-            value={selectedProductId}
-            onChange={(e) => setSelectedProductId(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
-          >
-            <option value="">Select a product...</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name} ({product.calories} cal/100g)
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Input
-            type="number"
-            step="0.1"
-            placeholder="Amount in grams"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-        <Button type="submit" disabled={createConsumption.isPending} className="w-full">
+    <Card className="!p-2">
+      <h2 className="text-lg font-bold mb-2 text-center">Add to Today&apos;s Meals</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
+        <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} />
+
+        <Input
+          type="number"
+          step="0.1"
+          placeholder="Amount in grams"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className=" !px-2"
+        />
+
+        <div className="text-red-500 text-xs h-3.5 text-center">{error}</div>
+
+        <Button
+          type="submit"
+          disabled={createConsumption.isPending}
+          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
+        >
           {createConsumption.isPending ? 'Adding...' : 'Add to Meals'}
         </Button>
       </form>
