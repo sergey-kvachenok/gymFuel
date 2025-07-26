@@ -1,8 +1,11 @@
 'use client';
-import { useState } from 'react';
-import { trpc } from '../../lib/trpc-client';
+import { FC, useState } from 'react';
+import { trpc } from '../../../lib/trpc-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
 
-export default function ProductList() {
+const ProductList: FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     name: '',
@@ -81,24 +84,24 @@ export default function ProductList() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <Card>
         <h2 className="text-xl font-bold mb-4">My Products</h2>
         <div className="text-gray-500">Loading products...</div>
-      </div>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <Card>
         <h2 className="text-xl font-bold mb-4">My Products</h2>
         <div className="text-red-500">Error loading products</div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <Card>
       <h2 className="text-xl font-bold mb-4">My Products</h2>
 
       {!products || products.length === 0 ? (
@@ -120,19 +123,17 @@ export default function ProductList() {
                       Delete &quot;{product.name}&quot;? This action cannot be undone.
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={confirmDelete}
                         disabled={deleteMutation.isPending}
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
+                        variant="destructive"
+                        size="sm"
                       >
                         {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                      </button>
-                      <button
-                        onClick={cancelDelete}
-                        className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors text-sm"
-                      >
+                      </Button>
+                      <Button onClick={cancelDelete} variant="secondary" size="sm">
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : isEditing ? (
@@ -142,12 +143,12 @@ export default function ProductList() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Product Name
                       </label>
-                      <input
+                      <Input
                         type="text"
                         value={editData.name}
                         onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Product name"
+                        size={undefined}
                       />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -155,77 +156,75 @@ export default function ProductList() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Calories
                         </label>
-                        <input
+                        <Input
                           type="number"
                           value={editData.calories}
                           onChange={(e) =>
                             setEditData({ ...editData, calories: Number(e.target.value) })
                           }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                          step="0.1"
+                          min={0}
+                          step={0.1}
+                          size={undefined}
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Protein (g)
                         </label>
-                        <input
+                        <Input
                           type="number"
                           value={editData.protein}
                           onChange={(e) =>
                             setEditData({ ...editData, protein: Number(e.target.value) })
                           }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                          step="0.1"
+                          min={0}
+                          step={0.1}
+                          size={undefined}
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Fat (g)
                         </label>
-                        <input
+                        <Input
                           type="number"
                           value={editData.fat}
                           onChange={(e) =>
                             setEditData({ ...editData, fat: Number(e.target.value) })
                           }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                          step="0.1"
+                          min={0}
+                          step={0.1}
+                          size={undefined}
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Carbs (g)
                         </label>
-                        <input
+                        <Input
                           type="number"
                           value={editData.carbs}
                           onChange={(e) =>
                             setEditData({ ...editData, carbs: Number(e.target.value) })
                           }
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="0"
-                          step="0.1"
+                          min={0}
+                          step={0.1}
+                          size={undefined}
                         />
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         onClick={handleSave}
                         disabled={updateMutation.isPending || !editData.name.trim()}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                        variant="default"
+                        size="sm"
                       >
                         {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors text-sm"
-                      >
+                      </Button>
+                      <Button onClick={handleCancel} variant="secondary" size="sm">
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -239,18 +238,16 @@ export default function ProductList() {
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
-                      >
+                      <Button onClick={() => handleEdit(product)} variant="secondary" size="sm">
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleDelete(product.id)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm"
+                        variant="destructive"
+                        size="sm"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -259,6 +256,8 @@ export default function ProductList() {
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
-}
+};
+
+export default ProductList;

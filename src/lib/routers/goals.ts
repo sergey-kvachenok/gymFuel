@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 
+export enum GoalType {
+  Gain = 'gain',
+  Lose = 'lose',
+  Maintain = 'maintain',
+}
+
 export const goalsRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
     const userId = parseInt((ctx.session!.user as { id: string }).id);
@@ -23,7 +29,7 @@ export const goalsRouter = router({
           .max(500, 'Protein too high'),
         dailyFat: z.number().min(10, 'Fat must be at least 10g').max(300, 'Fat too high'),
         dailyCarbs: z.number().min(10, 'Carbs must be at least 10g').max(1000, 'Carbs too high'),
-        goalType: z.enum(['gain', 'lose', 'maintain']).default('maintain'),
+        goalType: z.enum(GoalType).default(GoalType.Maintain),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -75,7 +81,7 @@ export const goalsRouter = router({
         activityLevel: z
           .enum(['sedentary', 'light', 'moderate', 'active', 'very_active'])
           .optional(),
-        goalType: z.enum(['gain', 'lose', 'maintain']),
+        goalType: z.enum(GoalType),
       }),
     )
     .query(async ({ input }) => {

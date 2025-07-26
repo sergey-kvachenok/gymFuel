@@ -1,216 +1,132 @@
-# 🚀 Deployment Guide
+# Deployment & CI/CD Guide
 
-## 📋 Quick Start
+## Table of Contents
 
-### 🔧 First Time Setup
+1. Overview
+2. Workflow Structure
+3. Required Secrets & Variables
+4. Automatic Staging Deployment
+5. Manual Staging Deployment
+6. Manual Production Deployment (with Staging Safety Check)
+7. Reusable Workflow (`deploy-reusable.yml`)
+8. Troubleshooting & FAQ
 
-```bash
-# 1. Setup all environments interactively
-npm run setup:env
+---
 
-# 2. Review created .env files
-# 3. Add environment variables to Vercel projects
-# 4. Run migrations for each environment
-```
+## 1. Overview
 
-### 🎯 Deploy to Staging
+This project uses **GitHub Actions** for CI/CD automation and **Vercel** for deployment. The deployment pipeline ensures that only code passing CI is deployed to staging automatically, and only staging code that was deployed automatically (not manually) can be promoted to production.
 
-```bash
-npm run deploy:staging
-```
+---
 
-### 🚀 Deploy to Production
+## 2. Workflow Structure
 
-```bash
-npm run deploy:prod
-```
+### Triggers
 
-## 🌍 Environment Configuration
+- **workflow_run**: Automatically triggers after a successful run of the `CI Pipeline` workflow on the `main` branch.
+- **workflow_dispatch**: Allows manual deployment via the GitHub Actions UI, with an environment choice (`staging` or `production`).
 
-### Development (.env.development)
+### Jobs
 
-- **Database**: Local Docker PostgreSQL
-- **URL**: http://localhost:3000
-- **Purpose**: Local development
+#### 2.1. `check-staging-safety`
 
-### Staging (.env.staging)
+- Runs only for manual production deployments.
+- Checks that the last staging deployment was automatic (after CI), not manual.
+- If staging is "safe", allows production deployment.
 
-- **Database**: Neon PostgreSQL (staging)
-- **URL**: https://gymfuel-staging.vercel.app
-- **Purpose**: Testing before production
+#### 2.2. `deploy-staging`
 
-### Production (.env)
+- Automatically deploys to staging after a successful CI run on `main`.
+- Uses the reusable workflow.
 
-- **Database**: Neon PostgreSQL (production)
-- **URL**: https://gymfuel.vercel.app
-- **Purpose**: Live application
+#### 2.3. `deploy-production`
 
-## 🤖 Automated Scripts
+- Manual production deployment.
+- Only runs if staging is "safe" (last deployment was automatic).
+- Uses the reusable workflow.
 
-### 📝 Environment Setup
+#### 2.4. `deploy-staging-manual`
 
-```bash
-npm run setup:env
-```
+- Manual deployment to staging (no CI check required).
+- Uses the reusable workflow.
 
-**What it does:**
+---
 
-- Interactive environment setup
-- Generates unique NEXTAUTH_SECRET for each env
-- Creates .env files with proper structure
-- Provides guidance for next steps
+## 3. Required Secrets & Variables
 
-### 🎭 Staging Deployment
+Add these secrets in **GitHub Repository → Settings → Secrets and variables → Actions**:
 
-```bash
-npm run deploy:staging
-```
+| Secret Name                    | Description                                  |
+| ------------------------------ | -------------------------------------------- |
+| `VERCEL_TOKEN`                 | Vercel CLI token                             |
+| `VERCEL_PROJECT_ID_STAGING`    | Vercel Project ID for staging environment    |
+| `VERCEL_PROJECT_ID_PRODUCTION` | Vercel Project ID for production environment |
+| `DATABASE_URL_STAGING`         | Database connection string for staging       |
+| `DATABASE_URL_PRODUCTION`      | Database connection string for production    |
 
-**What it does:**
+**Note:** Secret names must match exactly with those used in the workflow files.
 
-- ✅ Validates .env.staging variables
-- 🧪 Runs linting
-- 🔧 Generates Prisma client
-- 🗄️ Applies database migrations
-- 🏗️ Builds application
-- ☁️ Deploys to Vercel
-- 📊 Shows deployment URL
+---
 
-### 🚀 Production Deployment
+## 4. Automatic Staging Deployment
 
-```bash
-npm run deploy:prod
-```
+- Triggered automatically after a successful `CI Pipeline` run on `main`.
+- The `deploy-staging` job runs only if CI passes:
+  ```yaml
+  if: github.event.workflow_run.conclusion == 'success'
+  ```
+- Uses the reusable workflow for deployment steps.
 
-**What it does:**
+---
 
-- ⚠️ Requires confirmation
-- ✅ Validates production variables
-- 🔒 Security checks (prevents staging URLs)
-- 🧪 Runs full test suite
-- 🔧 Generates Prisma client
-- 🗄️ Applies database migrations
-- 🏗️ Builds application
-- ☁️ Deploys to Vercel production
-- 📋 Post-deployment checklist
+## 5. Manual Staging Deployment
 
-## 🔐 Environment Variables
+- Can be triggered manually from the GitHub Actions UI by selecting the `staging` environment.
+- Does **not** require a successful CI run.
+- Uses the `deploy-staging-manual` job and the reusable workflow.
 
-### Required for all environments:
+---
 
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Unique secret for JWT signing
-- `NEXTAUTH_URL` - Full application URL
-- `NEXT_PUBLIC_APP_ENV` - Environment identifier
+## 6. Manual Production Deployment (with Staging Safety Check)
 
-### Vercel Configuration:
+- Can be triggered manually from the GitHub Actions UI by selecting the `production` environment.
+- Before deploying, the `check-staging-safety` job verifies that the last staging deployment was automatic (after CI), not manual.
+- If the check passes, the `deploy-production` job runs, using the same commit as the last safe staging deployment.
+- If the last staging deployment was manual, production deployment is blocked until a new automatic staging deployment occurs.
 
-1. Go to Vercel Dashboard
-2. Select your project
-3. Settings → Environment Variables
-4. Add variables for each environment
+---
 
-## 🗄️ Database Management
+## 7. Reusable Workflow (`deploy-reusable.yml`)
 
-### Migrations
+- Contains the shared deployment steps: code checkout, dependency installation, Vercel deployment, Prisma migrations, etc.
+- Receives parameters via `with` and `secrets` from the calling workflow.
+- Ensures DRY (Don't Repeat Yourself) and consistent deployment logic for both staging and production.
 
-```bash
-# Development
-npm run db:migrate:dev
+---
 
-# Staging
-npm run db:migrate:staging
+## 8. Troubleshooting & FAQ
 
-# Production
-npm run db:migrate:prod
-```
+### Q: **Vercel CLI error: "Detected linked project does not have 'id'"**
 
-### Database Studio
+**A:** This means the `VERCEL_PROJECT_ID` secret is missing or empty. Ensure the secret exists and matches the name used in the workflow.
 
-```bash
-# Development
-npm run db:studio:dev
+### Q: **Production deployment is blocked**
 
-# Staging
-npm run db:studio:staging
+**A:** The last staging deployment was manual. Push new changes to `main` to trigger an automatic staging deployment, then retry production deployment.
 
-# Production
-npm run db:studio:prod
-```
+### Q: **Secrets not found or empty**
 
-## 🔍 Deployment Workflow
+**A:** Double-check that all required secrets are set in GitHub and that their names match those referenced in the workflow files.
 
-### 1. Development
+---
 
-```bash
-# Start local development
-npm run dev
+## Example: How to Deploy to Production
 
-# Make changes
-# Test locally
-```
+1. Push your changes to the `main` branch.
+2. Wait for the CI pipeline and automatic staging deployment to complete successfully.
+3. Go to GitHub Actions → select the `Deploy to Environments` workflow → click "Run workflow" → choose `production`.
+4. If the last staging deployment was automatic, production deployment will proceed using the same commit.
 
-### 2. Staging Deployment
+---
 
-```bash
-# Deploy to staging
-npm run deploy:staging
-
-# Test staging environment
-# Verify all features work
-```
-
-### 3. Production Deployment
-
-```bash
-# Deploy to production (after staging approval)
-npm run deploy:prod
-
-# Monitor production
-# Run smoke tests
-```
-
-## 🐛 Troubleshooting
-
-### Build Errors
-
-- **Prisma Client**: Run `npm run db:generate`
-- **Environment Variables**: Check .env files
-- **Missing Dependencies**: Run `npm install`
-
-### Database Issues
-
-- **Migration Errors**: Check database connection
-- **Schema Changes**: Create new migration with `npx prisma migrate dev`
-
-### Vercel Deployment
-
-- **Environment Variables**: Ensure all required vars are set
-- **Build Failures**: Check build logs in Vercel dashboard
-
-## 📊 Monitoring
-
-### After Deployment Check:
-
-- [ ] Application loads successfully
-- [ ] Authentication works
-- [ ] Database connectivity
-- [ ] API endpoints respond
-- [ ] Environment banner shows correct environment
-
-## 🔄 CI/CD Pipeline
-
-The repository includes GitHub Actions workflow in `.github/workflows/deploy.yml` for automated deployments:
-
-- **Push to `develop`** → Auto-deploy to staging
-- **Push to `main`** → Auto-deploy to production
-- **Pull Requests** → Preview deployments
-
-## 📞 Support
-
-If you encounter issues:
-
-1. Check the deployment logs
-2. Verify environment variables
-3. Test database connectivity
-4. Review Vercel function logs
+If you have questions or need to update the deployment process, please update this file accordingly.

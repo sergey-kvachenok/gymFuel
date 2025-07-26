@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { trpc } from '../../lib/trpc-client';
-import MealsList from './MealsList';
+import { trpc } from '../../../../../lib/trpc-client';
+import MealsList from '../MealsList';
 
 export default function TodaysMealsHybrid({ children }: { children: React.ReactNode }) {
   const [showClientData, setShowClientData] = useState(false);

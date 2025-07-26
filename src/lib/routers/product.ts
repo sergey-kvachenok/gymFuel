@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
+import { Prisma } from '@prisma/client';
 
 export const productRouter = router({
   create: protectedProcedure
@@ -104,4 +105,21 @@ export const productRouter = router({
       orderBy: { createdAt: 'desc' },
     });
   }),
+
+  search: protectedProcedure
+    .input(z.object({ query: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const userId = parseInt((ctx.session!.user as { id: string }).id);
+      const where = {
+        userId,
+        ...(input.query
+          ? { name: { contains: input.query, mode: Prisma.QueryMode.insensitive } }
+          : {}),
+      };
+      return await ctx.prisma.product.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        take: 100,
+      });
+    }),
 });
