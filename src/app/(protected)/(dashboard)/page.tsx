@@ -1,4 +1,4 @@
-import { createTrpcServer } from '../../lib/trpc-server';
+import { createTrpcServer } from '../../../lib/trpc-server';
 import DailyStats from './DailyStats';
 import TodaysMealsServer from './TodaysMealsServer';
 import TodaysMealsHybrid from './TodaysMealsHybrid';

@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
-import { trpc } from '../../lib/trpc-client';
+import { FC, useState } from 'react';
+import { trpc } from '../../../lib/trpc-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 
-export default function ProductList() {
+const ProductList: FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     name: '',
@@ -258,4 +258,6 @@ export default function ProductList() {
       )}
     </Card>
   );
-}
+};
+
+export default ProductList;

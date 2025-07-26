@@ -5,7 +5,7 @@ import { authOptions } from '../lib/auth';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
 import { getServerSession } from 'next-auth';
-import { DashboardClient } from './(dashboard)/DashboardClient';
+import { DashboardClient } from './(protected)/(dashboard)/DashboardClient';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,19 +34,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-
-  const userName = session?.user?.name || session?.user?.email || '';
-
   return (
     <html lang="en">
-      <body className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-pink-50">
+      <body className="min-h-screen flex flex-col items-center  bg-gradient-to-br from-blue-50 via-white to-pink-50">
         <Providers>
-          <main className="max-w-[800px] w-full px-4">
-            <EnvironmentBanner />
-            <DashboardClient userName={userName} />
-            {children}
-          </main>
+          <EnvironmentBanner />
+          <main className="max-w-[800px] w-full flex-1">{children}</main>
         </Providers>
       </body>
     </html>

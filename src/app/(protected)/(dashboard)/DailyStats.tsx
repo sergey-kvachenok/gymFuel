@@ -1,7 +1,7 @@
 'use client';
 
 import { FC } from 'react';
-import { trpc } from '../../lib/trpc-client';
+import { trpc } from '../../../lib/trpc-client';
 import { statsFields } from '@/constants/DailyStats.constants';
 import StatsCardMessage from '@/components/GenericStatsCard';
 

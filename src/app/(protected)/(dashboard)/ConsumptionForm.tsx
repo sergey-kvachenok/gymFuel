@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { trpc } from '../../lib/trpc-client';
+import { trpc } from '../../../lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import ProductCombobox, { ProductOption } from '@/components/ui/ProductCombobox';
 
 export default function ConsumptionForm() {
@@ -59,31 +59,33 @@ export default function ConsumptionForm() {
   }
 
   return (
-    <Card className="!p-2">
-      <h2 className="text-lg font-bold mb-2 text-center">Add to Today&apos;s Meals</h2>
+    <Card>
+      <CardHeader>Add to Today&apos;s Meals</CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
-        <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} />
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
+          <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} />
 
-        <Input
-          type="number"
-          step="0.1"
-          placeholder="Amount in grams"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className=" !px-2"
-        />
+          <Input
+            type="number"
+            step="0.1"
+            placeholder="Amount in grams"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className=" !px-2"
+          />
 
-        <div className="text-red-500 text-xs h-3.5 text-center">{error}</div>
+          <div className="text-red-500 text-xs h-3.5 text-center">{error}</div>
 
-        <Button
-          type="submit"
-          disabled={createConsumption.isPending}
-          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
-        >
-          {createConsumption.isPending ? 'Adding...' : 'Add to Meals'}
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            disabled={createConsumption.isPending}
+            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
+          >
+            {createConsumption.isPending ? 'Adding...' : 'Add to Meals'}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }

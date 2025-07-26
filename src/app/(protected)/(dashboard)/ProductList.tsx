@@ -1,11 +1,34 @@
 'use client';
-import { FC, useState } from 'react';
-import { trpc } from '../../lib/trpc-client';
+import { useState } from 'react';
+import { trpc } from '../../../lib/trpc-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 
-const ProductList: FC = () => {
+const nutritionFields = [
+  {
+    key: 'calories',
+    label: 'Calories',
+    unit: '',
+  },
+  {
+    key: 'protein',
+    label: 'Protein (g)',
+    unit: 'g',
+  },
+  {
+    key: 'fat',
+    label: 'Fat (g)',
+    unit: 'g',
+  },
+  {
+    key: 'carbs',
+    label: 'Carbs (g)',
+    unit: 'g',
+  },
+];
+
+export default function ProductList() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     name: '',
@@ -152,66 +175,23 @@ const ProductList: FC = () => {
                       />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Calories
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.calories}
-                          onChange={(e) =>
-                            setEditData({ ...editData, calories: Number(e.target.value) })
-                          }
-                          min={0}
-                          step={0.1}
-                          size={undefined}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Protein (g)
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.protein}
-                          onChange={(e) =>
-                            setEditData({ ...editData, protein: Number(e.target.value) })
-                          }
-                          min={0}
-                          step={0.1}
-                          size={undefined}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Fat (g)
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.fat}
-                          onChange={(e) =>
-                            setEditData({ ...editData, fat: Number(e.target.value) })
-                          }
-                          min={0}
-                          step={0.1}
-                          size={undefined}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Carbs (g)
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.carbs}
-                          onChange={(e) =>
-                            setEditData({ ...editData, carbs: Number(e.target.value) })
-                          }
-                          min={0}
-                          step={0.1}
-                          size={undefined}
-                        />
-                      </div>
+                      {nutritionFields.map((field) => (
+                        <div key={field.key}>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {field.label}
+                          </label>
+                          <Input
+                            type="number"
+                            value={editData[field.key as keyof typeof editData] as number}
+                            onChange={(e) =>
+                              setEditData({ ...editData, [field.key]: Number(e.target.value) })
+                            }
+                            min={0}
+                            step={0.1}
+                            size={undefined}
+                          />
+                        </div>
+                      ))}
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -258,6 +238,4 @@ const ProductList: FC = () => {
       )}
     </Card>
   );
-};
-
-export default ProductList;
+}

@@ -1,5 +1,6 @@
 'use client';
-import { trpc } from '../../lib/trpc-client';
+import { Card } from '@/components/ui/card';
+import { trpc } from '../../../lib/trpc-client';
 
 type GoalsProgressProps = {
   currentStats: {
@@ -82,7 +83,7 @@ export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
   const getTextColor = (baseColor: string) => `text-${baseColor}-700`;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <Card>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Daily Goals Progress</h2>
         <div className="text-sm text-gray-500 capitalize">Goal: {goals.goalType} weight</div>
@@ -136,6 +137,6 @@ export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
           </a>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -26,6 +26,7 @@ const ConsumptionManager = () => {
           Manage Products
         </TabsTrigger>
       </TabsList>
+
       <div className="relative min-h-[340px]">
         <div
           className={`absolute inset-0 transition-opacity duration-300 ${

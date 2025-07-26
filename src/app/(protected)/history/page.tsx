@@ -1,16 +1,7 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../lib/auth';
-import { createTrpcServer } from '../../lib/trpc-server';
+import { createTrpcServer } from '../../../lib/trpc-server';
 import HistoryClient from './HistoryClient';
 
 export default async function HistoryPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return <div className="flex min-h-screen items-center justify-center">Please login</div>;
-  }
-
-  // Загружаем историю за последние 30 дней
   let history = null;
   let error = null;
 

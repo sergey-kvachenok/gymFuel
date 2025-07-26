@@ -30,7 +30,9 @@ export default function EnvironmentBanner() {
   };
 
   return (
-    <div className={`${getBannerColor()} text-white py-1 px-4 text-center text-sm font-medium`}>
+    <div
+      className={`${getBannerColor()} text-white py-1 px-4 text-center text-sm font-medium w-full`}
+    >
       {getBannerText()} | {envInfo.baseUrl}
     </div>
   );
