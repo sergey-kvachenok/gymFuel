@@ -1,9 +1,9 @@
 import { createTrpcServer } from '../../../lib/trpc-server';
-import DailyStats from './DailyStats';
-import TodaysMealsServer from './TodaysMealsServer';
-import TodaysMealsHybrid from './TodaysMealsHybrid';
-import GoalsProgress from './GoalsProgress';
-import ConsumptionManager from './ConsumptionManager';
+import DailyStats from './components/DailyStats';
+import TodaysMealsServer from './components/TodaysMeals/TodaysMealsServer';
+import TodaysMealsHybrid from './components/TodaysMeals/TodaysMealsHybrid';
+import GoalsProgress from './components/GoalsProgress';
+import ConsumptionManager from './components/ConsumptionManager';
 
 export default async function DashboardPage() {
   // Создаём один trpc server и загружаем все данные параллельно
@@ -24,19 +24,15 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 flex flex-col items-center py-12 px-4">
-      <div className="w-full max-w-4xl space-y-8">
-        <ConsumptionManager />
-        {/* Goals Progress - показываем прогресс целей */}
-        <GoalsProgress currentStats={stats} />
-        {/* Daily Stats - передаём готовые данные */}
-        <DailyStats />
-        {/* Today's Meals - передаём готовые данные */}
+    <div className="flex flex-col gap-4">
+      <DailyStats />
+      <ConsumptionManager />
 
-        <TodaysMealsHybrid>
-          <TodaysMealsServer meals={meals} error={error} />
-        </TodaysMealsHybrid>
-      </div>
+      <TodaysMealsHybrid>
+        <TodaysMealsServer meals={meals} error={error} />
+      </TodaysMealsHybrid>
+
+      <GoalsProgress currentStats={stats} />
     </div>
   );
 }

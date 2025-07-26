@@ -1,4 +1,4 @@
-import MealsList from './MealsList';
+import MealsList from '../MealsList';
 
 type Consumption = {
   id: number;

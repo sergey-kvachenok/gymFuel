@@ -1,12 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { trpc } from '../../../lib/trpc-client';
+import { trpc } from '../../../../lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import ProductCombobox, { ProductOption } from '@/components/ui/ProductCombobox';
 
-export default function ConsumptionForm() {
+export default function ConsumptionForm({ onSuccess }: { onSuccess?: () => void }) {
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
@@ -16,13 +16,13 @@ export default function ConsumptionForm() {
 
   const createConsumption = trpc.consumption.create.useMutation({
     onSuccess: () => {
-      // Обновляем статистику и список потреблений
       utils.consumption.getDailyStats.invalidate();
       utils.consumption.getByDate.invalidate();
-      // Очищаем форму
+
       setSelectedProduct(null);
       setAmount('');
       setError('');
+      onSuccess?.();
     },
     onError: (error) => {
       setError(error.message);
@@ -60,10 +60,10 @@ export default function ConsumptionForm() {
 
   return (
     <Card>
-      <CardHeader>Add to Today&apos;s Meals</CardHeader>
+      <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col ">
           <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} />
 
           <Input
@@ -72,16 +72,11 @@ export default function ConsumptionForm() {
             placeholder="Amount in grams"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className=" !px-2"
           />
 
-          <div className="text-red-500 text-xs h-3.5 text-center">{error}</div>
+          <div className="text-red-500 text-xs h-3 text-center">{error}</div>
 
-          <Button
-            type="submit"
-            disabled={createConsumption.isPending}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
-          >
+          <Button type="submit" disabled={createConsumption.isPending} variant="default">
             {createConsumption.isPending ? 'Adding...' : 'Add to Meals'}
           </Button>
         </form>

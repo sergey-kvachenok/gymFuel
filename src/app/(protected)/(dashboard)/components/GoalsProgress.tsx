@@ -1,6 +1,6 @@
 'use client';
 import { Card } from '@/components/ui/card';
-import { trpc } from '../../../lib/trpc-client';
+import { trpc } from '../../../../lib/trpc-client';
 
 type GoalsProgressProps = {
   currentStats: {

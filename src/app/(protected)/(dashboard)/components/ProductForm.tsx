@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { trpc } from '../../../lib/trpc-client';
+import { trpc } from '../../../../lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 
 const nutritionFields = [
   {
@@ -28,7 +28,7 @@ const nutritionFields = [
   },
 ];
 
-export default function ProductForm() {
+export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
   const [formData, setFormData] = useState({
     name: '',
     calories: '',
@@ -45,6 +45,7 @@ export default function ProductForm() {
       utils.product.getAll.invalidate();
       setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
       setError('');
+      onSuccess?.();
     },
     onError: (error) => {
       setError(error.message);
@@ -85,48 +86,50 @@ export default function ProductForm() {
   };
 
   return (
-    <Card className="p-2">
-      <h2 className="text-xl font-bold mb-4">Add New Product</h2>
+    <Card>
+      <CardTitle className="mb-4">Add New Product</CardTitle>
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
-        <Input
-          type="text"
-          placeholder="Product name"
-          value={formData.name}
-          onChange={(e) => handleFieldChange('name', e.target.value)}
-        />
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
+          <Input
+            type="text"
+            placeholder="Product name"
+            value={formData.name}
+            onChange={(e) => handleFieldChange('name', e.target.value)}
+          />
 
-        <div className="grid grid-cols-2 gap-4">
-          {nutritionFields.slice(0, 2).map((field) => (
-            <Input
-              key={field.key}
-              type="number"
-              step={field.step}
-              placeholder={field.placeholder}
-              value={formData[field.key as keyof typeof formData] as string}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-            />
-          ))}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            {nutritionFields.slice(0, 2).map((field) => (
+              <Input
+                key={field.key}
+                type="number"
+                step={field.step}
+                placeholder={field.placeholder}
+                value={formData[field.key as keyof typeof formData] as string}
+                onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              />
+            ))}
+          </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {nutritionFields.slice(2).map((field) => (
-            <Input
-              key={field.key}
-              type="number"
-              step={field.step}
-              placeholder={field.placeholder}
-              value={formData[field.key as keyof typeof formData] as string}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-            />
-          ))}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            {nutritionFields.slice(2).map((field) => (
+              <Input
+                key={field.key}
+                type="number"
+                step={field.step}
+                placeholder={field.placeholder}
+                value={formData[field.key as keyof typeof formData] as string}
+                onChange={(e) => handleFieldChange(field.key, e.target.value)}
+              />
+            ))}
+          </div>
 
-        <Button type="submit" disabled={createProduct.isPending} className="w-full">
-          {createProduct.isPending ? 'Adding...' : 'Add Product'}
-        </Button>
-      </form>
+          <Button type="submit" disabled={createProduct.isPending} className="w-full">
+            {createProduct.isPending ? 'Adding...' : 'Add Product'}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }

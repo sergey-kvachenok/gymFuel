@@ -5,7 +5,7 @@ import { authOptions } from '../lib/auth';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
 import { getServerSession } from 'next-auth';
-import { DashboardClient } from './(protected)/(dashboard)/DashboardClient';
+import { DashboardClient } from '../components/DashboardClient';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

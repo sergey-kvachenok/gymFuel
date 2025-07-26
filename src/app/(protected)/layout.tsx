@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
-import { DashboardClient } from './(dashboard)/DashboardClient';
+import { DashboardClient } from '../../components/DashboardClient';
 
 export default async function RootLayout({
   children,
