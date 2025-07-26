@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { trpc } from '../../../lib/trpc-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { trpc } from '@/lib/trpc-client';
 
 const nutritionFields = [
   {
