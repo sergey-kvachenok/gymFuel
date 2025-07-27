@@ -1,24 +1,33 @@
 'use client';
-import { Card } from '@/components/ui/card';
+import { FC } from 'react';
+import { Card, CardTitle } from '@/components/ui/card';
 import { trpc } from '../../../../lib/trpc-client';
 
-type GoalsProgressProps = {
-  currentStats: {
-    totalCalories: number;
-    totalProtein: number;
-    totalFat: number;
-    totalCarbs: number;
-  } | null;
-};
+const COLORS = {
+  calories: '#3b82f6', // blue-500
+  protein: '#22c55e', // green-500
+  fat: '#eab308', // yellow-500
+  carbs: '#ef4444', // red-500
+  overGoal: '#ef4444', // red-500
+  text: {
+    calories: '#1d4ed8', // blue-700
+    protein: '#15803d', // green-700
+    fat: '#a16207', // yellow-700
+    carbs: '#b91c1c', // red-700
+  },
+} as const;
 
-export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
-  const { data: goals, isLoading } = trpc.goals.get.useQuery();
+export const GoalsProgress: FC = () => {
+  const { data: goals, isLoading: goalsLoading } = trpc.goals.get.useQuery();
+  const { data: currentStats, isLoading: statsLoading } = trpc.consumption.getDailyStats.useQuery(
+    {},
+  );
 
-  if (isLoading) {
+  if (goalsLoading || statsLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 border">
         <h2 className="text-xl font-bold mb-4">Daily Goals Progress</h2>
-        <div className="text-gray-500">Loading goals...</div>
+        <div className="text-gray-500">Loading...</div>
       </div>
     );
   }
@@ -48,57 +57,52 @@ export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
       current: Math.round(current.totalCalories),
       goal: Math.round(goals.dailyCalories),
       unit: '',
-      color: 'blue',
+      color: COLORS.calories,
+      textColor: COLORS.text.calories,
     },
     {
       name: 'Protein',
       current: Math.round(current.totalProtein * 10) / 10,
       goal: Math.round(goals.dailyProtein * 10) / 10,
       unit: 'g',
-      color: 'green',
+      color: COLORS.protein,
+      textColor: COLORS.text.protein,
     },
     {
       name: 'Fat',
       current: Math.round(current.totalFat * 10) / 10,
       goal: Math.round(goals.dailyFat * 10) / 10,
       unit: 'g',
-      color: 'yellow',
+      color: COLORS.fat,
+      textColor: COLORS.text.fat,
     },
     {
       name: 'Carbs',
       current: Math.round(current.totalCarbs * 10) / 10,
       goal: Math.round(goals.dailyCarbs * 10) / 10,
       unit: 'g',
-      color: 'red',
+      color: COLORS.carbs,
+      textColor: COLORS.text.carbs,
     },
   ];
 
-  const getProgressColor = (percentage: number, baseColor: string) => {
-    if (percentage >= 100) return `bg-${baseColor}-600`;
-    if (percentage >= 80) return `bg-${baseColor}-500`;
-    if (percentage >= 50) return `bg-${baseColor}-400`;
-    return `bg-${baseColor}-300`;
-  };
-
-  const getTextColor = (baseColor: string) => `text-${baseColor}-700`;
-
   return (
     <Card>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Daily Goals Progress</h2>
-        <div className="text-sm text-gray-500 capitalize">Goal: {goals.goalType} weight</div>
-      </div>
+      <CardTitle className="flex justify-between items-center mb-4">
+        Daily Goals Progress
+        <p className="text-xs text-gray-500 capitalize">Goal: {goals.goalType} weight</p>
+      </CardTitle>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {progressData.map((item) => {
           const percentage = Math.min((item.current / item.goal) * 100, 100);
           const isOverGoal = item.current > item.goal;
 
           return (
-            <div key={item.name} className="space-y-2">
+            <div key={item.name} className="space-y-1">
               <div className="flex justify-between items-center text-sm">
                 <span className="font-medium text-gray-700">{item.name}</span>
-                <span className={`font-semibold ${getTextColor(item.color)}`}>
+                <span className="font-semibold" style={{ color: item.textColor }}>
                   {item.current}
                   {item.unit} / {item.goal}
                   {item.unit}
@@ -108,17 +112,18 @@ export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
 
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-500 ${
-                    isOverGoal ? `bg-red-500` : getProgressColor(percentage, item.color)
-                  }`}
-                  style={{ width: `${Math.min(percentage, 100)}%` }}
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${Math.min(percentage, 100)}%`,
+                    backgroundColor: isOverGoal ? COLORS.overGoal : item.color,
+                  }}
                 />
               </div>
 
               <div className="flex justify-between text-xs text-gray-500">
-                <span>{Math.round(percentage)}% completed</span>
+                <span className="font-medium">{Math.round(percentage)}% completed</span>
                 {isOverGoal && (
-                  <span className="text-red-600">
+                  <span className="text-red-600 font-medium">
                     +{Math.round((item.current - item.goal) * 10) / 10}
                     {item.unit} over goal
                   </span>
@@ -139,4 +144,6 @@ export default function GoalsProgress({ currentStats }: GoalsProgressProps) {
       </div>
     </Card>
   );
-}
+};
+
+export default GoalsProgress;
