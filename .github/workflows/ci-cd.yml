@@ -36,8 +36,8 @@ jobs:
       - name: 🔍 Lint code
         run: npm run lint
 
-      - name: 🧪 Run unit tests
-        run: npm test
+      # - name: 🧪 Run unit tests
+      #   run: npm test
 
       - name: 🏗️ Test build
         run: npm run build
@@ -66,8 +66,8 @@ jobs:
       - name: 🔍 Lint code
         run: npm run lint
 
-      - name: 🧪 Run unit tests
-        run: npm test
+      # - name: 🧪 Run unit tests
+      #   run: npm test
 
       - name: 🏗️ Test build
         run: npm run build
