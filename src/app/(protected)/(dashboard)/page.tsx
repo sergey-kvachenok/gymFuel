@@ -3,7 +3,7 @@ import DailyStats from './components/DailyStats';
 import TodaysMealsServer from './components/TodaysMeals/TodaysMealsServer';
 import TodaysMealsHybrid from './components/TodaysMeals/TodaysMealsHybrid';
 import GoalsProgress from './components/GoalsProgress';
-import ConsumptionManager from './components/ConsumptionManager';
+import ConsumptionManager from './components/Consumption/ConsumptionManager';
 
 export default async function DashboardPage() {
   // Создаём один trpc server и загружаем все данные параллельно
