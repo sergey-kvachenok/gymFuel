@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useState } from 'react';
 import { trpc } from '../../../../lib/trpc-client';
-import { calculateNutrients } from '../../../../lib/utils';
+import { calculateNutrients, formatTime } from '../../../../lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { DeleteMeal } from './TodaysMeals/DeleteMeal';
@@ -167,10 +167,7 @@ export default function MealsList({
 
                   <div className="flex items-center gap-3">
                     <p className="text-xs text-gray-400">
-                      {new Date(consumption.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatTime(new Date(consumption.createdAt))}
                     </p>
 
                     {showActions && (

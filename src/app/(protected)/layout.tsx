@@ -12,9 +12,9 @@ export default async function RootLayout({
   const userName = session?.user?.name || session?.user?.email || '';
 
   return (
-    <>
+    <div className="px-2">
       <DashboardClient userName={userName} />
       {children}
-    </>
+    </div>
   );
 }

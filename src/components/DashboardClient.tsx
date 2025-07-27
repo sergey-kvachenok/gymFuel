@@ -1,6 +1,7 @@
 'use client';
 import { FC } from 'react';
 import { signOut } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -11,23 +12,22 @@ interface DashboardClientProps {
 
 const navigationButtons = [
   {
+    href: '/',
+    label: 'Dashboard',
+  },
+  {
     href: '/goals',
-    label: 'Set Goals',
-    variant: 'secondary' as const,
+    label: 'Goals',
   },
   {
     href: '/history',
-    label: 'View History',
-    variant: 'secondary' as const,
-  },
-  {
-    label: 'Logout',
-    variant: 'destructive' as const,
-    onClick: () => signOut(),
+    label: 'History',
   },
 ];
 
 export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => {
+  const pathname = usePathname() || '';
+
   return (
     <Card className="mb-4 flex flex-row justify-between items-center">
       <div>
@@ -38,20 +38,26 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
         </CardDescription>
       </div>
 
-      <div className="flex gap-3 flex-wrap justify-end">
-        {navigationButtons.map((button, index) =>
-          button.href ? (
-            <Link key={index} href={button.href}>
-              <Button variant={button.variant} size="sm">
-                {button.label}
-              </Button>
-            </Link>
-          ) : (
-            <Button key={index} variant={button.variant} size="sm" onClick={button.onClick}>
-              {button.label}
-            </Button>
-          ),
-        )}
+      <div className="flex gap-3 justify-end items-center max-sm:flex-col">
+        <div className="flex gap-3 flex-wrap justify-end items-center">
+          {navigationButtons.map((button, index) => {
+            const isActive = pathname === button.href;
+
+            return (
+              <Link key={index} href={button.href}>
+                <span
+                  className={`${isActive ? 'text-red-950 font-semibold' : 'text-gray-600 font-medium'}  text-sm transition-colors hover:text-gray-800`}
+                >
+                  {button.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <Button variant="destructive" size="sm" onClick={() => signOut()}>
+          Logout
+        </Button>
       </div>
     </Card>
   );

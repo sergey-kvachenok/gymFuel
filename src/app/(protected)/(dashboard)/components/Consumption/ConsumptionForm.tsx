@@ -31,12 +31,14 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
 }) => {
   if (!isProductsPresented) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
-        <h2 className="text-xl font-bold mb-4">Add to Today&apos;s Meals</h2>
-        <div className="text-gray-500 text-center py-8">
-          No products available. Add some products first to track your consumption.
-        </div>
-      </div>
+      <Card>
+        <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>
+        <CardContent>
+          <div className="text-gray-500 text-center py-8">
+            No products available. Add some products first to track your consumption.
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
