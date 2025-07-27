@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      vercel_production:
+        description: 'Whether to deploy to Vercel production environment (--prod flag)'
+        required: false
+        type: boolean
+        default: true
       commit-sha:
         description: 'Specific commit SHA to deploy (defaults to latest)'
         required: false
@@ -39,6 +44,7 @@ jobs:
           echo "🚀 Deploying to: ${{ inputs.environment }}"
           echo "📦 Commit SHA: ${{ inputs.commit-sha || github.sha }}"
           echo "🔗 Commit URL: https://github.com/${{ github.repository }}/commit/${{ inputs.commit-sha || github.sha }}"
+          echo "🎯 Vercel production: ${{ inputs.vercel_production }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -60,12 +66,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Deploy to Vercel (Staging)
-        if: ${{ !inputs.is_production }}
+      - name: Deploy to Vercel (Preview)
+        if: ${{ !inputs.vercel_production }}
         run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (Production)
-        if: ${{ inputs.is_production }}
+        if: ${{ inputs.vercel_production }}
         run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Generate Prisma Client (Production only)
