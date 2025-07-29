@@ -5,6 +5,9 @@ import { HistoryItem } from './types';
 import { HistoryFilters } from './components/HistoryFilters';
 import { HistoryList } from './components/HistoryList';
 import { DayDetailsModal } from './components/DayDetailsModal';
+import SidePanel from '@/components/SidePanel';
+import { Button } from '@/components/ui/button';
+import ProductList from './components/ProductList';
 
 type HistoryClientProps = {
   initialHistory: HistoryItem[] | null;
@@ -12,6 +15,7 @@ type HistoryClientProps = {
 };
 
 export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps) {
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [daysFilter, setDaysFilter] = useState(30);
   const [selectedDay, setSelectedDay] = useState<HistoryItem | null>(null);
 
@@ -32,6 +36,25 @@ export default function HistoryClient({ initialHistory, initialError }: HistoryC
 
   const displayError = error?.message || initialError;
 
+  const sidePanelComponent = useMemo(
+    () => (
+      <SidePanel
+        isOpen={isSidePanelOpen}
+        onClose={() => setIsSidePanelOpen(false)}
+        onOpen={() => setIsSidePanelOpen(true)}
+        title="Products List"
+        trigger={
+          <Button variant="ghost" size="sm">
+            Products List
+          </Button>
+        }
+      >
+        <ProductList />
+      </SidePanel>
+    ),
+    [isSidePanelOpen],
+  );
+
   if (displayError) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 border">
@@ -42,7 +65,11 @@ export default function HistoryClient({ initialHistory, initialError }: HistoryC
 
   return (
     <div className="space-y-6">
-      <HistoryFilters daysFilter={daysFilter} onDaysFilterChange={setDaysFilter} />
+      <HistoryFilters
+        daysFilter={daysFilter}
+        onDaysFilterChange={setDaysFilter}
+        sidePanelComponent={sidePanelComponent}
+      />
 
       {isLoading && (
         <div className="bg-white rounded-2xl shadow-lg p-6 border">

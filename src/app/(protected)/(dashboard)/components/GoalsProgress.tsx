@@ -7,13 +7,13 @@ const COLORS = {
   calories: '#3b82f6', // blue-500
   protein: '#22c55e', // green-500
   fat: '#eab308', // yellow-500
-  carbs: '#ef4444', // red-500
+  carbs: '#8b5cf6', // violet-500
   overGoal: '#ef4444', // red-500
   text: {
     calories: '#1d4ed8', // blue-700
     protein: '#15803d', // green-700
     fat: '#a16207', // yellow-700
-    carbs: '#b91c1c', // red-700
+    carbs: '#8b5cf6', // violet-500
   },
 } as const;
 
