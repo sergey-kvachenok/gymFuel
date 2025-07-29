@@ -1,11 +1,12 @@
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, FC } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ConsumptionForm } from './ConsumptionForm';
 import ProductForm from '../ProductForm';
 import { trpc } from '@/lib/trpc-client';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
+import { useProductSearch } from '@/hooks/use-product-search';
 
 const enum PopupTypes {
   Consumption = 'consumption',
@@ -25,13 +26,16 @@ const formButtons = [
   },
 ];
 
-export default function ConsumptionManager() {
+const ConsumptionManager: FC = () => {
   const [openModal, setOpenModal] = useState<PopupTypes | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
 
-  const { data: products } = trpc.product.getAll.useQuery();
+  const { allProducts: products } = useProductSearch({
+    orderBy: 'name',
+    orderDirection: 'asc',
+  });
   const utils = trpc.useUtils();
 
   const createConsumption = trpc.consumption.create.useMutation({
@@ -120,4 +124,6 @@ export default function ConsumptionManager() {
       ))}
     </div>
   );
-}
+};
+
+export default ConsumptionManager;

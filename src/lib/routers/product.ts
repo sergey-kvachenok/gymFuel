@@ -72,7 +72,6 @@ export const productRouter = router({
     .mutation(async ({ ctx, input }) => {
       const userId = parseInt((ctx.session!.user as { id: string }).id);
 
-      // Проверяем что продукт принадлежит пользователю
       const existing = await ctx.prisma.product.findFirst({
         where: { id: input.id, userId },
       });
@@ -97,29 +96,35 @@ export const productRouter = router({
       });
     }),
 
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const userId = parseInt((ctx.session!.user as { id: string }).id);
-
-    return await ctx.prisma.product.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }),
-
-  search: protectedProcedure
-    .input(z.object({ query: z.string().optional() }))
+  getAll: protectedProcedure
+    .input(
+      z
+        .object({
+          query: z.string().optional(),
+          limit: z.number().min(1).max(1000).default(100),
+          orderBy: z.enum(['name', 'createdAt']).default('createdAt'),
+          orderDirection: z.enum(['asc', 'desc']).default('desc'),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
       const userId = parseInt((ctx.session!.user as { id: string }).id);
+
       const where = {
         userId,
-        ...(input.query
+        ...(input?.query
           ? { name: { contains: input.query, mode: Prisma.QueryMode.insensitive } }
           : {}),
       };
+
+      const orderBy = {
+        [input?.orderBy || 'createdAt']: input?.orderDirection || 'desc',
+      };
+
       return await ctx.prisma.product.findMany({
         where,
-        orderBy: { name: 'asc' },
-        take: 100,
+        orderBy,
+        take: input?.limit || 100,
       });
     }),
 });

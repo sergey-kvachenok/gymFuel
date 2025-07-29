@@ -30,10 +30,14 @@ export const formatDate = (dateString: string) => {
 };
 
 export const formatTime = (date: Date) => {
-  return date.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  // Используем фиксированную локаль для консистентности между сервером и клиентом
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = minutes.toString().padStart(2, '0');
+
+  return `${displayHours}:${displayMinutes} ${ampm}`;
 };
 
 export const formatDateShort = (dateString: string) => {

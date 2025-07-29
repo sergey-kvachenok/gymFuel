@@ -1,202 +1,120 @@
 'use client';
-import { useCallback, useState } from 'react';
-import { trpc } from '../../../../lib/trpc-client';
+import React, { FC, useMemo, useCallback } from 'react';
 import { calculateNutrients, formatTime } from '../../../../lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { DeleteMeal } from './TodaysMeals/DeleteMeal';
-import { EditMeal } from './TodaysMeals/EditMeal';
+import EditableList from '../../../../components/EditableList';
+import { ConsumptionItem } from '../../../../types/api';
+import { useMealManipulation } from '../../../../hooks/use-meal-manipulation';
 
-type Consumption = {
-  id: number;
-  amount: number;
-  createdAt: Date | string;
-  product: {
-    name: string;
-    calories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
-  };
-};
-
-type MealsListProps = {
-  consumptions?: Consumption[];
+interface MealsListProps {
+  consumptions?: ConsumptionItem[];
   isLoading?: boolean;
   error?: string | null;
   title?: string;
-  showActions?: boolean; // Показывать ли кнопки редактирования/удаления
-};
+  showActions?: boolean;
+}
 
-export default function MealsList({
+const MealsList: FC<MealsListProps> = ({
   consumptions,
   isLoading = false,
   error = null,
   title = "Today's Meals",
   showActions = false,
-}: MealsListProps) {
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editAmount, setEditAmount] = useState<number>(0);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+}) => {
+  const { updateMeal, deleteMeal, isUpdating, isDeleting } = useMealManipulation();
 
-  const utils = trpc.useUtils();
+  const renderMeal = useCallback((consumption: ConsumptionItem) => {
+    const nutrients = calculateNutrients(consumption);
 
-  const updateMutation = trpc.consumption.update.useMutation({
-    onSuccess: () => {
-      utils.consumption.invalidate();
-      setEditingId(null);
-    },
-    onError: (error) => {
-      alert(`Error updating: ${error.message}`);
-    },
-  });
-
-  const deleteMutation = trpc.consumption.delete.useMutation({
-    onSuccess: () => {
-      utils.consumption.invalidate();
-      setDeletingId(null);
-    },
-    onError: (error) => {
-      alert(`Error deleting: ${error.message}`);
-    },
-  });
-
-  const handleEdit = (consumption: Consumption) => {
-    setEditingId(consumption.id);
-    setEditAmount(consumption.amount);
-  };
-
-  const handleSave = useCallback(() => {
-    if (editingId && editAmount > 0) {
-      updateMutation.mutate({ id: editingId, amount: editAmount });
-    }
-  }, [editingId, editAmount, updateMutation]);
-
-  const handleCancel = useCallback(() => {
-    setEditingId(null);
-    setEditAmount(0);
+    return (
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-sm">{consumption.product.name}</h3>
+          <p className="text-xs text-gray-600 mt-1">
+            {consumption.amount}g → {nutrients.calories} cal | P: {nutrients.protein}g | F:{' '}
+            {nutrients.fat}g | C: {nutrients.carbs}g
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-gray-400">{formatTime(new Date(consumption.createdAt))}</p>
+        </div>
+      </div>
+    );
   }, []);
 
-  const handleDelete = (id: number) => {
-    setDeletingId(id);
-  };
+  const editConfig = useMemo(
+    () => ({
+      title: 'Edit Meal Amount',
+      fields: [{ key: 'amount', label: 'Amount (g)', type: 'number' as const, min: 1 }],
+      validateData: (data: { [key: string]: string | number }) =>
+        typeof data.amount === 'number' && data.amount > 0,
+    }),
+    [],
+  );
 
-  const confirmDelete = useCallback(() => {
-    if (deletingId) {
-      deleteMutation.mutate({ id: deletingId });
-    }
-  }, [deletingId, deleteMutation]);
+  const deleteConfig = useMemo(
+    () => ({
+      getItemName: (consumption: ConsumptionItem) => consumption.product.name,
+      message: 'Delete this meal? This action cannot be undone.',
+    }),
+    [],
+  );
 
-  const cancelDelete = useCallback(() => {
-    setDeletingId(null);
-  }, []);
+  const handleEdit = useCallback(
+    (consumption: ConsumptionItem) => ({
+      amount: consumption.amount,
+    }),
+    [],
+  );
 
-  if (isLoading) {
-    return (
-      <Card>
-        <h2 className="text-xl font-bold mb-4">{title}</h2>
-        <div className="text-gray-500">Loading meals...</div>
-      </Card>
-    );
-  }
+  const handleSave = useCallback(
+    (id: number, editData: Record<string, string | number>) => ({
+      id,
+      amount: editData.amount as number,
+    }),
+    [],
+  );
 
-  if (error) {
-    return (
-      <Card>
-        <h2 className="text-xl font-bold mb-4">{title}</h2>
-        <div className="text-red-500">Error loading meals: {error}</div>
-      </Card>
-    );
-  }
+  const handleDelete = useCallback((id: number) => ({ id }), []);
+
+  // Memoized mutation objects
+  const updateMutation = useMemo(
+    () => ({
+      mutate: (data: Record<string, unknown>) => {
+        const { id, amount } = data;
+        updateMeal({ id: id as number, amount: amount as number });
+      },
+      isPending: isUpdating,
+    }),
+    [updateMeal, isUpdating],
+  );
+
+  const deleteMutation = useMemo(
+    () => ({
+      mutate: (data: Record<string, unknown>) => {
+        deleteMeal(data as { id: number });
+      },
+      isPending: isDeleting,
+    }),
+    [deleteMeal, isDeleting],
+  );
 
   return (
-    <Card>
-      <CardTitle className="mb-4">{title}</CardTitle>
-
-      {!consumptions || consumptions.length === 0 ? (
-        <CardContent className="text-gray-500 text-center py-8">
-          No meals recorded today. Add your first meal above!
-        </CardContent>
-      ) : (
-        <CardContent className="flex flex-col gap-2 overflow-y-auto h-50">
-          {consumptions.map((consumption) => {
-            const nutrients = calculateNutrients(consumption);
-            const isEditing = editingId === consumption.id;
-            const isDeleting = deletingId === consumption.id;
-
-            if (isEditing) {
-              return (
-                <div key={consumption.id} className="p-2 bg-gray-100 rounded-lg ">
-                  <EditMeal
-                    productName={consumption.product.name}
-                    editAmount={editAmount}
-                    setEditAmount={setEditAmount}
-                    handleSave={handleSave}
-                    handleCancel={handleCancel}
-                    isPending={updateMutation.isPending}
-                  />
-                </div>
-              );
-            }
-
-            if (isDeleting) {
-              return (
-                <div key={consumption.id} className="p-2 bg-gray-100 rounded-lg ">
-                  <DeleteMeal
-                    confirmDelete={confirmDelete}
-                    cancelDelete={cancelDelete}
-                    isPending={deleteMutation.isPending}
-                  />
-                </div>
-              );
-            }
-
-            return (
-              <div key={consumption.id} className="p-2 bg-gray-100 rounded-lg ">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-sm">
-                      {consumption.product.name}
-                    </h3>
-
-                    <p className="text-xs text-gray-600 mt-1">
-                      {consumption.amount}g → {nutrients.calories} cal | P: {nutrients.protein}g |
-                      F: {nutrients.fat}g | C: {nutrients.carbs}g
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs text-gray-400">
-                      {formatTime(new Date(consumption.createdAt))}
-                    </p>
-
-                    {showActions && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleEdit(consumption)}
-                          variant="secondary"
-                          size="sm"
-                          className="text-xs !p-2"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(consumption.id)}
-                          variant="destructive"
-                          size="sm"
-                          className="text-xs !p-2"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      )}
-    </Card>
+    <EditableList
+      items={consumptions}
+      isLoading={isLoading}
+      error={error}
+      title={title}
+      showActions={showActions}
+      renderItem={renderMeal}
+      editConfig={editConfig}
+      deleteConfig={deleteConfig}
+      updateMutation={updateMutation}
+      deleteMutation={deleteMutation}
+      onEdit={handleEdit}
+      onSave={handleSave}
+      onDelete={handleDelete}
+    />
   );
-}
+};
+
+export default MealsList;

@@ -1,11 +1,10 @@
 'use client';
 import { useState, useRef, useEffect, FC } from 'react';
-import { useDebounce } from '@/hooks/use-debounce';
-import { trpc } from '@/lib/trpc-client';
 import MacroInfo from '../../../../../components/ui/MacroInfo';
-import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import { NutrientsTooltip } from './NutrientsTooltip';
+import ProductSearch from '@/components/ProductSearch';
+import { useProductSearch } from '../../../../../hooks/use-product-search';
 
 export type ProductOption = {
   id: number;
@@ -24,11 +23,16 @@ type ProductComboboxProps = {
 
 export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, disabled }) => {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const debounced = useDebounce(search, 300);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { data: products = [], isLoading } = trpc.product.search.useQuery({ query: debounced });
+  const {
+    setSearchQuery,
+    products = [],
+    isLoading,
+  } = useProductSearch({
+    orderBy: 'name',
+    orderDirection: 'asc',
+  });
 
   const clear = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -86,18 +90,15 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
         </div>
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg z-50 mt-1 p-2">
-          <Input
-            type="text"
+          <ProductSearch
+            onSearchChange={setSearchQuery}
             placeholder="Search product..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            disabled={disabled}
+            className="mb-2"
           />
 
-          <ul className="max-h-[200px] overflow-y-auto px-2">
+          <ul className="max-h-[100px] sm:max-h-[200px] overflow-y-auto px-2">
             {isLoading && <div className="text-center text-gray-500 text-sm">Loading...</div>}
 
             {!isLoading && products.length === 0 && (
@@ -111,13 +112,13 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
                   onClick={() => {
                     onChange(product);
                     setOpen(false);
-                    setSearch('');
+                    setSearchQuery('');
                   }}
-                  className={`${index === products.length - 1 ? '' : 'border-b'} border-gray-100 py-2 cursor-pointer flex justify-between items-center text-sm min-h-[40px] hover:bg-gray-50 transition-colors`}
+                  className={`${index === products.length - 1 ? '' : 'border-b'} border-gray-100 py-1.5 sm:py-2 cursor-pointer flex justify-between items-center text-sm min-h-[32px] sm:min-h-[40px] hover:bg-gray-50 transition-colors`}
                 >
                   <div>
                     <div className="font-medium flex items-center gap-1">
-                      <span>
+                      <span className="text-xs sm:text-sm">
                         {product.name} ({product.calories} cal/100g)
                       </span>
                       <NutrientsTooltip
@@ -127,7 +128,9 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
                       />
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">
-                      Protein: {product.protein}g | Fat: {product.fat}g | Carbs: {product.carbs}g
+                      <span className="text-[10px] sm:text-xs">
+                        Protein: {product.protein}g | Fat: {product.fat}g | Carbs: {product.carbs}g
+                      </span>
                     </div>
                   </div>
                 </li>
