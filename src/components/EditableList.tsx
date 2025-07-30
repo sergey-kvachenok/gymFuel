@@ -4,6 +4,8 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { EditItem } from './EditItem';
 import { DeleteItem } from './DeleteItem';
 import { EditableItem, EditableListMutation, EditData, MutationData } from '@/types/api';
+import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 export interface EditableListProps<T extends EditableItem> {
   items?: T[];
@@ -11,6 +13,7 @@ export interface EditableListProps<T extends EditableItem> {
   error?: string | null;
   title?: string;
   showActions?: boolean;
+  height?: number;
 
   renderItem: (item: T, isEditing: boolean, isDeleting: boolean) => ReactNode;
 
@@ -54,6 +57,7 @@ const EditableList = <T extends EditableItem>({
   onEdit,
   onSave,
   onDelete,
+  height,
 }: EditableListProps<T>) => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<EditData | null>(null);
@@ -124,7 +128,10 @@ const EditableList = <T extends EditableItem>({
   return (
     <Card>
       <CardTitle className="mb-4">{title}</CardTitle>
-      <CardContent>
+      <CardContent
+        className={cn('overflow-y-auto overscroll-contain')}
+        style={height ? { height: `${height}px` } : undefined}
+      >
         {!items || items.length === 0 ? (
           <div className="text-gray-500 text-center py-8">No items found.</div>
         ) : (
@@ -167,20 +174,25 @@ const EditableList = <T extends EditableItem>({
               return (
                 <div key={item.id} className="p-4 bg-gray-50 rounded-lg">
                   {renderItem(item, isEditing, isDeleting)}
+
                   {showActions && (
-                    <div className="flex gap-2 mt-3">
-                      <button
+                    <div className="flex gap-2 mt-1 justify-end">
+                      <Button
                         onClick={() => handleEdit(item)}
-                        className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+                        variant="outline"
+                        size="sm"
+                        className="!px-2 text-xs"
                       >
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleDelete(item.id)}
-                        className="px-3 py-1 text-sm bg-red-200 hover:bg-red-300 text-red-800 rounded transition-colors"
+                        variant="destructive"
+                        size="sm"
+                        className="!px-2 text-xs"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

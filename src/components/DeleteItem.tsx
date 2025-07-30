@@ -21,7 +21,7 @@ export const DeleteItem: React.FC<DeleteItemProps> = memo(
   }) => {
     return (
       <div className="flex justify-between items-center">
-        <div className="text-red-600 font-medium">{message}</div>
+        <div className="text-red-600 font-sm">{message}</div>
         <div className="flex gap-2">
           <Button onClick={confirmDelete} disabled={isPending} variant="destructive" size="sm">
             {isPending ? 'Deleting...' : 'Delete'}

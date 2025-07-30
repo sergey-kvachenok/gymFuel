@@ -18,7 +18,6 @@ export const calculateNutrients = (consumption: {
   };
 };
 
-// Date formatting utilities
 export const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -30,7 +29,6 @@ export const formatDate = (dateString: string) => {
 };
 
 export const formatTime = (date: Date) => {
-  // Используем фиксированную локаль для консистентности между сервером и клиентом
   const hours = date.getHours();
   const minutes = date.getMinutes();
   const ampm = hours >= 12 ? 'PM' : 'AM';

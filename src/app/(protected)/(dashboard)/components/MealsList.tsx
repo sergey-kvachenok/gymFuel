@@ -113,6 +113,7 @@ const MealsList: FC<MealsListProps> = ({
       onEdit={handleEdit}
       onSave={handleSave}
       onDelete={handleDelete}
+      height={250}
     />
   );
 };

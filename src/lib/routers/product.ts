@@ -42,7 +42,6 @@ export const productRouter = router({
     .mutation(async ({ ctx, input }) => {
       const userId = parseInt((ctx.session!.user as { id: string }).id);
 
-      // Проверяем что продукт принадлежит пользователю
       const existing = await ctx.prisma.product.findFirst({
         where: { id: input.id, userId },
       });
