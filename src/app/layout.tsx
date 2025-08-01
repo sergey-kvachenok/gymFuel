@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
+import PWAInstaller from '../components/PWAInstaller';
 
 // const geistSans = Geist({
 //   variable: '--font-geist-sans',
@@ -16,12 +17,18 @@ import EnvironmentBanner from '../components/EnvironmentBanner';
 export const metadata: Metadata = {
   title: 'GymFuel - Nutrition Tracker',
   description: 'Track your nutrition goals and build muscle with custom food tracking',
-  keywords: ['nutrition', 'fitness', 'gym', 'muscle building', 'calorie tracking'],
+  keywords: ['nutrition', 'fitness', 'gym', 'muscle building', 'calorie tracking', 'pwa'],
   authors: [{ name: 'GymFuel Team' }],
   openGraph: {
     title: 'GymFuel - Nutrition Tracker',
     description: 'Track your nutrition goals and build muscle',
     type: 'website',
+  },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'GymFuel',
   },
 };
 
@@ -36,6 +43,7 @@ export default async function RootLayout({
         <Providers>
           <EnvironmentBanner />
           <main className="max-w-[800px] w-full flex-1">{children}</main>
+          <PWAInstaller />
         </Providers>
       </body>
     </html>
