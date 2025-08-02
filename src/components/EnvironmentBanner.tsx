@@ -1,14 +1,30 @@
 'use client';
-import { config, envInfo } from '../lib/config';
+import { useState, useEffect } from 'react';
 
 export default function EnvironmentBanner() {
-  // Show banner only in non-production environments
-  if (!config.features.showEnvironmentBanner) {
+  const [mounted, setMounted] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('');
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Client-side only URL detection
+    setBaseUrl(window.location.origin);
+    
+    // Client-side only environment check to prevent hydration mismatch
+    const APP_ENV = process.env.NEXT_PUBLIC_APP_ENV || 'development';
+    setShowBanner(APP_ENV !== 'production');
+  }, []);
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted || !showBanner) {
     return null;
   }
 
+  const APP_ENV = process.env.NEXT_PUBLIC_APP_ENV || 'development';
+
   const getBannerColor = () => {
-    switch (envInfo.APP_ENV) {
+    switch (APP_ENV) {
       case 'development':
         return 'bg-green-600';
       case 'staging':
@@ -19,7 +35,7 @@ export default function EnvironmentBanner() {
   };
 
   const getBannerText = () => {
-    switch (envInfo.APP_ENV) {
+    switch (APP_ENV) {
       case 'development':
         return '🚧 Development Environment';
       case 'staging':
@@ -33,7 +49,7 @@ export default function EnvironmentBanner() {
     <div
       className={`${getBannerColor()} text-white py-1 px-4 text-center text-sm font-medium w-full`}
     >
-      {getBannerText()} | {envInfo.baseUrl}
+      {getBannerText()} | {baseUrl}
     </div>
   );
 }

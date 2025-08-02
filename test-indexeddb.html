@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB Test - Vibe App</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button { background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .data-display { max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; background: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ IndexedDB Test - Vibe App</h1>
+        
+        <div class="test-section">
+            <h2>🔍 Database Connection Test</h2>
+            <div id="connection-status">Testing connection...</div>
+            <button onclick="testConnection()">Test Connection</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Database Structure</h2>
+            <div id="db-structure">Loading...</div>
+            <button onclick="inspectStructure()">Inspect Structure</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📦 Data Inspection</h2>
+            <button onclick="inspectProducts()">Check Products</button>
+            <button onclick="inspectConsumption()">Check Consumption</button>
+            <button onclick="inspectGoals()">Check Goals</button>
+            <button onclick="inspectSyncOps()">Check Sync Operations</button>
+            <button onclick="clearAll()">Clear All Data</button>
+            <div id="data-results" class="data-display"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 CRUD Operations Test</h2>
+            <button onclick="testCRUD()">Run CRUD Test</button>
+            <div id="crud-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'GymFuelDb';
+        const DB_VERSION = 2;
+        let db = null;
+
+        async function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    console.log('Database upgrade needed');
+                    // This shouldn't happen if the app has already created the DB
+                };
+            });
+        }
+
+        async function testConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            try {
+                await openDB();
+                statusDiv.innerHTML = '<p class="success">✅ Connected to IndexedDB successfully</p>';
+                statusDiv.innerHTML += `<p class="info">Database: ${DB_NAME}, Version: ${db.version}</p>`;
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Failed to connect: ${error.message}</p>`;
+            }
+        }
+
+        async function inspectStructure() {
+            const structureDiv = document.getElementById('db-structure');
+            try {
+                if (!db) await openDB();
+                
+                let html = '<h3>Object Stores:</h3><ul>';
+                const storeNames = Array.from(db.objectStoreNames);
+                
+                if (storeNames.length === 0) {
+                    html += '<li class="warning">⚠️ No object stores found. The app may not have been used yet.</li>';
+                } else {
+                    for (const storeName of storeNames) {
+                        html += `<li class="success">✅ <strong>${storeName}</strong></li>`;
+                    }
+                }
+                html += '</ul>';
+                
+                html += '<h3>Expected Stores:</h3><ul>';
+                const expectedStores = ['products', 'consumption', 'goals', 'syncOperations'];
+                for (const store of expectedStores) {
+                    if (storeNames.includes(store)) {
+                        html += `<li class="success">✅ ${store}</li>`;
+                    } else {
+                        html += `<li class="error">❌ ${store} (missing)</li>`;
+                    }
+                }
+                html += '</ul>';
+                
+                structureDiv.innerHTML = html;
+            } catch (error) {
+                structureDiv.innerHTML = `<p class="error">❌ Error inspecting structure: ${error.message}</p>`;
+            }
+        }
+
+        async function getStoreData(storeName) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('Database not connected'));
+                    return;
+                }
+                
+                if (!db.objectStoreNames.contains(storeName)) {
+                    reject(new Error(`Store '${storeName}' does not exist`));
+                    return;
+                }
+                
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function inspectProducts() {
+            const resultsDiv = document.getElementById('data-results');
+            try {
+                if (!db) await openDB();
+                const products = await getStoreData('products');
+                
+                let html = `<h3>Products (${products.length} items)</h3>`;
+                if (products.length === 0) {
+                    html += '<p class="warning">⚠️ No products found. Try using the app online first to cache some data.</p>';
+                } else {
+                    html += '<pre>' + JSON.stringify(products, null, 2) + '</pre>';
+                }
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error loading products: ${error.message}</p>`;
+            }
+        }
+
+        async function inspectConsumption() {
+            const resultsDiv = document.getElementById('data-results');
+            try {
+                if (!db) await openDB();
+                const consumption = await getStoreData('consumption');
+                
+                let html = `<h3>Consumption (${consumption.length} items)</h3>`;
+                if (consumption.length === 0) {
+                    html += '<p class="warning">⚠️ No consumption data found. This was the main issue - consumption data wasn\'t being cached.</p>';
+                    html += '<p class="info">ℹ️ After the fix, consumption data should appear here when you use the app online.</p>';
+                } else {
+                    html += '<pre>' + JSON.stringify(consumption, null, 2) + '</pre>';
+                }
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error loading consumption: ${error.message}</p>`;
+            }
+        }
+
+        async function inspectGoals() {
+            const resultsDiv = document.getElementById('data-results');
+            try {
+                if (!db) await openDB();
+                const goals = await getStoreData('goals');
+                
+                let html = `<h3>Goals (${goals.length} items)</h3>`;
+                if (goals.length === 0) {
+                    html += '<p class="warning">⚠️ No goals found.</p>';
+                } else {
+                    html += '<pre>' + JSON.stringify(goals, null, 2) + '</pre>';
+                }
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error loading goals: ${error.message}</p>`;
+            }
+        }
+
+        async function inspectSyncOps() {
+            const resultsDiv = document.getElementById('data-results');
+            try {
+                if (!db) await openDB();
+                const syncOps = await getStoreData('syncOperations');
+                
+                let html = `<h3>Sync Operations (${syncOps.length} items)</h3>`;
+                if (syncOps.length === 0) {
+                    html += '<p class="info">ℹ️ No pending sync operations.</p>';
+                } else {
+                    html += '<pre>' + JSON.stringify(syncOps, null, 2) + '</pre>';
+                }
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error loading sync operations: ${error.message}</p>`;
+            }
+        }
+
+        async function clearAll() {
+            const resultsDiv = document.getElementById('data-results');
+            try {
+                if (!db) await openDB();
+                
+                const stores = ['products', 'consumption', 'goals', 'syncOperations'];
+                const promises = stores.map(storeName => {
+                    return new Promise((resolve, reject) => {
+                        if (!db.objectStoreNames.contains(storeName)) {
+                            resolve(`${storeName}: not found`);
+                            return;
+                        }
+                        
+                        const transaction = db.transaction([storeName], 'readwrite');
+                        const store = transaction.objectStore(storeName);
+                        const request = store.clear();
+                        
+                        request.onsuccess = () => resolve(`${storeName}: cleared`);
+                        request.onerror = () => reject(`${storeName}: ${request.error}`);
+                    });
+                });
+                
+                const results = await Promise.all(promises);
+                resultsDiv.innerHTML = '<h3>Clear Results:</h3><ul>' + 
+                    results.map(result => `<li class="success">✅ ${result}</li>`).join('') + 
+                    '</ul>';
+                    
+                // Also clear localStorage
+                localStorage.removeItem('cachedUserId');
+                resultsDiv.innerHTML += '<p class="info">ℹ️ Also cleared cached user ID from localStorage</p>';
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error clearing data: ${error.message}</p>`;
+            }
+        }
+
+        async function testCRUD() {
+            const resultsDiv = document.getElementById('crud-results');
+            let html = '<h3>CRUD Test Results:</h3>';
+            
+            try {
+                if (!db) await openDB();
+                
+                // Test creating a product
+                const testProduct = {
+                    id: 999,
+                    name: 'Test Product',
+                    calories: 100,
+                    protein: 10,
+                    fat: 5,
+                    carbs: 15,
+                    userId: 1,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    synced: false
+                };
+                
+                // Create
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readwrite');
+                    const store = transaction.objectStore('products');
+                    const request = store.put(testProduct);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+                html += '<p class="success">✅ CREATE: Test product created</p>';
+                
+                // Read
+                const readProduct = await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readonly');
+                    const store = transaction.objectStore('products');
+                    const request = store.get(999);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+                
+                if (readProduct && readProduct.name === 'Test Product') {
+                    html += '<p class="success">✅ READ: Test product retrieved successfully</p>';
+                } else {
+                    html += '<p class="error">❌ READ: Failed to retrieve test product</p>';
+                }
+                
+                // Update
+                testProduct.name = 'Updated Test Product';
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readwrite');
+                    const store = transaction.objectStore('products');
+                    const request = store.put(testProduct);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+                html += '<p class="success">✅ UPDATE: Test product updated</p>';
+                
+                // Delete
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readwrite');
+                    const store = transaction.objectStore('products');
+                    const request = store.delete(999);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+                html += '<p class="success">✅ DELETE: Test product deleted</p>';
+                
+                html += '<p class="success"><strong>🎉 All CRUD operations working correctly!</strong></p>';
+                
+            } catch (error) {
+                html += `<p class="error">❌ CRUD test failed: ${error.message}</p>`;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            testConnection();
+            inspectStructure();
+        });
+    </script>
+</body>
+</html>

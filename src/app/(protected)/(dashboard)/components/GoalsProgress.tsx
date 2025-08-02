@@ -1,7 +1,8 @@
 'use client';
 import { FC } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
-import { trpc } from '../../../../lib/trpc-client';
+import { useOfflineDailyStats } from '@/hooks/use-offline-consumption';
+import { useOfflineGoals } from '@/hooks/use-offline-goals';
 
 const COLORS = {
   calories: '#3b82f6', // blue-500
@@ -18,10 +19,8 @@ const COLORS = {
 } as const;
 
 export const GoalsProgress: FC = () => {
-  const { data: goals, isLoading: goalsLoading } = trpc.goals.get.useQuery();
-  const { data: currentStats, isLoading: statsLoading } = trpc.consumption.getDailyStats.useQuery(
-    {},
-  );
+  const { data: goals, isLoading: goalsLoading } = useOfflineGoals();
+  const { data: currentStats, isLoading: statsLoading } = useOfflineDailyStats({});
 
   if (goalsLoading || statsLoading) {
     return (

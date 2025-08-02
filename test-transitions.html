@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online/Offline Transition Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status { padding: 15px; margin: 15px 0; border-radius: 5px; font-weight: bold; }
+        .online { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .offline { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .fix-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .step { margin: 10px 0; padding: 10px; background: white; border-left: 4px solid #007bff; }
+        code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Online/Offline Transition Fix</h1>
+        
+        <div id="network-status" class="status">
+            <span>📡 Network Status: </span><span id="status-text">Checking...</span>
+        </div>
+        
+        <div class="fix-section">
+            <h2>✅ What Was Fixed</h2>
+            <div class="success">
+                <p><strong>Problem:</strong> When going back online, app showed "Fetch error" and empty pages instead of cached data.</p>
+                <p><strong>Root Cause:</strong> Hooks tried to fetch from API when online, but if API failed, they didn't gracefully fall back to cached data.</p>
+            </div>
+            
+            <h3>🔧 Specific Fixes Applied:</h3>
+            <ul>
+                <li class="success">✅ <strong>Better Fallback Logic:</strong> All hooks now always try cached data if API fails, regardless of online status</li>
+                <li class="success">✅ <strong>Clear Error State:</strong> Errors are cleared when fallback data is successfully loaded</li>
+                <li class="success">✅ <strong>Improved Logging:</strong> Better console logs to debug transition issues</li>
+                <li class="success">✅ <strong>Auto-refetch:</strong> Hooks automatically refetch when network status changes</li>
+            </ul>
+        </div>
+        
+        <div class="fix-section">
+            <h2>🧪 Testing the Fix</h2>
+            
+            <div class="step">
+                <h3>Step 1: Setup (Online)</h3>
+                <p>1. Go to <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></p>
+                <p>2. Login and add some products + consumption data</p>
+                <p>3. Verify everything works normally</p>
+            </div>
+            
+            <div class="step">
+                <h3>Step 2: Go Offline</h3>
+                <p>1. Open DevTools (F12) → Network tab</p>
+                <p>2. Check "Offline" checkbox</p>
+                <p>3. Refresh the page</p>
+                <p class="success">✅ <strong>Expected:</strong> Data should load from cache without errors</p>
+            </div>
+            
+            <div class="step">
+                <h3>Step 3: Go Back Online (The Fix)</h3>
+                <p>1. Uncheck "Offline" in DevTools</p>
+                <p>2. <strong>Don't refresh</strong> - just switch network status</p>
+                <p class="success">✅ <strong>Expected (Fixed):</strong> Should automatically try to fetch fresh data</p>
+                <p class="success">✅ <strong>Expected (Fixed):</strong> If API fails, should smoothly show cached data (no "Fetch error")</p>
+                <p class="success">✅ <strong>Expected (Fixed):</strong> Should work without page reload</p>
+            </div>
+            
+            <div class="step">
+                <h3>Step 4: API Failure Simulation</h3>
+                <p>1. Keep app online</p>
+                <p>2. In DevTools → Network, add a blocking rule for your API endpoint</p>
+                <p>3. Try to navigate between pages</p>
+                <p class="success">✅ <strong>Expected (Fixed):</strong> Should gracefully fall back to cached data</p>
+                <p class="success">✅ <strong>Expected (Fixed):</strong> Should not show empty pages or "Fetch error"</p>
+            </div>
+        </div>
+        
+        <div class="fix-section">
+            <h2>📝 Technical Changes Made</h2>
+            <h3>Files Modified:</h3>
+            <ul>
+                <li><code>src/hooks/use-offline-consumption.ts</code> - Fixed fallback logic in all consumption hooks</li>
+                <li><code>src/hooks/use-offline-products.ts</code> - Fixed fallback logic in products hook</li>
+            </ul>
+            
+            <h3>Key Code Changes:</h3>
+            <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto;">
+// BEFORE: Only fallback when online
+if (isOnline) {
+  try { /* fallback to offline */ } 
+  catch { /* show error */ }
+} else {
+  setError(err as Error); // ❌ Always show error
+}
+
+// AFTER: Always try fallback
+try {
+  const offlineResult = await offlineStorage.getData(userId);
+  setData(offlineResult);
+  setError(null); // ✅ Clear error with fallback data
+} catch (offlineErr) {
+  setError(offlineErr as Error); // Only error if both fail
+}</pre>
+        </div>
+        
+        <div class="fix-section">
+            <h2>🎯 Expected Behavior Now</h2>
+            <div class="success">
+                <h3>✅ Smooth Transitions:</h3>
+                <ul>
+                    <li>Online → Offline: Uses cached data immediately</li>
+                    <li>Offline → Online: Tries API, falls back to cache if needed</li>
+                    <li>API Failures: Always shows cached data instead of errors</li>
+                    <li>Network Changes: Automatically refetches without reload</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="fix-section">
+            <h2>🔍 Debug Console Logs</h2>
+            <p>Open browser console to see helpful debugging logs:</p>
+            <ul>
+                <li><code>Primary data fetch failed:</code> - When API call fails</li>
+                <li><code>Using cached data as fallback:</code> - When fallback succeeds</li>
+                <li><code>Both online and offline fetch failed:</code> - When everything fails</li>
+                <li><code>Network status changed, refetching:</code> - When auto-refetch triggers</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function updateNetworkStatus() {
+            const statusElement = document.getElementById('status-text');
+            const statusContainer = document.getElementById('network-status');
+            
+            if (navigator.onLine) {
+                statusElement.textContent = 'Online 🟢';
+                statusContainer.className = 'status online';
+            } else {
+                statusElement.textContent = 'Offline 🔴';
+                statusContainer.className = 'status offline';
+            }
+        }
+        
+        // Initial check
+        updateNetworkStatus();
+        
+        // Listen for network changes
+        window.addEventListener('online', () => {
+            updateNetworkStatus();
+            console.log('🟢 Network came back online - app should auto-refetch data');
+        });
+        
+        window.addEventListener('offline', () => {
+            updateNetworkStatus();
+            console.log('🔴 Network went offline - app should use cached data');
+        });
+        
+        console.log('🔄 Transition test page loaded');
+        console.log('📡 Current network status:', navigator.onLine ? 'Online' : 'Offline');
+    </script>
+</body>
+</html>

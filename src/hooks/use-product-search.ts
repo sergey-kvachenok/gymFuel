@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { trpc } from '../lib/trpc-client';
+import { useState, useCallback, useMemo } from 'react';
+import { useOfflineProducts } from './use-offline-products';
 
 interface ProductSearchOptions {
   query?: string;
@@ -22,16 +22,18 @@ export const useProductSearch = (options: ProductSearchOptions = {}) => {
     setSearchQuery(query);
   }, []);
 
-  const {
-    data: products,
-    isLoading,
-    error,
-  } = trpc.product.getAll.useQuery({
+  const queryParams = useMemo(() => ({
     query: searchQuery,
     limit,
     orderBy,
     orderDirection,
-  });
+  }), [searchQuery, limit, orderBy, orderDirection]);
+
+  const {
+    data: products,
+    isLoading,
+    error,
+  } = useOfflineProducts(queryParams);
 
   return {
     searchQuery,

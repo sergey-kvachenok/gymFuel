@@ -54,7 +54,6 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
   return (
     <div ref={containerRef} className="relative w-full">
       <button
-        type="button"
         onClick={() => setOpen(!open)}
         disabled={disabled}
         className={`w-full p-2 border border-gray-300 rounded-md bg-white text-left ${
@@ -69,7 +68,6 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
 
             {value && (
               <button
-                type="button"
                 onClick={clear}
                 className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
                 disabled={disabled}

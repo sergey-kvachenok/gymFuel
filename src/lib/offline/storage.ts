@@ -97,6 +97,20 @@ class OfflineStorageService {
     });
   }
 
+  async syncProducts(userId: number, products: OfflineProduct[]): Promise<void> {
+    await this.ensureInitialized();
+    
+    // Cache all products using put (insert or update)
+    for (const product of products) {
+      try {
+        await indexedDBService.saveProduct(product);
+        console.log('Successfully cached product:', product.name);
+      } catch (error) {
+        console.warn('Failed to cache product:', product.name, error);
+      }
+    }
+  }
+
   // Consumption
   async getConsumption(userId: number): Promise<OfflineConsumption[]> {
     await this.ensureInitialized();
@@ -191,6 +205,20 @@ class OfflineStorageService {
     });
   }
 
+  async syncConsumption(_userId: number, consumption: OfflineConsumption[]): Promise<void> {
+    await this.ensureInitialized();
+    
+    // Cache all consumption using put (insert or update)
+    for (const item of consumption) {
+      try {
+        await indexedDBService.saveConsumption(item);
+        console.log('Successfully cached consumption item:', item.id);
+      } catch (error) {
+        console.warn('Failed to cache consumption:', item.id, error);
+      }
+    }
+  }
+
   // Goals
   async getGoals(userId: number): Promise<OfflineGoal[]> {
     await this.ensureInitialized();
@@ -280,6 +308,8 @@ class OfflineStorageService {
     
     const targetDate = date ? new Date(date) : new Date();
     const consumptions = await this.getConsumptionByDate(userId, targetDate);
+    
+    console.log(`📊 getDailyStats for ${targetDate.toISOString().split('T')[0]}: found ${consumptions.length} consumptions`);
 
     const stats = consumptions.reduce(
       (acc, consumption) => {

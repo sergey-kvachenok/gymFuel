@@ -1,10 +1,12 @@
 'use client';
-import { trpc } from '../../../../../lib/trpc-client';
+import { useOfflineConsumption } from '@/hooks/use-offline-consumption';
 import MealsList from '../MealsList';
 import ClientOnly from '@/components/ClientOnly';
+import { ConsumptionItem } from '@/types/api';
 
 export default function TodaysMealsHybrid({ children }: { children: React.ReactNode }) {
-  const { data: clientConsumptions, isLoading } = trpc.consumption.getByDate.useQuery({});
+  const { data: offlineConsumptions, isLoading } = useOfflineConsumption({});
+  const clientConsumptions = offlineConsumptions as ConsumptionItem[];
 
   return (
     <ClientOnly fallback={<>{children}</>}>

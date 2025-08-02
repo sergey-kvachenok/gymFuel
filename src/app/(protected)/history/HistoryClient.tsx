@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useMemo, useState } from 'react';
-import { trpc } from '../../../lib/trpc-client';
+import { useOfflineHistory } from '@/hooks/use-offline-consumption';
 import { HistoryItem } from './types';
 import { HistoryFilters } from './components/HistoryFilters';
 import { HistoryList } from './components/HistoryList';
@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import ProductList from './components/ProductList';
 
 type HistoryClientProps = {
-  initialHistory: HistoryItem[] | null;
-  initialError: string | null;
+  initialHistory?: HistoryItem[] | null;
+  initialError?: string | null;
 };
 
-export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps) {
+export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps = {}) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [daysFilter, setDaysFilter] = useState(30);
   const [selectedDay, setSelectedDay] = useState<HistoryItem | null>(null);
@@ -23,7 +23,7 @@ export default function HistoryClient({ initialHistory, initialError }: HistoryC
     data: history,
     isLoading,
     error,
-  } = trpc.consumption.getHistory.useQuery({ days: daysFilter }, { refetchOnWindowFocus: false });
+  } = useOfflineHistory({ days: daysFilter });
 
   const handleCloseModal = useCallback(() => {
     setSelectedDay(null);

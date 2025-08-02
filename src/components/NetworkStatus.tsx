@@ -1,20 +1,21 @@
+'use client';
 import { FC, useEffect, useState } from 'react';
 import { useNetworkStatus } from '@/hooks/use-network-status';
 import { syncService } from '@/lib/offline/sync';
 import { offlineStorage } from '@/lib/offline/storage';
-import type { AppRouter } from '@/lib/routers';
-import type { TRPCClient } from '@trpc/client';
+import { trpcClient } from '@/lib/trpc-client';
 
 interface NetworkStatusProps {
   userId: number;
-  trpcClient?: TRPCClient<AppRouter>;
 }
 
-const NetworkStatus: FC<NetworkStatusProps> = ({ userId, trpcClient }) => {
+const NetworkStatus: FC<NetworkStatusProps> = ({ userId }) => {
   const isOnline = useNetworkStatus();
   const [pendingOperations, setPendingOperations] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncResult, setLastSyncResult] = useState<{ success: number; failed: number } | null>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<{ success: number; failed: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadPendingOperations = async () => {
@@ -27,7 +28,7 @@ const NetworkStatus: FC<NetworkStatusProps> = ({ userId, trpcClient }) => {
     };
 
     loadPendingOperations();
-    
+
     // Refresh pending operations every 30 seconds
     const interval = setInterval(loadPendingOperations, 30000);
     return () => clearInterval(interval);
@@ -35,7 +36,7 @@ const NetworkStatus: FC<NetworkStatusProps> = ({ userId, trpcClient }) => {
 
   useEffect(() => {
     const handleSync = async () => {
-      if (isOnline && pendingOperations > 0 && trpcClient && !syncService.getIsSyncing()) {
+      if (isOnline && pendingOperations > 0 && !syncService.getIsSyncing()) {
         setIsSyncing(true);
         try {
           const result = await syncService.syncToServer(userId, trpcClient);
@@ -54,7 +55,7 @@ const NetworkStatus: FC<NetworkStatusProps> = ({ userId, trpcClient }) => {
       const timer = setTimeout(handleSync, 2000); // Wait 2 seconds after coming online
       return () => clearTimeout(timer);
     }
-  }, [isOnline, pendingOperations, userId, trpcClient]);
+  }, [isOnline, pendingOperations, userId]);
 
   if (!isOnline && pendingOperations === 0) {
     return (
@@ -89,9 +90,7 @@ const NetworkStatus: FC<NetworkStatusProps> = ({ userId, trpcClient }) => {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-md">
         <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-        <span className="text-sm text-orange-700">
-          {pendingOperations} changes waiting to sync
-        </span>
+        <span className="text-sm text-orange-700">{pendingOperations} changes waiting to sync</span>
       </div>
     );
   }
