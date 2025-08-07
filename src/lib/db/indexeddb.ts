@@ -77,8 +77,6 @@ class IndexedDBService {
             autoIncrement: false, // Changed to false since we're using API IDs
           });
           productStore.createIndex('userId', 'userId', { unique: false });
-          productStore.createIndex('name', 'name', { unique: false });
-          productStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Consumption store
@@ -89,9 +87,6 @@ class IndexedDBService {
             autoIncrement: false, // Changed to false since we're using API IDs
           });
           consumptionStore.createIndex('userId', 'userId', { unique: false });
-          consumptionStore.createIndex('productId', 'productId', { unique: false });
-          consumptionStore.createIndex('date', 'date', { unique: false });
-          consumptionStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Goals store
@@ -102,7 +97,6 @@ class IndexedDBService {
             autoIncrement: true, // Keep true for goals since they're created locally
           });
           goalsStore.createIndex('userId', 'userId', { unique: false });
-          goalsStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Sync operations store
@@ -113,8 +107,6 @@ class IndexedDBService {
             autoIncrement: true, // Keep true for sync operations since they're created locally
           });
           syncStore.createIndex('userId', 'userId', { unique: false });
-          syncStore.createIndex('entity', 'entity', { unique: false });
-          syncStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
     });

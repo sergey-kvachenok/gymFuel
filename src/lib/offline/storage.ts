@@ -1,5 +1,16 @@
-import { indexedDBService, OfflineProduct, OfflineConsumption, OfflineGoal, SyncOperation } from '@/lib/db/indexeddb';
-import { CreateProductInput, UpdateProductInput, CreateConsumptionInput, UpdateConsumptionInput } from '@/types/api';
+import {
+  indexedDBService,
+  OfflineProduct,
+  OfflineConsumption,
+  OfflineGoal,
+  SyncOperation,
+} from '@/lib/db/indexeddb';
+import {
+  CreateProductInput,
+  UpdateProductInput,
+  CreateConsumptionInput,
+  UpdateConsumptionInput,
+} from '@/types/api';
 import { IFormData } from '@/app/(protected)/goals/types';
 
 class OfflineStorageService {
@@ -26,7 +37,7 @@ class OfflineStorageService {
 
   async createProduct(userId: number, input: CreateProductInput): Promise<OfflineProduct> {
     await this.ensureInitialized();
-    
+
     const product: Omit<OfflineProduct, 'id'> = {
       ...input,
       userId,
@@ -36,7 +47,7 @@ class OfflineStorageService {
     };
 
     const savedProduct = await indexedDBService.addProduct(product);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'CREATE',
@@ -51,10 +62,10 @@ class OfflineStorageService {
 
   async updateProduct(userId: number, input: UpdateProductInput): Promise<OfflineProduct> {
     await this.ensureInitialized();
-    
+
     const existingProducts = await indexedDBService.getProducts(userId);
-    const existing = existingProducts.find(p => p.id === input.id);
-    
+    const existing = existingProducts.find((p) => p.id === input.id);
+
     if (!existing) {
       throw new Error('Product not found');
     }
@@ -67,7 +78,7 @@ class OfflineStorageService {
     };
 
     const savedProduct = await indexedDBService.updateProduct(updatedProduct);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'UPDATE',
@@ -83,9 +94,9 @@ class OfflineStorageService {
 
   async deleteProduct(userId: number, id: number): Promise<void> {
     await this.ensureInitialized();
-    
+
     await indexedDBService.deleteProduct(id);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'DELETE',
@@ -99,12 +110,11 @@ class OfflineStorageService {
 
   async syncProducts(userId: number, products: OfflineProduct[]): Promise<void> {
     await this.ensureInitialized();
-    
+
     // Cache all products using put (insert or update)
     for (const product of products) {
       try {
         await indexedDBService.saveProduct(product);
-        console.log('Successfully cached product:', product.name);
       } catch (error) {
         console.warn('Failed to cache product:', product.name, error);
       }
@@ -122,13 +132,16 @@ class OfflineStorageService {
     return indexedDBService.getConsumptionByDate(userId, date);
   }
 
-  async createConsumption(userId: number, input: CreateConsumptionInput): Promise<OfflineConsumption> {
+  async createConsumption(
+    userId: number,
+    input: CreateConsumptionInput,
+  ): Promise<OfflineConsumption> {
     await this.ensureInitialized();
-    
+
     // Get product data for offline consumption
     const products = await indexedDBService.getProducts(userId);
-    const product = products.find(p => p.id === input.productId);
-    
+    const product = products.find((p) => p.id === input.productId);
+
     if (!product) {
       throw new Error('Product not found');
     }
@@ -144,7 +157,7 @@ class OfflineStorageService {
     };
 
     const savedConsumption = await indexedDBService.addConsumption(consumption);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'CREATE',
@@ -157,12 +170,15 @@ class OfflineStorageService {
     return savedConsumption;
   }
 
-  async updateConsumption(userId: number, input: UpdateConsumptionInput): Promise<OfflineConsumption> {
+  async updateConsumption(
+    userId: number,
+    input: UpdateConsumptionInput,
+  ): Promise<OfflineConsumption> {
     await this.ensureInitialized();
-    
+
     const existingConsumptions = await indexedDBService.getConsumption(userId);
-    const existing = existingConsumptions.find(c => c.id === input.id);
-    
+    const existing = existingConsumptions.find((c) => c.id === input.id);
+
     if (!existing) {
       throw new Error('Consumption not found');
     }
@@ -175,7 +191,7 @@ class OfflineStorageService {
     };
 
     const savedConsumption = await indexedDBService.updateConsumption(updatedConsumption);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'UPDATE',
@@ -191,9 +207,9 @@ class OfflineStorageService {
 
   async deleteConsumption(userId: number, id: number): Promise<void> {
     await this.ensureInitialized();
-    
+
     await indexedDBService.deleteConsumption(id);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'DELETE',
@@ -207,7 +223,7 @@ class OfflineStorageService {
 
   async syncConsumption(_userId: number, consumption: OfflineConsumption[]): Promise<void> {
     await this.ensureInitialized();
-    
+
     // Cache all consumption using put (insert or update)
     for (const item of consumption) {
       try {
@@ -227,7 +243,7 @@ class OfflineStorageService {
 
   async createGoal(userId: number, input: IFormData): Promise<OfflineGoal> {
     await this.ensureInitialized();
-    
+
     const goal: Omit<OfflineGoal, 'id'> = {
       ...input,
       userId,
@@ -237,7 +253,7 @@ class OfflineStorageService {
     };
 
     const savedGoal = await indexedDBService.addGoal(goal);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'CREATE',
@@ -252,10 +268,10 @@ class OfflineStorageService {
 
   async updateGoal(userId: number, id: number, input: IFormData): Promise<OfflineGoal> {
     await this.ensureInitialized();
-    
+
     const existingGoals = await indexedDBService.getGoals(userId);
-    const existing = existingGoals.find(g => g.id === id);
-    
+    const existing = existingGoals.find((g) => g.id === id);
+
     if (!existing) {
       throw new Error('Goal not found');
     }
@@ -268,7 +284,7 @@ class OfflineStorageService {
     };
 
     const savedGoal = await indexedDBService.updateGoal(updatedGoal);
-    
+
     // Add to sync queue
     await this.addSyncOperation({
       type: 'UPDATE',
@@ -305,11 +321,13 @@ class OfflineStorageService {
   // Daily stats calculation (offline version)
   async getDailyStats(userId: number, date?: string) {
     await this.ensureInitialized();
-    
+
     const targetDate = date ? new Date(date) : new Date();
     const consumptions = await this.getConsumptionByDate(userId, targetDate);
-    
-    console.log(`📊 getDailyStats for ${targetDate.toISOString().split('T')[0]}: found ${consumptions.length} consumptions`);
+
+    console.log(
+      `📊 getDailyStats for ${targetDate.toISOString().split('T')[0]}: found ${consumptions.length} consumptions`,
+    );
 
     const stats = consumptions.reduce(
       (acc, consumption) => {

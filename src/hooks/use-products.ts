@@ -24,7 +24,7 @@ export const useProducts = (props?: UseProductsProps) => {
   const { searchOptions } = props || {};
   const isOnline = useNetworkStatus();
   const wasOfflineRef = useRef(false);
-  
+
   const userId = getUserIdWithFallback(session, isOnline);
   const [offlineProducts, setOfflineProducts] = useState<OfflineProduct[]>([]);
   const [isLoadingOffline, setIsLoadingOffline] = useState(false);
@@ -35,16 +35,14 @@ export const useProducts = (props?: UseProductsProps) => {
   }, [session]);
 
   // Memoize searchOptions to prevent infinite loops
-  const memoizedSearchOptions = useMemo(() => searchOptions, [
-    searchOptions?.query,
-    searchOptions?.orderBy,
-    searchOptions?.orderDirection,
-    searchOptions?.limit,
-  ]);
+  const memoizedSearchOptions = useMemo(() => searchOptions, [searchOptions]);
 
   // Standard tRPC query - only enabled when online
   const trpcQuery = trpc.product.getAll.useQuery(memoizedSearchOptions, {
-    enabled: isOnline && (!!session?.user || (typeof window !== 'undefined' && !!localStorage.getItem('cachedUserId'))),
+    enabled:
+      isOnline &&
+      (!!session?.user ||
+        (typeof window !== 'undefined' && !!localStorage.getItem('cachedUserId'))),
     retry: (failureCount, error) => {
       // Don't retry network errors since we'll use offline fallback
       return failureCount < 1 && !isNetworkError(error);
@@ -53,49 +51,61 @@ export const useProducts = (props?: UseProductsProps) => {
 
   // Cache successful online data to IndexedDB
   useEffect(() => {
-    if (trpcQuery.data && isOnline && userId > 0) {
-      const offlineData: OfflineProduct[] = trpcQuery.data.map(product => ({
-        ...product,
-        updatedAt: product.createdAt,
-        synced: true,
-      }));
-      
-      offlineStorage.syncProducts(userId, offlineData).catch(error => {
-        console.warn('Failed to cache products to IndexedDB:', error);
-      });
-    }
+    const cacheProductsToIndexedDB = async () => {
+      if (trpcQuery.data && isOnline && userId > 0) {
+        const offlineData: OfflineProduct[] = trpcQuery.data.map((product) => ({
+          ...product,
+          updatedAt: product.createdAt,
+          synced: true,
+        }));
+
+        try {
+          await offlineStorage.syncProducts(userId, offlineData);
+        } catch (error) {
+          console.warn('Failed to cache products to IndexedDB:', error);
+        }
+      }
+    };
+
+    cacheProductsToIndexedDB();
   }, [trpcQuery.data, isOnline, userId]);
 
   // Load offline data when offline
   useEffect(() => {
-    if (!isOnline && userId > 0) {
-      setIsLoadingOffline(true);
-      
-      offlineStorage.getProducts(userId).then(products => {
-        // Apply client-side filtering for offline data
-        let filteredData = [...products];
-        
-        if (memoizedSearchOptions?.query) {
-          filteredData = filteredData.filter(product =>
-            product.name.toLowerCase().includes(memoizedSearchOptions.query!.toLowerCase())
-          );
-        }
+    const loadOfflineProducts = async () => {
+      if (!isOnline && userId > 0) {
+        setIsLoadingOffline(true);
 
-        if (memoizedSearchOptions?.orderBy === 'name') {
-          filteredData.sort((a, b) => {
-            const direction = memoizedSearchOptions.orderDirection === 'desc' ? -1 : 1;
-            return a.name.localeCompare(b.name) * direction;
-          });
-        }
+        try {
+          const products = await offlineStorage.getProducts(userId);
+          
+          // Apply client-side filtering for offline data
+          let filteredData = [...products];
 
-        setOfflineProducts(filteredData);
-        setIsLoadingOffline(false);
-      }).catch(error => {
-        console.error('Failed to load offline products:', error);
-        setOfflineProducts([]);
-        setIsLoadingOffline(false);
-      });
-    }
+          if (memoizedSearchOptions?.query) {
+            filteredData = filteredData.filter((product) =>
+              product.name.toLowerCase().includes(memoizedSearchOptions.query!.toLowerCase()),
+            );
+          }
+
+          if (memoizedSearchOptions?.orderBy === 'name') {
+            filteredData.sort((a, b) => {
+              const direction = memoizedSearchOptions.orderDirection === 'desc' ? -1 : 1;
+              return a.name.localeCompare(b.name) * direction;
+            });
+          }
+
+          setOfflineProducts(filteredData);
+        } catch (error) {
+          console.error('Failed to load offline products:', error);
+          setOfflineProducts([]);
+        } finally {
+          setIsLoadingOffline(false);
+        }
+      }
+    };
+
+    loadOfflineProducts();
   }, [isOnline, userId, memoizedSearchOptions]);
 
   // Track offline state and invalidate when back online
@@ -264,7 +274,7 @@ export const useProducts = (props?: UseProductsProps) => {
 
   return {
     // Data - use online data when online, offline data when offline
-    products: isOnline ? (trpcQuery.data || []) : offlineProducts,
+    products: isOnline ? trpcQuery.data || [] : offlineProducts,
     isLoading: isOnline ? trpcQuery.isLoading : isLoadingOffline,
     error: isOnline ? trpcQuery.error : null,
 
@@ -276,7 +286,7 @@ export const useProducts = (props?: UseProductsProps) => {
 
     // States
     isPending: false, // Could be enhanced with useState if needed
-    
+
     // Debug info
     isOnline,
     dataSource: isOnline ? 'trpc' : 'indexeddb',
