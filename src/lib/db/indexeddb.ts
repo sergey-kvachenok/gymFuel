@@ -52,7 +52,6 @@ class IndexedDBService {
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log('Initializing IndexedDB:', this.dbName, 'version:', this.version);
       const request = indexedDB.open(this.dbName, this.version);
 
       request.onerror = () => {
@@ -66,47 +65,49 @@ class IndexedDBService {
       };
 
       request.onupgradeneeded = (event) => {
-        console.log('IndexedDB upgrade needed');
         const db = (event.target as IDBOpenDBRequest).result;
-
         // Products store
         if (!db.objectStoreNames.contains('products')) {
-          console.log('Creating products store');
           const productStore = db.createObjectStore('products', {
             keyPath: 'id',
             autoIncrement: false, // Changed to false since we're using API IDs
           });
           productStore.createIndex('userId', 'userId', { unique: false });
+          productStore.createIndex('name', 'name', { unique: false });
+          productStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Consumption store
         if (!db.objectStoreNames.contains('consumption')) {
-          console.log('Creating consumption store');
           const consumptionStore = db.createObjectStore('consumption', {
             keyPath: 'id',
             autoIncrement: false, // Changed to false since we're using API IDs
           });
           consumptionStore.createIndex('userId', 'userId', { unique: false });
+          consumptionStore.createIndex('productId', 'productId', { unique: false });
+          consumptionStore.createIndex('date', 'date', { unique: false });
+          consumptionStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Goals store
         if (!db.objectStoreNames.contains('goals')) {
-          console.log('Creating goals store');
           const goalsStore = db.createObjectStore('goals', {
             keyPath: 'id',
             autoIncrement: true, // Keep true for goals since they're created locally
           });
           goalsStore.createIndex('userId', 'userId', { unique: false });
+          goalsStore.createIndex('synced', 'synced', { unique: false });
         }
 
         // Sync operations store
         if (!db.objectStoreNames.contains('syncOperations')) {
-          console.log('Creating syncOperations store');
           const syncStore = db.createObjectStore('syncOperations', {
             keyPath: 'id',
             autoIncrement: true, // Keep true for sync operations since they're created locally
           });
           syncStore.createIndex('userId', 'userId', { unique: false });
+          syncStore.createIndex('entity', 'entity', { unique: false });
+          syncStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
     });
@@ -124,7 +125,6 @@ class IndexedDBService {
     const index = store.index('userId');
 
     return new Promise((resolve, reject) => {
-      console.log('Getting products from IndexedDB for userId:', userId);
       const request = index.getAll(userId);
       request.onsuccess = () => {
         console.log('Retrieved products from IndexedDB:', request.result);

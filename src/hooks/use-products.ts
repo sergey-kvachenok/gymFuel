@@ -78,7 +78,7 @@ export const useProducts = (props?: UseProductsProps) => {
 
         try {
           const products = await offlineStorage.getProducts(userId);
-          
+
           // Apply client-side filtering for offline data
           let filteredData = [...products];
 
@@ -118,17 +118,6 @@ export const useProducts = (props?: UseProductsProps) => {
       wasOfflineRef.current = true;
     }
   }, [isOnline, trpcQuery]);
-
-  // Debug logging
-  console.log('useProducts hook:', {
-    searchOptions: memoizedSearchOptions,
-    onlineProducts: trpcQuery.data?.length || 0,
-    offlineProducts: offlineProducts.length,
-    isLoading: isOnline ? trpcQuery.isLoading : isLoadingOffline,
-    error: trpcQuery.error?.message,
-    isOnline,
-    userId,
-  });
 
   // Enhanced mutation functions with offline fallback
   const createProduct = useMemo(
