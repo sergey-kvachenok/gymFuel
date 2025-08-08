@@ -86,3 +86,10 @@ export interface EditableListMutation<TInput> {
   isPending: boolean;
   onSuccess?: () => void;
 }
+
+export interface ProductSearchOptions {
+  query?: string;
+  limit?: number;
+  orderBy?: 'name' | 'createdAt';
+  orderDirection?: 'asc' | 'desc';
+}

@@ -4,7 +4,7 @@ import MacroInfo from '../../../../../components/ui/MacroInfo';
 import { X } from 'lucide-react';
 import { NutrientsTooltip } from './NutrientsTooltip';
 import ProductSearch from '@/components/ProductSearch';
-import { useProductSearch } from '../../../../../hooks/use-product-search';
+import { useProducts } from '../../../../../hooks/use-products';
 
 export type ProductOption = {
   id: number;
@@ -25,14 +25,33 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const {
-    setSearchQuery,
-    products = [],
-    isLoading,
-  } = useProductSearch({
-    orderBy: 'name',
-    orderDirection: 'asc',
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { products, isLoading, error } = useProducts({
+    searchOptions: {
+      query: searchQuery || undefined,
+      orderBy: 'name',
+      orderDirection: 'asc',
+    },
   });
+
+  // const {
+  //   products = [],
+  //   isLoading,
+  //   error,
+  // } = useProducts({
+  //   searchOptions: searchQuery ? {
+  //     query: searchQuery,
+  //     orderBy: 'name',
+  //     orderDirection: 'asc',
+  //   } : {
+  //     orderBy: 'name',
+  //     orderDirection: 'asc',
+  //   },
+  // });
+
+  // Debug logging
+  console.log('ProductCombobox:', { products: products.length, isLoading, error, searchQuery });
 
   const clear = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();

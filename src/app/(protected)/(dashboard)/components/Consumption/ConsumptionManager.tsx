@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { ConsumptionForm } from './ConsumptionForm';
 import ProductForm from '../ProductForm';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
-import { useProductSearch } from '@/hooks/use-product-search';
 import { useOfflineConsumption } from '@/hooks/use-offline-consumption';
 
 const enum PopupTypes {
@@ -32,10 +31,6 @@ const ConsumptionManager: FC = () => {
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
 
-  const { allProducts: products } = useProductSearch({
-    orderBy: 'name',
-    orderDirection: 'asc',
-  });
   const { createConsumption: createConsumptionMutation } = useOfflineConsumption();
 
   const submitConsumption = useCallback(
@@ -55,7 +50,7 @@ const ConsumptionManager: FC = () => {
           productId,
           amount,
         });
-        
+
         setSelectedProduct(null);
         setAmount(undefined);
         setError('');
@@ -106,7 +101,7 @@ const ConsumptionManager: FC = () => {
                 amount={amount}
                 error={error}
                 isPending={false}
-                isProductsPresented={!!products && products.length > 0}
+                isProductsPresented={true}
                 onAmountChange={onAmountChange}
               />
             )}

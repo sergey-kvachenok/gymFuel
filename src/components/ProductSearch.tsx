@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, FC } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useOfflineProducts } from '@/hooks/use-offline-products';
+import { useProducts } from '@/hooks/use-products';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
@@ -34,7 +34,9 @@ export const ProductSearch: FC<ProductSearchProps> = ({
     orderDirection: 'asc' as const,
   }), [debounced]);
 
-  const { data: products = [], isLoading } = useOfflineProducts(queryParams);
+  const { products = [], isLoading } = useProducts({
+    searchOptions: queryParams,
+  });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

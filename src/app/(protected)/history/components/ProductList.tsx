@@ -1,10 +1,9 @@
 'use client';
-import { FC, useMemo, useCallback } from 'react';
+import { FC, useMemo, useCallback, useState } from 'react';
 import ProductSearch from '@/components/ProductSearch';
 import EditableList from '@/components/EditableList';
 import { Product, UpdateProductInput } from '@/types/api';
-import { useProductSearch } from '../../../../hooks/use-product-search';
-import { useProductManipulation } from '../../../../hooks/use-product-manipulation';
+import { useProducts } from '../../../../hooks/use-products';
 
 const fields = [
   { key: 'name', label: 'Product Name', type: 'text' as const, placeholder: 'Product name' },
@@ -15,11 +14,15 @@ const fields = [
 ];
 
 const ProductList: FC = () => {
-  const { setSearchQuery, products, isLoading, error } = useProductSearch({
-    orderBy: 'name',
-    orderDirection: 'asc',
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const { products, isLoading, error, updateProduct, deleteProduct, isPending } = useProducts({
+    searchOptions: {
+      query: searchQuery || undefined,
+      orderBy: 'name',
+      orderDirection: 'asc',
+    },
   });
-  const { updateProduct, deleteProduct, isUpdating, isDeleting } = useProductManipulation();
 
   const renderProduct = useCallback(
     (product: Product) => (
@@ -56,17 +59,17 @@ const ProductList: FC = () => {
   const updateMutation = useMemo(
     () => ({
       mutate: (data: Record<string, unknown>) => updateProduct(data as UpdateProductInput),
-      isPending: isUpdating,
+      isPending,
     }),
-    [updateProduct, isUpdating],
+    [isPending, updateProduct],
   );
 
   const deleteMutation = useMemo(
     () => ({
       mutate: (data: Record<string, unknown>) => deleteProduct({ id: data.id as number }),
-      isPending: isDeleting,
+      isPending,
     }),
-    [deleteProduct, isDeleting],
+    [deleteProduct, isPending],
   );
 
   const handleEdit = useCallback(

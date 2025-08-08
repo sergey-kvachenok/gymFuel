@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useCreateProduct } from '@/hooks/use-create-product';
-import { useOfflineUtils } from '@/hooks/use-offline-utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
@@ -39,11 +38,8 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
   });
   const [error, setError] = useState('');
 
-  const utils = useOfflineUtils();
-
   const createProduct = useCreateProduct({
     onSuccess: () => {
-      utils.product.getAll.invalidate();
       setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
       setError('');
       onSuccess?.();

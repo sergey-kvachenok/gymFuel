@@ -162,14 +162,11 @@ class IndexedDBService {
     const store = this.getStore('products', 'readwrite');
 
     return new Promise((resolve, reject) => {
-      console.log('Attempting to save product to IndexedDB:', product);
       const request = store.put(product);
       request.onsuccess = () => {
-        console.log('Successfully saved product to IndexedDB:', request.result);
         resolve(product);
       };
       request.onerror = () => {
-        console.error('Failed to save product to IndexedDB:', request.error);
         reject(request.error);
       };
     });

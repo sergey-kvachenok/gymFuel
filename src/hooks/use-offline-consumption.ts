@@ -4,7 +4,6 @@ import { useSession } from 'next-auth/react';
 import { useNetworkStatus } from './use-network-status';
 import { offlineStorage } from '@/lib/offline/storage';
 import { trpcClient } from '@/lib/trpc-client';
-import { useOfflineUtils } from './use-offline-utils';
 import type { OfflineConsumption } from '@/lib/db/indexeddb';
 import type { CreateConsumptionInput, UpdateConsumptionInput } from '@/types/api';
 
@@ -15,7 +14,6 @@ interface UseOfflineConsumptionParams {
 export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
   const { data: session, status } = useSession();
   const isOnline = useNetworkStatus();
-  const utils = useOfflineUtils();
   
   // Fallback for offline: try to get cached userId from localStorage
   let userId = session?.user ? parseInt((session.user as { id: string }).id) : 0;
@@ -141,13 +139,11 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         // Cache the consumption data by syncing it
         await offlineStorage.syncConsumption(userId, [offlineConsumption]);
         
-        utils.consumption.getAll.invalidate();
         refetchData();
         return result;
       } else {
         console.log('Creating consumption offline:', input);
         const result = await offlineStorage.createConsumption(userId, input);
-        utils.consumption.getAll.invalidate();
         refetchData();
         return result;
       }
@@ -158,8 +154,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         try {
           console.log('Online creation failed, falling back to offline');
           const result = await offlineStorage.createConsumption(userId, input);
-          utils.consumption.getAll.invalidate();
-          refetchData();
+            refetchData();
           return result;
         } catch (offlineError) {
           throw offlineError;
@@ -168,7 +163,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         throw error;
       }
     }
-  }, [userId, isOnline, utils, refetchData]);
+  }, [userId, isOnline, refetchData]);
 
   const updateConsumption = useCallback(async (input: UpdateConsumptionInput) => {
     if (!userId) {
@@ -189,13 +184,11 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         // Cache the consumption data by syncing it
         await offlineStorage.syncConsumption(userId, [offlineConsumption]);
         
-        utils.consumption.getAll.invalidate();
         refetchData();
         return result;
       } else {
         console.log('Updating consumption offline:', input);
         const result = await offlineStorage.updateConsumption(userId, input);
-        utils.consumption.getAll.invalidate();
         refetchData();
         return result;
       }
@@ -206,8 +199,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         try {
           console.log('Online update failed, falling back to offline');
           const result = await offlineStorage.updateConsumption(userId, input);
-          utils.consumption.getAll.invalidate();
-          refetchData();
+            refetchData();
           return result;
         } catch (offlineError) {
           throw offlineError;
@@ -216,7 +208,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         throw error;
       }
     }
-  }, [userId, isOnline, utils, refetchData]);
+  }, [userId, isOnline, refetchData]);
 
   const deleteConsumption = useCallback(async (id: number) => {
     if (!userId) {
@@ -229,12 +221,10 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         await trpcClient.consumption.delete.mutate({ id });
         await offlineStorage.deleteConsumption(userId, id);
         
-        utils.consumption.getAll.invalidate();
         refetchData();
       } else {
         console.log('Deleting consumption offline:', id);
         await offlineStorage.deleteConsumption(userId, id);
-        utils.consumption.getAll.invalidate();
         refetchData();
       }
     } catch (error) {
@@ -244,8 +234,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         try {
           console.log('Online deletion failed, falling back to offline');
           await offlineStorage.deleteConsumption(userId, id);
-          utils.consumption.getAll.invalidate();
-          refetchData();
+            refetchData();
         } catch (offlineError) {
           throw offlineError;
         }
@@ -253,7 +242,7 @@ export const useOfflineConsumption = (params?: UseOfflineConsumptionParams) => {
         throw error;
       }
     }
-  }, [userId, isOnline, utils, refetchData]);
+  }, [userId, isOnline, refetchData]);
 
   return { 
     data, 
