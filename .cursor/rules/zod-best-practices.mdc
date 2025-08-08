@@ -1,0 +1,9 @@
+---
+description: 
+globs: src/app/api/**/*.ts
+alwaysApply: false
+---
+- Define schemas for data validation to ensure type safety.
+- Use Zod's built-in methods for parsing and transforming data.
+- Implement error handling to provide user-friendly feedback on validation failures.
+- Leverage Zod's integration with TypeScript for enhanced type inference.

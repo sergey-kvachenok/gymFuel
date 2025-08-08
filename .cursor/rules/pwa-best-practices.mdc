@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Create a comprehensive manifest.json to define app metadata.
+- Implement a service worker for caching strategies to enhance offline capabilities.
+- Ensure the app is responsive and works well on various devices.
+- Test PWA features regularly to ensure compliance with best practices and standards.

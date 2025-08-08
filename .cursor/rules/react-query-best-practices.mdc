@@ -1,0 +1,9 @@
+---
+description: 
+globs: src/**/*.ts,src/**/*.tsx
+alwaysApply: false
+---
+- Use query keys to uniquely identify queries for caching and refetching.
+- Implement background refetching to keep data fresh.
+- Use `useQuery` and `useMutation` hooks for data fetching and state management.
+- Handle loading and error states in your UI for better user experience.

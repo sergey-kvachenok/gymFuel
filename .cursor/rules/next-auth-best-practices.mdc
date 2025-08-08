@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Use JWT for stateless authentication to improve scalability.
+- Implement session management to enhance user experience.
+- Secure sensitive routes with proper authorization checks.
+- Customize callbacks for additional user data handling and session management.

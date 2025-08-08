@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Use a library like idb for a simpler API to interact with IndexedDB.
+- Implement versioning for your database to manage schema changes.
+- Ensure data synchronization logic is robust to handle online/offline transitions.
+- Regularly clean up old data to prevent storage bloat.

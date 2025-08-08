@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Use migrations for schema changes to maintain database integrity.
+- Leverage Prisma's type safety features to avoid runtime errors.
+- Use `prisma generate` in your build process to ensure the client is up-to-date.
+- Implement proper error handling for database operations.
