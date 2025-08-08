@@ -1,0 +1,13 @@
+---
+description: Best practices for validating and transforming request input in Next.js App Router API routes using Zod. Emphasizes boundary validation, safeParse, strict schemas, coercion, and consistent error shaping.
+globs:
+  - src/app/api/**/*.ts
+  - src/lib/routers/**/*.ts
+  - src/**/*.ts
+alwaysApply: true
+---
+
+- Define schemas for data validation to ensure type safety.
+- Use Zod's built-in methods for parsing and transforming data.
+- Implement error handling to provide user-friendly feedback on validation failures.
+- Leverage Zod's integration with TypeScript for enhanced type inference.

@@ -1,0 +1,10 @@
+---
+description: Best practices for testing React components and applications including unit tests, integration tests, coverage reporting, and user-centric testing approaches
+globs:
+alwaysApply: true
+---
+
+- Write unit tests for components and utility functions to ensure reliability.
+- Use integration tests to verify component interactions and data flow.
+- Implement coverage reports to identify untested parts of your codebase.
+- Use `@testing-library/react` for user-centric testing approaches.

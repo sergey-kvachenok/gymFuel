@@ -1,0 +1,173 @@
+Please adapt the globs depending on your project structure.
+
+---
+name: nextjs-best-practices.mdc
+description: Best practices for Next.js applications and routing
+globs: **/*.{ts,tsx}
+---
+
+- Use the App Router for better performance and organization.
+- Implement proper error boundaries to handle errors gracefully.
+- Optimize data fetching with React Suspense and Next.js's built-in data fetching methods.
+- Utilize dynamic routing for better SEO and user experience.
+
+---
+name: prisma-best-practices.mdc
+description: Best practices for using Prisma ORM
+globs: **/*.{ts,js}
+---
+
+- Use migrations for schema changes to maintain database integrity.
+- Leverage Prisma's type safety features to avoid runtime errors.
+- Use `prisma generate` in your build process to ensure the client is up-to-date.
+- Implement proper error handling for database operations.
+
+---
+name: react-query-best-practices.mdc
+description: Best practices for data fetching with React Query
+globs: **/*.{ts,tsx}
+---
+
+- Use query keys to uniquely identify queries for caching and refetching.
+- Implement background refetching to keep data fresh.
+- Use `useQuery` and `useMutation` hooks for data fetching and state management.
+- Handle loading and error states in your UI for better user experience.
+
+---
+name: tailwindcss-best-practices.mdc
+description: Best practices for styling with Tailwind CSS
+globs: **/*.{ts,tsx,css}
+---
+
+- Use utility-first classes for rapid UI development.
+- Create custom components with Tailwind's `@apply` directive for reusability.
+- Ensure responsive design by utilizing Tailwind's responsive utilities.
+- Use `tailwind-merge` to manage conflicting class names effectively.
+
+---
+name: zod-best-practices.mdc
+description: Best practices for schema validation with Zod
+globs: **/*.{ts,js}
+---
+
+- Define schemas for data validation to ensure type safety.
+- Use Zod's built-in methods for parsing and transforming data.
+- Implement error handling to provide user-friendly feedback on validation failures.
+- Leverage Zod's integration with TypeScript for enhanced type inference.
+
+---
+name: next-auth-best-practices.mdc
+description: Best practices for authentication with NextAuth.js
+globs: **/*.{ts,tsx}
+---
+
+- Use JWT for stateless authentication to improve scalability.
+- Implement session management to enhance user experience.
+- Secure sensitive routes with proper authorization checks.
+- Customize callbacks for additional user data handling and session management.
+
+---
+name: testing-best-practices.mdc
+description: Best practices for testing with Jest and Testing Library
+globs: **/*.{ts,tsx}
+---
+
+- Write unit tests for components and utility functions to ensure reliability.
+- Use integration tests to verify component interactions and data flow.
+- Implement coverage reports to identify untested parts of your codebase.
+- Use `@testing-library/react` for user-centric testing approaches.
+
+
+Based on PRD
+
+To effectively implement the GymFuel application, you will need to adapt the globs depending on your project structure. Below are best practices for each major library/framework involved in the project.
+
+---
+name: nextjs-best-practices.mdc
+description: Best practices for Next.js applications and routing
+globs: **/*.{ts,tsx}
+---
+
+- Use the App Router for better performance and organization of routes.
+- Implement proper error boundaries to handle errors gracefully.
+- Utilize Server Components for data fetching to reduce client-side bundle size.
+- Optimize images and static assets for faster load times.
+
+---
+name: trpc-best-practices.mdc
+description: Best practices for using tRPC in type-safe API development
+globs: **/*.{ts,tsx}
+---
+
+- Define clear and concise API routes to maintain readability.
+- Use input validation with Zod to ensure type safety and prevent errors.
+- Leverage middleware for authentication and authorization checks.
+- Keep your API responses consistent to simplify client-side handling.
+
+---
+name: tailwindcss-best-practices.mdc
+description: Best practices for styling with Tailwind CSS
+globs: **/*.{ts,tsx,css}
+---
+
+- Use utility-first classes to build responsive designs quickly.
+- Create reusable components with Tailwind's @apply directive for consistency.
+- Maintain a consistent design system by defining custom themes in the Tailwind config.
+- Optimize for accessibility by ensuring color contrast and semantic HTML.
+
+---
+name: prisma-best-practices.mdc
+description: Best practices for using Prisma as an ORM
+globs: **/*.{ts,tsx}
+---
+
+- Use migrations to manage database schema changes effectively.
+- Define clear relationships in your Prisma schema for better data integrity.
+- Utilize Prisma's query optimization features to improve performance.
+- Implement error handling for database operations to manage exceptions gracefully.
+
+---
+name: nextauth-best-practices.mdc
+description: Best practices for authentication with NextAuth.js
+globs: **/*.{ts,tsx}
+---
+
+- Use secure password hashing (bcrypt) for storing user credentials.
+- Implement session management to maintain user state across requests.
+- Configure proper callback URLs for OAuth providers to enhance security.
+- Regularly review and update authentication strategies to mitigate vulnerabilities.
+
+---
+name: zod-best-practices.mdc
+description: Best practices for validation with Zod
+globs: **/*.{ts,tsx}
+---
+
+- Define schemas for all forms to ensure consistent validation.
+- Use Zod's built-in methods for type inference to maintain type safety.
+- Implement custom validation messages for better user experience.
+- Keep validation logic close to the data it validates for clarity.
+
+---
+name: indexeddb-best-practices.mdc
+description: Best practices for using IndexedDB for offline storage
+globs: **/*.{ts,tsx}
+---
+
+- Use a library like idb for a simpler API to interact with IndexedDB.
+- Implement versioning for your database to manage schema changes.
+- Ensure data synchronization logic is robust to handle online/offline transitions.
+- Regularly clean up old data to prevent storage bloat.
+
+---
+name: pwa-best-practices.mdc
+description: Best practices for Progressive Web App development
+globs: **/*.{ts,tsx}
+---
+
+- Create a comprehensive manifest.json to define app metadata.
+- Implement a service worker for caching strategies to enhance offline capabilities.
+- Ensure the app is responsive and works well on various devices.
+- Test PWA features regularly to ensure compliance with best practices and standards.
+
+By following these best practices, you can ensure a robust, maintainable, and user-friendly GymFuel application.

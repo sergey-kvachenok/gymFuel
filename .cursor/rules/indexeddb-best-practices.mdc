@@ -1,0 +1,22 @@
+---
+description: Best practices for IndexedDB usage including data synchronization, multi-tab coordination, and offline-first patterns
+globs:
+alwaysApply: true
+---
+
+- Use a library like idb for a simpler API to interact with IndexedDB.
+- Prefer the `idb` package (npm: `idb`) for promise-based APIs and safer transactions; avoid raw IDB unless necessary.
+- Implement versioning for your database to manage schema changes.
+- On upgrades, handle `onupgradeneeded`, `versionchange`, and `blocked` events; prompt other tabs to close and call `db.close()` on `versionchange`.
+- Write idempotent upgrade steps; never drop stores/indices unless you have a safe migration/backup path.
+- Ensure data synchronization logic is robust to handle online/offline transitions. Implement idempotent operations and use multi-tab coordination mechanisms like BroadcastChannel or Service Worker to prevent duplicates and lost updates during synchronization.
+- Queue writes offline; replay with backoff when online. Use `BroadcastChannel` or `postMessage` to coordinate multi-tab state.
+- Make sync operations idempotent (e.g., by using stable IDs and merge strategies) to tolerate retries.
+- Regularly clean up old data to prevent storage bloat.
+- Implement TTL/lastAccessed fields and periodic cleanup cursors; chunk deletes to avoid long transactions.
+- Batch writes/reads in as few transactions as possible; avoid many single-record transactions.
+- Handle `QuotaExceededError` and use `navigator.storage.persist()` to request persistent storage where appropriate.
+- Feature-detect (`'indexedDB' in window`) and gracefully degrade; note Safari Private Browsing can disable IDB.
+- Don’t store secrets/PII unencrypted; encrypt sensitive values client-side and avoid large base64 payloads (prefer Blob).
+- Close databases when not in use; keep transactions short to reduce contention across tabs.
+- Prefer indices and key ranges (`IDBKeyRange`) over full-store scans; paginate with cursors.
