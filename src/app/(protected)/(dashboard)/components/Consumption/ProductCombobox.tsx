@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, FC } from 'react';
+import { useState, useRef, useEffect, FC, useMemo } from 'react';
 import MacroInfo from '../../../../../components/ui/MacroInfo';
 import { X } from 'lucide-react';
 import { NutrientsTooltip } from './NutrientsTooltip';
@@ -27,31 +27,18 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { products, isLoading, error } = useProducts({
-    searchOptions: {
-      query: searchQuery || undefined,
-      orderBy: 'name',
-      orderDirection: 'asc',
-    },
-  });
+  const searchOptions = useMemo(() => ({
+    query: searchQuery || undefined,
+    orderBy: 'name' as const,
+    orderDirection: 'asc' as const,
+  }), [searchQuery]);
 
-  // const {
-  //   products = [],
-  //   isLoading,
-  //   error,
-  // } = useProducts({
-  //   searchOptions: searchQuery ? {
-  //     query: searchQuery,
-  //     orderBy: 'name',
-  //     orderDirection: 'asc',
-  //   } : {
-  //     orderBy: 'name',
-  //     orderDirection: 'asc',
-  //   },
-  // });
+  const { products, isLoading, error } = useProducts({ searchOptions });
+  
+  console.log('ProductCombobox products:', { products, type: typeof products, isArray: Array.isArray(products) });
 
   // Debug logging
-  console.log('ProductCombobox:', { products: products.length, isLoading, error, searchQuery });
+  console.log('ProductCombobox:', { products: products, isLoading, error, searchQuery });
 
   const clear = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();

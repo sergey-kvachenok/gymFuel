@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ConsumptionForm } from './ConsumptionForm';
 import ProductForm from '../ProductForm';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
-import { useOfflineConsumption } from '@/hooks/use-offline-consumption';
+import { useConsumption } from '@/hooks/use-consumption';
 
 const enum PopupTypes {
   Consumption = 'consumption',
@@ -31,7 +31,7 @@ const ConsumptionManager: FC = () => {
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
 
-  const { createConsumption: createConsumptionMutation } = useOfflineConsumption();
+  const { createConsumption: createConsumptionMutation } = useConsumption();
 
   const submitConsumption = useCallback(
     async (e: React.FormEvent) => {

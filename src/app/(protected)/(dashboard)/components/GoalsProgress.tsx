@@ -1,8 +1,8 @@
 'use client';
 import { FC } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
-import { useOfflineDailyStats } from '@/hooks/use-offline-consumption';
-import { useOfflineGoals } from '@/hooks/use-offline-goals';
+import { useConsumptionStats } from '@/hooks/use-consumption-stats';
+import { useGoals } from '@/hooks/use-goals';
 
 const COLORS = {
   calories: '#3b82f6', // blue-500
@@ -19,8 +19,8 @@ const COLORS = {
 } as const;
 
 export const GoalsProgress: FC = () => {
-  const { data: goals, isLoading: goalsLoading } = useOfflineGoals();
-  const { data: currentStats, isLoading: statsLoading } = useOfflineDailyStats({});
+  const { data: goals, isLoading: goalsLoading } = useGoals();
+  const { data: currentStats, isLoading: statsLoading } = useConsumptionStats({});
 
   if (goalsLoading || statsLoading) {
     return (

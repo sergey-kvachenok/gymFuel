@@ -1,4 +1,3 @@
-'use client';
 import { useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc-client';
 import { trpcClient } from '@/lib/trpc-client';
@@ -6,38 +5,31 @@ import { offlineStorage } from '@/lib/offline/storage';
 import { isNetworkError } from '@/lib/utils/network';
 import { useOfflineBase } from './use-offline-base';
 import {
-  ProductSearchOptions,
-  CreateProductInput,
-  UpdateProductInput,
-  DeleteProductInput,
+  CreateConsumptionInput,
+  UpdateConsumptionInput,
+  DeleteConsumptionInput,
 } from '@/types/api';
-import type { OfflineProduct } from '@/lib/db/indexeddb';
+import type { OfflineConsumption } from '@/lib/db/indexeddb';
 
-interface UseProductsProps {
-  searchOptions?: ProductSearchOptions;
+interface UseOfflineConsumptionParams {
+  date?: string;
 }
 
-export const useProducts = (props?: UseProductsProps) => {
-  const { searchOptions } = props || {};
+export const useConsumption = (params: UseOfflineConsumptionParams = {}) => {
   const {
-    checkAuth,
     isOnline,
     wasOfflineRef,
     userId,
-    offlineData: offlineProducts,
-    setOfflineData: setOfflineProducts,
+    offlineData: offlineConsumption,
+    setOfflineData: setOfflineConsumption,
     isLoadingOffline,
     setIsLoadingOffline,
+    checkAuth,
     tRPCEnabled,
-  } = useOfflineBase<OfflineProduct[]>([]);
-
-  console.log({ isOnline, offlineProducts });
-
-  // Memoize searchOptions to prevent infinite loops
-  const memoizedSearchOptions = useMemo(() => searchOptions, [searchOptions]);
+  } = useOfflineBase<OfflineConsumption[]>([]);
 
   // Standard tRPC query - only enabled when online
-  const trpcQuery = trpc.product.getAll.useQuery(memoizedSearchOptions, {
+  const trpcQuery = trpc.consumption.getByDate.useQuery(params, {
     enabled: tRPCEnabled,
     retry: (failureCount, error) => {
       // Don't retry network errors since we'll use offline fallback
@@ -47,66 +39,51 @@ export const useProducts = (props?: UseProductsProps) => {
 
   // Cache successful online data to IndexedDB
   useEffect(() => {
-    const cacheProductsToIndexedDB = async () => {
+    const cacheConsumptionToIndexedDB = async () => {
       if (trpcQuery.data && isOnline && userId > 0) {
-        const offlineData: OfflineProduct[] = trpcQuery.data.map((product) => ({
+        const offlineData: OfflineConsumption[] = trpcQuery.data.map((product) => ({
           ...product,
           updatedAt: product.createdAt,
           synced: true,
         }));
 
         try {
-          await offlineStorage.syncProducts(userId, offlineData);
+          await offlineStorage.syncConsumption(userId, offlineData);
         } catch (error) {
-          console.warn('Failed to cache products to IndexedDB:', error);
+          console.warn('Failed to cache consumption to IndexedDB:', error);
         }
       }
     };
 
-    cacheProductsToIndexedDB();
+    cacheConsumptionToIndexedDB();
   }, [trpcQuery.data, isOnline, userId]);
 
   // Load offline data when offline
   useEffect(() => {
-    const loadOfflineProducts = async () => {
+    const loadOfflineConsumption = async () => {
       if (!isOnline && userId > 0) {
         setIsLoadingOffline(true);
 
         try {
-          const products = await offlineStorage.getProducts(userId);
+          const consumption = await offlineStorage.getConsumption(userId);
 
-          // Apply client-side filtering for offline data
-          let filteredData = [...products];
-
-          if (memoizedSearchOptions?.query) {
-            filteredData = filteredData.filter((product) =>
-              product.name.toLowerCase().includes(memoizedSearchOptions.query!.toLowerCase()),
-            );
-          }
-
-          if (memoizedSearchOptions?.orderBy === 'name') {
-            filteredData.sort((a, b) => {
-              const direction = memoizedSearchOptions.orderDirection === 'desc' ? -1 : 1;
-              return a.name.localeCompare(b.name) * direction;
-            });
-          }
-
-          setOfflineProducts(filteredData);
+          setOfflineConsumption(consumption);
         } catch (error) {
           console.error('Failed to load offline products:', error);
-          setOfflineProducts([]);
+          setOfflineConsumption([]);
         } finally {
           setIsLoadingOffline(false);
         }
       }
     };
 
-    loadOfflineProducts();
-  }, [isOnline, userId, memoizedSearchOptions]);
+    loadOfflineConsumption();
+  }, [isOnline, userId]);
 
   // Track offline state and invalidate when back online
   useEffect(() => {
     if (isOnline && wasOfflineRef.current) {
+      console.log('📡 Back online - invalidating tRPC cache');
       trpcQuery.refetch();
       wasOfflineRef.current = false;
     } else if (!isOnline) {
@@ -115,25 +92,25 @@ export const useProducts = (props?: UseProductsProps) => {
   }, [isOnline, trpcQuery]);
 
   // Enhanced mutation functions with offline fallback
-  const createProduct = useMemo(
-    () => async (data: CreateProductInput) => {
+  const createConsumption = useMemo(
+    () => async (data: CreateConsumptionInput) => {
       checkAuth();
 
       try {
         if (isOnline) {
           try {
             // Try online first
-            const result = await trpcClient.product.create.mutate(data);
+            const result = await trpcClient.consumption.create.mutate(data);
 
             // Cache to IndexedDB for offline access
-            const offlineProduct: OfflineProduct = {
+            const offlineConsumption: OfflineConsumption = {
               ...result,
               updatedAt: result.createdAt,
               synced: true,
             };
 
             try {
-              await offlineStorage.syncProducts(userId, [offlineProduct]);
+              await offlineStorage.syncConsumption(userId, [offlineConsumption]);
             } catch (cacheError) {
               console.warn('Failed to cache created product:', cacheError);
             }
@@ -145,7 +122,7 @@ export const useProducts = (props?: UseProductsProps) => {
             if (isNetworkError(onlineError)) {
               console.warn('Online create failed, using offline:', onlineError);
               // Fallback to offline
-              const result = await offlineStorage.createProduct(userId, data);
+              const result = await offlineStorage.createConsumption(userId, data);
               // When offline, tRPC query will get updated data via IndexedDB fallback automatically
               return result;
             }
@@ -153,7 +130,7 @@ export const useProducts = (props?: UseProductsProps) => {
           }
         } else {
           // Use offline storage when offline
-          const result = await offlineStorage.createProduct(userId, data);
+          const result = await offlineStorage.createConsumption(userId, data);
           // No refetch needed - tRPC query will get updated data via IndexedDB fallback
           return result;
         }
@@ -161,28 +138,28 @@ export const useProducts = (props?: UseProductsProps) => {
         throw error;
       }
     },
-    [isOnline, trpcQuery, userId],
+    [checkAuth, isOnline, trpcQuery, userId],
   );
 
-  const updateProduct = useMemo(
-    () => async (data: UpdateProductInput) => {
+  const updateConsumption = useMemo(
+    () => async (data: UpdateConsumptionInput) => {
       checkAuth();
 
       try {
         if (isOnline) {
           try {
             // Try online first
-            const result = await trpcClient.product.update.mutate(data);
+            const result = await trpcClient.consumption.update.mutate(data);
 
             // Update cache in IndexedDB
-            const offlineProduct: OfflineProduct = {
+            const offlineConsumption: OfflineConsumption = {
               ...result,
               updatedAt: result.createdAt,
               synced: true,
             };
 
             try {
-              await offlineStorage.syncProducts(userId, [offlineProduct]);
+              await offlineStorage.syncConsumption(userId, [offlineConsumption]);
             } catch (cacheError) {
               console.warn('Failed to cache updated product:', cacheError);
             }
@@ -194,38 +171,38 @@ export const useProducts = (props?: UseProductsProps) => {
             if (isNetworkError(onlineError)) {
               console.warn('Online update failed, using offline:', onlineError);
               // Fallback to offline
-              const result = await offlineStorage.updateProduct(userId, data);
+              const result = await offlineStorage.updateConsumption(userId, data);
               return result;
             }
             throw onlineError;
           }
         } else {
           // Use offline storage when offline
-          const result = await offlineStorage.updateProduct(userId, data);
+          const result = await offlineStorage.updateConsumption(userId, data);
           return result;
         }
       } catch (error) {
         throw error;
       }
     },
-    [isOnline, trpcQuery, userId],
+    [checkAuth, isOnline, trpcQuery, userId],
   );
 
-  const deleteProduct = useMemo(
-    () => async (data: DeleteProductInput) => {
+  const deleteConsumption = useMemo(
+    () => async (data: DeleteConsumptionInput) => {
       checkAuth();
 
       try {
         if (isOnline) {
           try {
             // Try online first
-            await trpcClient.product.delete.mutate(data);
+            await trpcClient.consumption.delete.mutate(data);
 
             // Remove from cache
             try {
-              await offlineStorage.deleteProduct(userId, data.id);
+              await offlineStorage.deleteConsumption(userId, data.id);
             } catch (cacheError) {
-              console.warn('Failed to remove deleted product from cache:', cacheError);
+              console.warn('Failed to remove deleted consumption from cache:', cacheError);
             }
 
             // Only refetch when online
@@ -234,38 +211,33 @@ export const useProducts = (props?: UseProductsProps) => {
             if (isNetworkError(onlineError)) {
               console.warn('Online delete failed, using offline:', onlineError);
               // Fallback to offline
-              await offlineStorage.deleteProduct(userId, data.id);
+              await offlineStorage.deleteConsumption(userId, data.id);
             } else {
               throw onlineError;
             }
           }
         } else {
           // Use offline storage when offline
-          await offlineStorage.deleteProduct(userId, data.id);
+          await offlineStorage.deleteConsumption(userId, data.id);
         }
       } catch (error) {
         throw error;
       }
     },
-    [isOnline, trpcQuery, userId],
+    [checkAuth, isOnline, trpcQuery, userId],
   );
 
   return {
-    // Data - use online data when online, offline data when offline
-    products: isOnline ? trpcQuery.data || [] : offlineProducts,
+    consumption: isOnline ? trpcQuery.data || [] : offlineConsumption,
     isLoading: isOnline ? trpcQuery.isLoading : isLoadingOffline,
     error: isOnline ? trpcQuery.error : null,
 
-    // Actions
-    createProduct,
-    updateProduct,
-    deleteProduct,
+    createConsumption,
+    updateConsumption,
+    deleteConsumption,
     refetch: trpcQuery.refetch,
 
-    // States
-    isPending: false, // Could be enhanced with useState if needed
-
-    // Debug info
+    isPending: false,
     isOnline,
     dataSource: isOnline ? 'trpc' : 'indexeddb',
   };
