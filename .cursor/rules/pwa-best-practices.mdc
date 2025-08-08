@@ -1,9 +1,23 @@
 ---
-description: 
-globs: 
+description: Best practices for Progressive Web App development including manifest configuration, service worker implementation, responsive design, and testing strategies
+globs:
 alwaysApply: true
 ---
-- Create a comprehensive manifest.json to define app metadata.
-- Implement a service worker for caching strategies to enhance offline capabilities.
-- Ensure the app is responsive and works well on various devices.
-- Test PWA features regularly to ensure compliance with best practices and standards.
+
+- Maintain a complete web app manifest (prefer `manifest.webmanifest`) with:
+  - `name`, `short_name`, `id`, `start_url`, `scope`, `display` (e.g., `standalone`), `display_override`, `theme_color`, `background_color`, `orientation`.
+  - Icons: include at least 192×192 and 512×512, plus a maskable icon (`purpose: any maskable`).
+  - Optional: `shortcuts`, `screenshots`, `categories`, `description`, `lang`, `dir`.
+- Register a HTTPS-only Service Worker with:
+  - Precache the app shell and critical assets (e.g., via Workbox) and serve a navigation offline fallback page.
+  - Apply runtime caching strategies per route/asset type (e.g., stale-while-revalidate for static, network-first for API).
+  - Manage cache versions and clean up old caches; do not cache sensitive/PII or authenticated API responses.
+  - Implement a robust update flow (listen for `updatefound`; prompt the user; call `skipWaiting()` judiciously).
+- Ensure responsiveness and installability:
+  - Responsive layout across breakpoints; handle safe areas on iOS; use touch targets ≥ 48×48 dp.
+  - Satisfy install criteria (valid manifest + SW over HTTPS); include `<link rel="manifest">` with correct MIME type.
+  - Add iOS meta tags and `apple-touch-icon` entries for proper standalone behavior on iOS.
+- Test and automate:
+  - Run Lighthouse (PWA + Performance) locally and in CI (e.g., Lighthouse CI) with enforceable score thresholds.
+  - Add end-to-end tests covering offline mode, SW updates, and install/uninstall flows.
+  - Monitor SW errors and cache misses; validate CSP to mitigate XSS and SW abuse.

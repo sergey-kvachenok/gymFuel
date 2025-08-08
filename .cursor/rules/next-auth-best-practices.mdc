@@ -1,9 +1,23 @@
 ---
-description: 
-globs: 
+description: Best practices for using NextAuth (next-auth) in Next.js: security, sessions, callbacks, middleware, and operational hygiene.
+globs:
+  - "app/api/auth/**/*"
+  - "pages/api/auth/**/*"
+  - "app/**/middleware.ts"
+  - "middleware.ts"
+  - "app/api/auth/[...nextauth]/**/*"
+  - "src/**/auth.ts"
+  - "src/**/auth.tsx"
+  - "lib/**/auth.ts"
+  - "lib/**/auth.tsx"
+  - "next.config.*"
+  - ".env*"
 alwaysApply: true
 ---
-- Use JWT for stateless authentication to improve scalability.
-- Implement session management to enhance user experience.
-- Secure sensitive routes with proper authorization checks.
-- Customize callbacks for additional user data handling and session management.
+
+- Prefer JWT sessions only when you need stateless scaling; otherwise consider database sessions for server-side invalidation and single sign-out.
+- Set NEXTAUTH_SECRET, use secure HTTP-only cookies in production, and configure sameSite=lax (or strict) and proper cookie domain. Never expose provider tokens to the client.
+- Protect routes with middleware (withAuth/auth) and an authorized callback. Enforce RBAC/ABAC on the server; don’t rely on client-only checks. Validate HTTP methods and return 401/403 appropriately.
+- Keep JWTs small and non-PII: include only stable identifiers (sub), roles/permissions, org/tenant IDs. Put only safe claims into session via the session callback; fetch sensitive data server-side as needed.
+- Configure session.maxAge and updateAge to match business requirements. If using refresh tokens with providers, rotate and store them securely on the server; revoke on sign-out when possible.
+- Avoid logging tokens or PII. Add rate limiting to credentials flows and monitor repeated 401s. Test expiry, unauthorized access, and role-based route coverage.

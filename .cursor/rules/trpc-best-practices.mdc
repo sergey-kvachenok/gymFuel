@@ -1,8 +1,14 @@
 ---
-description: 
-globs: 
+description: Best practices for tRPC routers and procedures in this repository.
+globs:
+  - src/lib/trpc.ts
+  - src/lib/trpc-client.ts
+  - src/lib/trpc-server.ts
+  - src/lib/routers/**/*.ts
+  - src/app/api/trpc/**/*.ts
 alwaysApply: true
 ---
+
 - Define clear and concise API routes to maintain readability.
 - Use input validation with Zod to ensure type safety and prevent errors.
 - Leverage middleware for authentication and authorization checks.

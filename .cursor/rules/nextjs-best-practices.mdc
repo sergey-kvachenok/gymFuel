@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description: Best practices for Next.js applications including App Router usage, error handling, data fetching optimization, and routing strategies
+globs:
 alwaysApply: true
 ---
+
 - Use the App Router for better performance and organization.
 - Implement proper error boundaries to handle errors gracefully.
 - Optimize data fetching with React Suspense and Next.js's built-in data fetching methods.
