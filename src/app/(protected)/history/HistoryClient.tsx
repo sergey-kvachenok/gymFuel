@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useMemo, useState } from 'react';
-import { trpc } from '../../../lib/trpc-client';
 import { HistoryItem } from './types';
 import { HistoryFilters } from './components/HistoryFilters';
 import { HistoryList } from './components/HistoryList';
@@ -8,22 +7,19 @@ import { DayDetailsModal } from './components/DayDetailsModal';
 import SidePanel from '@/components/SidePanel';
 import { Button } from '@/components/ui/button';
 import ProductList from './components/ProductList';
+import { useConsumptionStats } from '@/hooks/use-consumption-stats';
 
 type HistoryClientProps = {
-  initialHistory: HistoryItem[] | null;
-  initialError: string | null;
+  initialHistory?: HistoryItem[] | null;
+  initialError?: string | null;
 };
 
-export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps) {
+export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps = {}) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [daysFilter, setDaysFilter] = useState(30);
   const [selectedDay, setSelectedDay] = useState<HistoryItem | null>(null);
 
-  const {
-    data: history,
-    isLoading,
-    error,
-  } = trpc.consumption.getHistory.useQuery({ days: daysFilter }, { refetchOnWindowFocus: false });
+  const { data: history, isLoading, error } = useConsumptionStats({ days: daysFilter });
 
   const handleCloseModal = useCallback(() => {
     setSelectedDay(null);

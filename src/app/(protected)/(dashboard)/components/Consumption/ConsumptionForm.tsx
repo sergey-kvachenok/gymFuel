@@ -26,22 +26,8 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
   amount,
   error,
   isPending,
-  isProductsPresented,
   onAmountChange,
 }) => {
-  if (!isProductsPresented) {
-    return (
-      <Card>
-        <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>
-        <CardContent>
-          <div className="text-gray-500 text-center py-8">
-            No products available. Add some products first to track your consumption.
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>

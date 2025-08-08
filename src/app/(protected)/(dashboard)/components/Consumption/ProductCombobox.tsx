@@ -1,10 +1,10 @@
 'use client';
-import { useState, useRef, useEffect, FC } from 'react';
+import { useState, useRef, useEffect, FC, useMemo } from 'react';
 import MacroInfo from '../../../../../components/ui/MacroInfo';
 import { X } from 'lucide-react';
 import { NutrientsTooltip } from './NutrientsTooltip';
 import ProductSearch from '@/components/ProductSearch';
-import { useProductSearch } from '../../../../../hooks/use-product-search';
+import { useProducts } from '../../../../../hooks/use-products';
 
 export type ProductOption = {
   id: number;
@@ -25,14 +25,20 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const {
-    setSearchQuery,
-    products = [],
-    isLoading,
-  } = useProductSearch({
-    orderBy: 'name',
-    orderDirection: 'asc',
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const searchOptions = useMemo(() => ({
+    query: searchQuery || undefined,
+    orderBy: 'name' as const,
+    orderDirection: 'asc' as const,
+  }), [searchQuery]);
+
+  const { products, isLoading, error } = useProducts({ searchOptions });
+  
+  console.log('ProductCombobox products:', { products, type: typeof products, isArray: Array.isArray(products) });
+
+  // Debug logging
+  console.log('ProductCombobox:', { products: products, isLoading, error, searchQuery });
 
   const clear = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -54,7 +60,6 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
   return (
     <div ref={containerRef} className="relative w-full">
       <button
-        type="button"
         onClick={() => setOpen(!open)}
         disabled={disabled}
         className={`w-full p-2 border border-gray-300 rounded-md bg-white text-left ${
@@ -69,7 +74,6 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
 
             {value && (
               <button
-                type="button"
                 onClick={clear}
                 className="ml-2 p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
                 disabled={disabled}

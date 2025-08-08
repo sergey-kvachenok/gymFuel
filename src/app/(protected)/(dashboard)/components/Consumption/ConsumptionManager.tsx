@@ -4,9 +4,8 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ConsumptionForm } from './ConsumptionForm';
 import ProductForm from '../ProductForm';
-import { trpc } from '@/lib/trpc-client';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
-import { useProductSearch } from '@/hooks/use-product-search';
+import { useConsumption } from '@/hooks/use-consumption';
 
 const enum PopupTypes {
   Consumption = 'consumption',
@@ -32,29 +31,10 @@ const ConsumptionManager: FC = () => {
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
 
-  const { allProducts: products } = useProductSearch({
-    orderBy: 'name',
-    orderDirection: 'asc',
-  });
-  const utils = trpc.useUtils();
-
-  const createConsumption = trpc.consumption.create.useMutation({
-    onSuccess: () => {
-      utils.consumption.getDailyStats.invalidate();
-      utils.consumption.getByDate.invalidate();
-
-      setSelectedProduct(null);
-      setAmount(undefined);
-      setError('');
-      setOpenModal(null);
-    },
-    onError: (error) => {
-      setError(error.message);
-    },
-  });
+  const { createConsumption: createConsumptionMutation } = useConsumption();
 
   const submitConsumption = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setError('');
 
@@ -65,12 +45,21 @@ const ConsumptionManager: FC = () => {
         return;
       }
 
-      createConsumption.mutate({
-        productId,
-        amount,
-      });
+      try {
+        await createConsumptionMutation({
+          productId,
+          amount,
+        });
+
+        setSelectedProduct(null);
+        setAmount(undefined);
+        setError('');
+        setOpenModal(null);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to create consumption');
+      }
     },
-    [selectedProduct, amount, createConsumption],
+    [selectedProduct, amount, createConsumptionMutation],
   );
 
   const onAmountChange = useCallback(
@@ -111,8 +100,8 @@ const ConsumptionManager: FC = () => {
                 setSelectedProduct={setSelectedProduct}
                 amount={amount}
                 error={error}
-                isPending={createConsumption.isPending}
-                isProductsPresented={!!products && products.length > 0}
+                isPending={false}
+                isProductsPresented={true}
                 onAmountChange={onAmountChange}
               />
             )}

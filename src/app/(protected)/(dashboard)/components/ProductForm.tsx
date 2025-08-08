@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { trpc } from '../../../../lib/trpc-client';
+import { useProducts } from '@/hooks/use-products';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
@@ -37,22 +37,11 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
     carbs: '',
   });
   const [error, setError] = useState('');
+  const [isPending, setIsPending] = useState(false);
 
-  const utils = trpc.useUtils();
+  const { createProduct } = useProducts();
 
-  const createProduct = trpc.product.create.useMutation({
-    onSuccess: () => {
-      utils.product.getAll.invalidate();
-      setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
-      setError('');
-      onSuccess?.();
-    },
-    onError: (error) => {
-      setError(error.message);
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -72,13 +61,25 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    createProduct.mutate({
-      name: formData.name,
-      calories: caloriesNum,
-      protein: proteinNum,
-      fat: fatNum,
-      carbs: carbsNum,
-    });
+    setIsPending(true);
+    try {
+      await createProduct({
+        name: formData.name,
+        calories: caloriesNum,
+        protein: proteinNum,
+        fat: fatNum,
+        carbs: carbsNum,
+      });
+      
+      // Success - reset form
+      setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
+      setError('');
+      onSuccess?.();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create product');
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleFieldChange = (key: string, value: string) => {
@@ -125,8 +126,8 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
             ))}
           </div>
 
-          <Button type="submit" disabled={createProduct.isPending} className="w-full">
-            {createProduct.isPending ? 'Adding...' : 'Add Product'}
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? 'Adding...' : 'Add Product'}
           </Button>
         </form>
       </CardContent>

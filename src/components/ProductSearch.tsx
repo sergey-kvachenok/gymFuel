@@ -1,7 +1,7 @@
 'use client';
-import { useState, FC } from 'react';
+import { useState, useMemo, FC } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { trpc } from '@/lib/trpc-client';
+import { useProducts } from '@/hooks/use-products';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
@@ -28,10 +28,14 @@ export const ProductSearch: FC<ProductSearchProps> = ({
   const [search, setSearch] = useState('');
   const debounced = useDebounce(search, 300);
 
-  const { data: products = [], isLoading } = trpc.product.getAll.useQuery({
+  const queryParams = useMemo(() => ({
     query: debounced,
-    orderBy: 'name',
-    orderDirection: 'asc',
+    orderBy: 'name' as const,
+    orderDirection: 'asc' as const,
+  }), [debounced]);
+
+  const { products = [], isLoading } = useProducts({
+    searchOptions: queryParams,
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

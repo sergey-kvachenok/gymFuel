@@ -1,15 +1,15 @@
 'use client';
-import { trpc } from '../../../../../lib/trpc-client';
 import MealsList from '../MealsList';
 import ClientOnly from '@/components/ClientOnly';
+import { useConsumption } from '@/hooks/use-consumption';
 
 export default function TodaysMealsHybrid({ children }: { children: React.ReactNode }) {
-  const { data: clientConsumptions, isLoading } = trpc.consumption.getByDate.useQuery({});
+  const { consumption, isLoading } = useConsumption();
 
   return (
     <ClientOnly fallback={<>{children}</>}>
       <MealsList
-        consumptions={clientConsumptions}
+        consumptions={consumption}
         isLoading={isLoading}
         title="Today's Meals"
         showActions={true}
