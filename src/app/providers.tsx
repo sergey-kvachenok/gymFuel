@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc } from '../lib/trpc-client';
 import { httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
+import { useServiceWorker } from '../hooks/use-service-worker';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -17,6 +18,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       ],
     }),
   );
+
+  // Register service worker
+  useServiceWorker();
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>

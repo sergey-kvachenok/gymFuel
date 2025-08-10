@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
+import OfflineBanner from '../components/OfflineBanner';
 
 // const geistSans = Geist({
 //   variable: '--font-geist-sans',
@@ -32,8 +33,12 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body className="min-h-screen flex flex-col items-center  bg-gradient-to-br from-blue-50 via-white to-pink-50">
         <Providers>
+          <OfflineBanner />
           <EnvironmentBanner />
           <main className="max-w-[800px] w-full flex-1">{children}</main>
         </Providers>
