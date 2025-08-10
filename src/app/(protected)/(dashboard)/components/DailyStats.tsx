@@ -1,15 +1,19 @@
 'use client';
 
 import { FC } from 'react';
-import { trpc } from '../../../../lib/trpc-client';
 import { statsFields } from '@/constants/DailyStats.constants';
 import StatsCardMessage from '@/components/GenericStatsCard';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { useDailyStats } from '../../../../hooks/use-daily-stats';
 
 type StatsKey = 'totalCalories' | 'totalProtein' | 'totalFat' | 'totalCarbs';
 
-const DailyStats: FC = () => {
-  const { data: stats, error, isLoading } = trpc.consumption.getDailyStats.useQuery({});
+interface DailyStatsProps {
+  userId: number | null;
+}
+
+const DailyStats: FC<DailyStatsProps> = ({ userId }) => {
+  const { data: stats, error, isLoading } = useDailyStats(userId);
 
   if (isLoading) {
     return <StatsCardMessage title="Daily Nutrition" message="Loading..." />;

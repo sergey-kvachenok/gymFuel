@@ -101,3 +101,16 @@ export interface EditableListMutation<TInput> {
   isPending: boolean;
   onSuccess?: () => void;
 }
+
+export interface OfflineChange<T> {
+  id: number;
+  _deleted?: boolean;
+  _modified?: boolean;
+  data?: T;
+}
+
+export interface OfflineChangeWithData<T> extends OfflineChange<T> {
+  [key: string]: unknown;
+}
+
+export type OfflineChanges<T> = OfflineChange<T>[];

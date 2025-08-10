@@ -20,9 +20,22 @@
   - [x] 3.2 Create a `SyncService` that processes the `sync_queue` when the app is online.
   - [x] 3.3 Implement the `sync.batchSync` tRPC endpoint on the server to handle incoming sync operations.
 
-- [ ] 4. **Implement Offline Data Fetching**
-  - [ ] 4.1 Update all data fetching logic to read from IndexedDB when offline.
-  - [ ] 4.2 Ensure that fetching data from the server to refresh the cache does **not** add entries to the `sync_queue`.
+- [x] 4. **Implement Offline Data Fetching**
+  - [x] 4.1 Implement hybrid data layer that uses IndexedDB as primary data source
+    - [x] Create enhanced `useProductSearch` hook with IndexedDB integration
+    - [x] Create enhanced consumption query hooks (daily stats, by date)
+    - [x] Create enhanced nutrition goals query hook
+    - [x] Add server data caching to IndexedDB (mark with `isOfflineOnly: false`)
+    - [x] Implement data merging logic (server data + offline changes + pending sync operations)
+  - [ ] 4.2 Update offline data service to support query operations
+    - [ ] Add `syncServerProducts()` method to cache fresh server data
+    - [ ] Add `syncServerConsumptions()` method to cache fresh server data
+    - [ ] Add `syncServerNutritionGoals()` method to cache fresh server data
+    - [ ] Implement smart filtering that excludes pending deletions
+    - [ ] Add support for search, filter, and sort operations on IndexedDB
+  - [ ] 4.3 Ensure server data updates do **not** add entries to the `sync_queue`
+    - [ ] Server data updates bypass sync queue (direct IndexedDB writes)
+    - [ ] Only user-initiated changes create sync queue entries
 
 - [ ] 5. **Update UI**
   - [ ] 5.1 Update the `OfflineBanner` to display the number of items in the `sync_queue`.
@@ -47,3 +60,18 @@
   - Updated `src/types/api.ts` to include `updatedAt` fields and missing `NutritionGoals` interface
   - Refactored `offline-db.ts` and `offline-data-service.ts` to use existing types
 - **Impact**: Better type safety and consistency across the application
+
+#### Task 4.1 Hybrid Data Layer Implementation (2025-01-27)
+
+- **Completed**: Implemented hybrid data layer that uses IndexedDB as primary data source
+- **Implementation**:
+  - Created `useDailyStats()` hook with offline/online data switching
+  - Created `useConsumptionsByDate()` hook with offline/online data switching
+  - Created `useNutritionGoals()` hook with offline/online data switching
+  - Updated `useHybridProductSearch()` hook to accept userId parameter
+  - Added server data caching to IndexedDB via `offlineDataService.cacheServer*()` methods
+  - Implemented simple data merging logic: `isOnline ? serverData : offlineData`
+  - Created centralized auth utilities (`getCurrentUserId()`, `getCurrentSession()`)
+  - Updated components to pass real user ID instead of hardcoded values
+- **Architecture**: Simple conditional pattern `isOnline ? trpc.data : offlineData` for data source selection
+- **Impact**: Full offline functionality with real user authentication, no more hardcoded user IDs

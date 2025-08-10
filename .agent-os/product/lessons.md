@@ -2,6 +2,36 @@
 
 This file stores lessons and corrections learned from user feedback to avoid repeating mistakes.
 
+## Development Process
+
+- **Listen to User Feedback Immediately - Don't Over-Engineer**: When users point out issues or suggest simpler approaches, implement them immediately. Complex solutions often create more problems than they solve.
+
+- **Prevent Infinite Re-renders in React Hooks**: When using `useCallback` with async functions, move the async logic inside `useEffect` to prevent infinite re-renders. The pattern `useEffect(() => { const fetchData = async () => { ... }; fetchData(); }, [deps])` is safer than `useCallback(async () => { ... }, [deps])`.
+
+- **Don't Modify Core API Types for Implementation Details**: Adding fields like `isOfflineOnly` to core types can cause conflicts with database schemas and other systems. Keep implementation details separate from core data models.
+
+- **Fix Linter Errors Immediately - Don't Accumulate Technical Debt**: Address TypeScript and linter errors as they appear. Accumulating errors makes the codebase harder to work with and can mask real issues.
+
+- **Question Complex State Management - Prefer Simple Conditionals**: Instead of complex state management patterns, prefer simple conditional logic like `isOnline ? serverData : offlineData`. This is more readable and less error-prone.
+
+- **Understand Authentication Contexts - Server vs Client**: Server-side operations (tRPC) use `getServerSession()` and JWT tokens automatically, while client-side operations need explicit session management. Don't add unnecessary complexity like `SessionProvider` if you're only doing server-side operations.
+
+- **Centralize Authentication Logic in Utility Functions**: Create reusable utility functions like `getCurrentUserId()` and `getCurrentSession()` to avoid duplicating session logic across components. This makes the code more maintainable and consistent.
+
+- **Never Use Mock/Hardcoded Data - Always Use Real Data**: Never use placeholder values like `const userId = 1` or mock data. Always implement proper data fetching and use real, correct data from the appropriate sources (sessions, APIs, databases). Mock data creates bugs and security issues.
+
+- **Always Include All Dependencies in React Hook Arrays**: Never ignore React hook dependency warnings. Always include all variables used inside useEffect, useCallback, and useMemo in their dependency arrays. Missing dependencies cause stale closures, infinite re-renders, and hard-to-debug bugs.
+
+## Architecture
+
+- **Hybrid Data Layer Pattern**: Use `isOnline ? serverData : offlineData` for simple, effective offline/online data switching.
+
+- **Keep Offline Services Parameter-Based**: Design offline data services to accept `userId` as a parameter rather than trying to access authentication context internally.
+
+- **Separate Concerns**: Keep server-side authentication (JWT tokens) separate from client-side state management.
+
+- **Pass User ID as Props**: Instead of complex context or global state, pass user ID as props from server components to client components that need it.
+
 ## Implementation Workflow Lessons
 
 ### Planning Before Implementation
@@ -136,6 +166,66 @@ This file stores lessons and corrections learned from user feedback to avoid rep
   6. TypeScript errors usually indicate design issues, not TypeScript limitations
 - **Benefits**: Type safety, runtime validation, better maintainability, cleaner code
 - **Date**: 2025-08-10
+
+### Listen to User Feedback Immediately - Don't Over-Engineer
+
+- **Lesson**: When user suggests a simpler approach, implement it immediately instead of over-engineering
+- **Context**: User suggested `isOnline ? trpc.data : offlineData` pattern, but I initially implemented complex offline change tracking with `OfflineChange<T>` interfaces and infinite re-render issues
+- **Action**: When user provides feedback:
+  1. Stop current implementation immediately
+  2. Implement the user's suggested approach first
+  3. Only add complexity if the simple approach doesn't work
+  4. User feedback is often the most efficient solution
+  5. Don't assume complex solutions are better than simple ones
+- **Date**: 2025-01-27
+
+### Prevent Infinite Re-renders in React Hooks
+
+- **Lesson**: Avoid creating infinite re-render loops with `useCallback` and `useEffect` dependencies
+- **Context**: Created `useCallback` with dependencies that caused infinite re-renders, then hit the 3-attempt limit trying to fix TypeScript errors
+- **Action**: When creating hooks with async operations:
+  1. Move async functions inside `useEffect` to avoid dependency cycles
+  2. Keep `useEffect` dependencies minimal and stable
+  3. Test for re-render issues early in development
+  4. Use `useMemo` for expensive calculations, not for async operations
+  5. If you hit the 3-attempt limit, step back and simplify the approach
+- **Date**: 2025-01-27
+
+### Don't Modify Core API Types for Implementation Details
+
+- **Lesson**: Never add implementation-specific fields to core API types that are used by Prisma
+- **Context**: Added `isOfflineOnly?: boolean` to Product, Consumption, and NutritionGoals interfaces, which could cause Prisma schema mismatches
+- **Action**: When working with database types:
+  1. Keep Prisma-generated types clean and unmodified
+  2. Create separate types for internal implementation if needed
+  3. Use type composition (extends) rather than modification
+  4. Consider if the field is actually needed or if there's a simpler approach
+  5. Database types should match the actual database schema
+- **Date**: 2025-01-27
+
+### Fix Linter Errors Immediately - Don't Accumulate Technical Debt
+
+- **Lesson**: Address TypeScript/linter errors immediately when they're simple fixes
+- **Context**: Let TypeScript errors accumulate in offline data service, hit the 3-attempt limit, and had to leave errors unfixed
+- **Action**: When encountering linter errors:
+  1. Fix simple errors immediately (unused imports, type mismatches)
+  2. Don't let technical debt build up
+  3. Address issues one at a time systematically
+  4. If you hit the 3-attempt limit, document the issue and move on
+  5. Simple fixes prevent complex debugging later
+- **Date**: 2025-01-27
+
+### Question Complex State Management - Prefer Simple Conditionals
+
+- **Lesson**: Simple conditional logic is often better than complex state synchronization
+- **Context**: Initially implemented complex offline change tracking and data merging when `isOnline ? trpc.data : offlineData` worked perfectly
+- **Action**: When designing data flow:
+  1. Start with the simplest conditional approach
+  2. Ask "Can this be solved with a simple if/else?"
+  3. Avoid complex state synchronization unless absolutely necessary
+  4. Direct data source selection is cleaner than complex merging logic
+  5. Test the simple approach before adding complexity
+- **Date**: 2025-01-27
 
 ---
 

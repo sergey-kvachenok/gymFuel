@@ -38,9 +38,42 @@ As a user, I want to see how many of my offline changes are waiting to be synced
 ## Expected Deliverable
 
 1.  Users can fully manage their products, consumption, and goals while offline.
-2.  All offline changes are automatically synced to the server when the user comes back online.
-3.  Data conflicts are resolved based on the most recent `updatedAt` timestamp.
-4.  The offline banner shows the number of items pending synchronization.
+2.  Users can view, search, and filter all data offline (including offline changes).
+3.  All offline changes are automatically synced to the server when the user comes back online.
+4.  Data conflicts are resolved based on the most recent `updatedAt` timestamp.
+5.  The offline banner shows the number of items pending synchronization.
+
+## Data Return Strategy
+
+The app uses a **hybrid approach** combining Service Worker caching with IndexedDB storage:
+
+### Service Worker Role
+
+- **HTTP Response Caching**: Caches tRPC responses for faster loading when online
+- **Static Asset Caching**: Handles HTML, CSS, JS, manifest files
+- **Network Fallback**: Provides cached responses when network fails
+
+### IndexedDB Role
+
+- **Primary Data Source**: All queries return data from IndexedDB for consistency
+- **Offline Change Management**: Merges server data with pending offline changes
+- **Smart Query Support**: Enables search, filter, and sort operations offline
+
+### Data Flow by Status
+
+| Status                   | Data Source        | Returned Data                            |
+| ------------------------ | ------------------ | ---------------------------------------- |
+| **Online + Fresh Fetch** | Server → IndexedDB | Fresh server data + offline changes      |
+| **Online + Cached**      | IndexedDB only     | Cached server data + offline changes     |
+| **Offline**              | IndexedDB only     | Last known server data + offline changes |
+
+### Data Merging Logic
+
+1. **Base Data**: Server-synced records stored in IndexedDB
+2. **Offline Additions**: Records created offline (marked with `isOfflineOnly: true`)
+3. **Pending Modifications**: Apply updates from sync queue
+4. **Pending Deletions**: Filter out records marked for deletion
+5. **Final Result**: Merged view showing current state including all offline changes
 
 ## Changes
 
@@ -52,3 +85,18 @@ As a user, I want to see how many of my offline changes are waiting to be synced
 - **Rationale**: The existing `NutritionGoals` model already used `updatedAt` field, so changed Product and Consumption models to use the same naming for consistency
 - **Implementation**: All three models now consistently use `updatedAt` timestamp field
 - **Impact**: Better code consistency and maintainability across the data model
+
+#### Hybrid Data Strategy - IndexedDB + Service Worker (2025-08-10)
+
+- **Decision**: Use IndexedDB as primary data source instead of relying solely on Service Worker HTTP caching
+- **Rationale**: Service Worker caching alone cannot handle dynamic offline changes - users need to see their offline modifications immediately in the UI
+- **Implementation**:
+  - Service Worker handles HTTP response caching and static assets
+  - IndexedDB stores application data and merges server data with offline changes
+  - All query hooks return data from IndexedDB for consistency across online/offline states
+  - Server data updates bypass sync queue, only user changes create sync entries
+- **Benefits**:
+  - Immediate visibility of offline changes in UI
+  - Consistent data structure online/offline
+  - Support for search/filter operations when offline
+  - Smart data merging prevents data loss

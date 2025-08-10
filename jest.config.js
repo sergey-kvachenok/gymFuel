@@ -13,6 +13,7 @@ const customJestConfig = {
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  transformIgnorePatterns: ['node_modules/(?!(superjson|@trpc)/)'],
   collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}', '!src/**/*.d.ts', '!src/app/globals.css'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

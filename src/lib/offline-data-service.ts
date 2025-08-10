@@ -29,6 +29,16 @@ export class OfflineDataService {
   }
 
   /**
+   * Get the current user ID from the session
+   * This is a placeholder - in a real app, you'd get this from the auth context
+   */
+  private getCurrentUserId(): number {
+    // TODO: This should be passed in from the calling code
+    // For now, we'll throw an error to ensure proper implementation
+    throw new Error('getCurrentUserId() must be implemented with actual user ID');
+  }
+
+  /**
    * Get all pending sync operations
    */
   async getPendingSyncOperations(): Promise<SyncQueueItem[]> {
@@ -230,6 +240,151 @@ export class OfflineDataService {
    */
   async clearSyncQueue(userId: number): Promise<void> {
     await offlineDb.syncQueue.where('userId').equals(userId).delete();
+  }
+
+  // === SERVER DATA CACHING OPERATIONS ===
+
+  /**
+   * Cache server products to IndexedDB (without adding to sync queue)
+   */
+  async cacheServerProducts(products: Product[]): Promise<void> {
+    for (const product of products) {
+      await offlineDb.products.put(product);
+    }
+  }
+
+  /**
+   * Cache server consumptions to IndexedDB (without adding to sync queue)
+   */
+  async cacheServerConsumptions(consumptions: Consumption[]): Promise<void> {
+    for (const consumption of consumptions) {
+      await offlineDb.consumptions.put(consumption);
+    }
+  }
+
+  /**
+   * Cache server nutrition goals to IndexedDB (without adding to sync queue)
+   */
+  async cacheServerNutritionGoals(goals: NutritionGoals): Promise<void> {
+    await offlineDb.nutritionGoals.put(goals);
+  }
+
+  /**
+   * Get offline changes (items with pending sync operations)
+   */
+  async getOfflineChanges(
+    tableName: string,
+    userId: number,
+  ): Promise<
+    Array<{ id: number; _deleted?: boolean; _modified?: boolean; [key: string]: unknown }>
+  > {
+    const syncItems = await this.getSyncQueueItems(userId);
+    const tableChanges = syncItems.filter((item) => item.tableName === tableName);
+
+    const changes: Array<{
+      id: number;
+      _deleted?: boolean;
+      _modified?: boolean;
+      [key: string]: unknown;
+    }> = [];
+    for (const syncItem of tableChanges) {
+      if (syncItem.operation === 'delete') {
+        // For deletions, we need to track the ID to exclude from results
+        changes.push({ id: syncItem.recordId, _deleted: true });
+      } else if (syncItem.data) {
+        // For create/update, use the data from sync queue
+        changes.push({ ...(syncItem.data as Record<string, unknown>), _modified: true });
+      }
+    }
+
+    return changes;
+  }
+
+  /**
+   * Get products with offline changes merged
+   */
+  async getProductsWithOfflineChanges(userId: number): Promise<Product[]> {
+    const serverProducts = await this.getProducts(userId);
+    const offlineChanges = await this.getOfflineChanges('products', userId);
+
+    // Create a map of offline changes
+    const changesMap = new Map();
+    const deletedIds = new Set();
+
+    for (const change of offlineChanges) {
+      if (change._deleted) {
+        deletedIds.add(change.id);
+      } else {
+        changesMap.set(change.id, change);
+      }
+    }
+
+    // Merge server data with offline changes
+    const mergedProducts = serverProducts
+      .filter((product) => !deletedIds.has(product.id)) // Remove deleted items
+      .map((product) => changesMap.get(product.id) || product); // Apply offline changes
+
+    // Add new products from offline changes
+    for (const change of offlineChanges) {
+      if (!change._deleted && !serverProducts.find((p) => p.id === change.id)) {
+        mergedProducts.push(change);
+      }
+    }
+
+    return mergedProducts;
+  }
+
+  /**
+   * Get consumptions with offline changes merged
+   */
+  async getConsumptionsWithOfflineChanges(
+    userId: number,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Consumption[]> {
+    const serverConsumptions = await this.getConsumptions(userId, startDate, endDate);
+    const offlineChanges = await this.getOfflineChanges('consumptions', userId);
+
+    // Create a map of offline changes
+    const changesMap = new Map();
+    const deletedIds = new Set();
+
+    for (const change of offlineChanges) {
+      if (change._deleted) {
+        deletedIds.add(change.id);
+      } else {
+        changesMap.set(change.id, change);
+      }
+    }
+
+    // Merge server data with offline changes
+    const mergedConsumptions = serverConsumptions
+      .filter((consumption) => !deletedIds.has(consumption.id)) // Remove deleted items
+      .map((consumption) => changesMap.get(consumption.id) || consumption); // Apply offline changes
+
+    // Add new consumptions from offline changes
+    for (const change of offlineChanges) {
+      if (!change._deleted && !serverConsumptions.find((c) => c.id === change.id)) {
+        mergedConsumptions.push(change);
+      }
+    }
+
+    return mergedConsumptions;
+  }
+
+  /**
+   * Get nutrition goals with offline changes merged
+   */
+  async getNutritionGoalsWithOfflineChanges(userId: number): Promise<NutritionGoals | undefined> {
+    const serverGoals = await this.getNutritionGoals(userId);
+    const offlineChanges = await this.getOfflineChanges('nutritionGoals', userId);
+
+    if (offlineChanges.length > 0) {
+      // Return the most recent offline change
+      return offlineChanges[offlineChanges.length - 1];
+    }
+
+    return serverGoals;
   }
 }
 

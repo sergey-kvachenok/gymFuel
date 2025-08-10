@@ -1,5 +1,4 @@
-import { authOptions } from '@/lib/auth';
-import { getServerSession } from 'next-auth';
+import { getCurrentSession } from '../../lib/auth-utils';
 import { DashboardClient } from '../../components/DashboardClient';
 
 export default async function RootLayout({
@@ -7,8 +6,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-
+  const session = await getCurrentSession();
   const userName = session?.user?.name || session?.user?.email || '';
 
   return (
