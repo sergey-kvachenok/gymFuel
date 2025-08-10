@@ -1,3 +1,9 @@
+---
+description: Plan a new product and install Agent OS in its codebase
+globs: **/*
+alwaysApply: true
+---
+
 # Plan Product
 
 Plan a new product and install Agent OS in its codebase.

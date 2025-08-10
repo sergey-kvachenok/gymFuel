@@ -4,6 +4,30 @@
 
 Global code style rules for Agent OS projects.
 
+## Implementation Workflow
+
+### Planning and Discussion Phase
+
+- **NEVER start writing code during planning or documentation creation**
+- Always discuss all details, requirements, and implementation approach first
+- Ask clarifying questions to understand the full scope and requirements
+- Present the proposed solution and get confirmation before proceeding
+- **Review `@lessons.md`** to check for relevant lessons before planning similar tasks
+
+### Implementation Confirmation
+
+- After planning and discussion, ask: **"Should I implement the discussed functionality?"**
+- Only proceed with code implementation after receiving a positive confirmation
+- If the answer is negative or unclear, continue discussing until requirements are clear
+
+### Code Writing Guidelines
+
+- Only write code after explicit confirmation to implement
+- Follow all style guidelines below when implementing
+- Break down complex implementations into smaller, manageable tasks
+- **Check `@lessons.md` file** before starting any task to avoid repeating previous mistakes
+- **Refer to `@remember-lesson.md`** for guidance on learning from feedback and avoiding repeated errors
+
 <conditional-block context-check="general-formatting">
 IF this General Formatting section already read in current context:
   SKIP: Re-reading this section
