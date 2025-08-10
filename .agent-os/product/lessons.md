@@ -45,6 +45,15 @@ This file stores lessons and corrections learned from user feedback to avoid rep
 - **Action**: [What to do differently next time]
 - **Date**: [Date when learned]
 
+## Documentation Lessons
+
+### Spec and Task Documentation
+
+- **Lesson**: Always document implementation changes and decisions in a "Changes" section within spec and task files
+- **Context**: During PWA implementation, we made improvements (service worker hook refactoring, dependency adjustments) that weren't in the original spec but improved code quality
+- **Action**: Add a "Changes" section to both spec.md and tasks.md files to track implementation decisions, modifications, and additional work done beyond original requirements. This maintains visibility of both original planning and actual implementation decisions.
+- **Date**: 2025-08-10
+
 ---
 
 ## How to Use This File

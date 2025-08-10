@@ -38,3 +38,23 @@ When the user's network connection is lost, a persistent banner should appear at
 1.  The application is installable as a PWA on supported devices.
 2.  A persistent banner is displayed to the user when they are offline.
 3.  A basic service worker is registered and active.
+
+## Changes
+
+### Implementation Decisions Made During Development
+
+#### Service Worker Refactoring (2025-08-10)
+
+- **Decision**: Created a custom `useServiceWorker` hook instead of placing service worker logic directly in `providers.tsx`
+- **Rationale**: Improved code organization, readability, and separation of concerns
+- **Implementation**:
+  - Created `src/hooks/use-service-worker.ts` with encapsulated service worker registration logic
+  - Refactored `src/app/providers.tsx` to use the custom hook
+  - Maintained all original functionality while improving code structure
+- **Benefits**: Better testability, reusability, and cleaner component code
+
+#### Dependencies Adjustment (2025-08-10)
+
+- **Decision**: Removed `@types/dexie` dependency as dexie includes built-in TypeScript definitions
+- **Implementation**: Only added `dexie` to dependencies, removed separate type package
+- **Result**: Cleaner dependency management and successful installation
