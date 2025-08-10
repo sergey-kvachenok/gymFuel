@@ -6,9 +6,9 @@
   - [x] 1.1 Add the `updatedAt` field to the `Product`, `Consumption`, and `NutritionGoals` models in `prisma/schema.prisma`.
   - [x] 1.2 Generate and run a new database migration.
 
-- [ ] 2. **Setup Dexie.js and Sync Queue**
-  - [ ] 2.1 Define the Dexie.js database schema, including tables for products, consumption, goals, and a `sync_queue`.
-  - [ ] 2.2 Create a data abstraction layer that directs operations to IndexedDB.
+- [x] 2. **Setup Dexie.js and Sync Queue**
+  - [x] 2.1 Define the Dexie.js database schema, including tables for products, consumption, goals, and a `sync_queue`.
+  - [x] 2.2 Create a data abstraction layer that directs operations to IndexedDB.
 
 - [ ] 3. **Implement Offline CRUD and Sync Logic**
   - [ ] 3.1 Modify all data mutation hooks (`use-product-manipulation`, etc.) to write to IndexedDB and add an entry to the `sync_queue`.
@@ -33,3 +33,12 @@
 - **Modified**: Add the `updatedAt` field to the models
 - **Reason**: Consistency with existing `NutritionGoals.updatedAt` field already in the schema
 - **Impact**: All models now use consistent `updatedAt` naming convention
+
+#### Task 2 Type Reuse (2025-08-10)
+
+- **Decision**: Reuse existing types from `src/types/api.ts` instead of creating duplicate `OfflineProduct`, `OfflineConsumption`, `OfflineNutritionGoals` interfaces
+- **Reason**: Ensures type consistency between server DB and IndexedDB, following DRY principle
+- **Implementation**:
+  - Updated `src/types/api.ts` to include `updatedAt` fields and missing `NutritionGoals` interface
+  - Refactored `offline-db.ts` and `offline-data-service.ts` to use existing types
+- **Impact**: Better type safety and consistency across the application

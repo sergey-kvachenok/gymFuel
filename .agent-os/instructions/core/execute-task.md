@@ -59,13 +59,16 @@ FIND sections in technical-spec.md related to: - Current task functionality - Im
 
 </step>
 
-<step number="3" subagent="context-fetcher" name="best_practices_review">
+<step number="3" subagent="context-fetcher" name="lessons_and_best_practices_review">
 
-### Step 3: Best Practices Review
+### Step 3: Lessons and Best Practices Review
 
-Use the context-fetcher subagent to retrieve relevant sections from @~/.agent-os/standards/best-practices.md that apply to the current task's technology stack and feature type.
+Use the context-fetcher subagent to retrieve relevant lessons from @~/.agent-os/product/lessons.md and sections from @~/.agent-os/standards/best-practices.md that apply to the current task's technology stack and feature type.
 
 <selective_reading>
+<search_lessons>
+FIND lessons relevant to: - Current task type - Technology stack being used - Implementation patterns - Previously encountered issues
+</search_lessons>
 <search_best_practices>
 FIND sections relevant to: - Task's technology stack - Feature type being implemented - Testing approaches needed - Code organization patterns
 </search_best_practices>
@@ -73,13 +76,18 @@ FIND sections relevant to: - Task's technology stack - Feature type being implem
 
 <instructions>
   ACTION: Use context-fetcher subagent
+  REQUEST: "Find relevant lessons from lessons.md for:
+            - Task type: [CURRENT_TASK_TYPE]
+            - Technology stack: [CURRENT_TECH]
+            - Implementation patterns being used
+            - Common mistakes to avoid"
   REQUEST: "Find best practices sections relevant to:
             - Task's technology stack: [CURRENT_TECH]
             - Feature type: [CURRENT_FEATURE_TYPE]
             - Testing approaches needed
             - Code organization patterns"
-  PROCESS: Returned best practices
-  APPLY: Relevant patterns to implementation
+  PROCESS: Returned lessons and best practices
+  APPLY: Relevant patterns and avoid documented mistakes
 </instructions>
 
 </step>

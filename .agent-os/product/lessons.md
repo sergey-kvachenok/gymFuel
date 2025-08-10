@@ -87,6 +87,18 @@ This file stores lessons and corrections learned from user feedback to avoid rep
   4. Prefer flat DOM structure over deeply nested elements for better performance and maintainability
 - **Date**: 2025-08-10
 
+### Type/Interface Reuse
+
+- **Lesson**: Always check for existing types/interfaces before creating new ones - reuse and extend existing types instead of duplicating them
+- **Context**: Initially created duplicate interfaces `OfflineProduct`, `OfflineConsumption`, `OfflineNutritionGoals` when identical types already existed in `src/types/api.ts`
+- **Action**: Before creating new interfaces or types:
+  1. Search codebase for existing similar interfaces (grep for interface names)
+  2. Check if existing types can be reused or extended
+  3. If types need slight modifications, extend existing ones rather than duplicating
+  4. Ensure consistency between related data structures (server DB vs IndexedDB)
+  5. Follow DRY principle - single source of truth for data types
+- **Date**: 2025-08-10
+
 ---
 
 ## How to Use This File

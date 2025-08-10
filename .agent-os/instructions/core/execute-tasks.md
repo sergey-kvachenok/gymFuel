@@ -116,9 +116,44 @@ Use the git-workflow subagent to manage git branches to ensure proper isolation 
 
 </step>
 
-<step number="5" name="task_execution_loop">
+<step number="5" name="pre_execution_review">
 
-### Step 5: Task Execution Loop
+### Step 5: Pre-Execution Review
+
+Review lessons learned and code style guidelines before beginning task execution to avoid repeating known mistakes and ensure compliance with established patterns.
+
+<review_checklist>
+<lessons_check>
+IF lessons.md NOT already in context:
+READ @~/.agent-os/product/lessons.md
+REVIEW: Lessons relevant to current task type and technology stack
+APPLY: Documented best practices and avoid known mistakes
+ELSE:
+SKIP loading (use existing context)
+</lessons_check>
+
+<code_style_check>
+IF code-style.md NOT already in context:
+READ @~/.agent-os/standards/code-style.md
+FOLLOW: Conditional blocks for technologies being used in tasks
+APPLY: Relevant style guides for implementation
+ELSE:
+SKIP loading (use existing context)
+</code_style_check>
+</review_checklist>
+
+<instructions>
+  ACTION: Review relevant lessons and style guides
+  FOCUS: Current task types and technology stack
+  PREPARE: Implementation approach following established patterns
+  VERIFY: Understanding of common pitfalls to avoid
+</instructions>
+
+</step>
+
+<step number="6" name="task_execution_loop">
+
+### Step 6: Task Execution Loop
 
 Execute all assigned parent tasks and their subtasks using @~/.agent-os/instructions/core/execute-task.md instructions, continuing until all tasks are complete.
 
@@ -159,9 +194,9 @@ CONTINUE with next task
 
 </step>
 
-<step number="6" subagent="test-runner" name="test_suite_verification">
+<step number="7" subagent="test-runner" name="test_suite_verification">
 
-### Step 6: Run All Tests
+### Step 7: Run All Tests
 
 Use the test-runner subagent to run the entire test suite to ensure no regressions and fix any failures until all tests pass.
 
@@ -186,9 +221,9 @@ Use the test-runner subagent to run the entire test suite to ensure no regressio
 
 </step>
 
-<step number="7" subagent="git-workflow" name="git_workflow">
+<step number="8" subagent="git-workflow" name="git_workflow">
 
-### Step 7: Git Workflow
+### Step 8: Git Workflow
 
 Use the git-workflow subagent to create git commit, push to GitHub, and create pull request for the implemented features.
 
@@ -213,6 +248,7 @@ Use the git-workflow subagent to create git commit, push to GitHub, and create p
 <remote>origin</remote>
 </push>
 <pull_request>
+
 <title>descriptive PR title</title>
 <description>functionality recap</description>
 </pull_request>
@@ -220,9 +256,9 @@ Use the git-workflow subagent to create git commit, push to GitHub, and create p
 
 </step>
 
-<step number="8" name="roadmap_progress_check">
+<step number="9" name="roadmap_progress_check">
 
-### Step 8: Roadmap Progress Check (Conditional)
+### Step 9: Roadmap Progress Check (Conditional)
 
 Check @.agent-os/product/roadmap.md (if not in context) and update roadmap progress only if the executed tasks may have completed a roadmap item and the spec completes that item.
 
@@ -262,9 +298,9 @@ SKIP loading (use existing context)
 
 </step>
 
-<step number="9" name="completion_notification">
+<step number="10" name="completion_notification">
 
-### Step 9: Task Completion Notification
+### Step 10: Task Completion Notification
 
 Play a system sound to alert the user that tasks are complete.
 
@@ -279,9 +315,9 @@ afplay /System/Library/Sounds/Glass.aiff
 
 </step>
 
-<step number="10" name="completion_summary">
+<step number="11" name="completion_summary">
 
-### Step 10: Completion Summary
+### Step 11: Completion Summary
 
 Create a structured summary message with emojis showing what was done, any issues, testing instructions, and PR link.
 

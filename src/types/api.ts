@@ -7,6 +7,7 @@ export interface Product {
   carbs: number;
   userId: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export type CreateProductInput = Pick<Product, 'name' | 'calories' | 'protein' | 'fat' | 'carbs'>;
@@ -21,6 +22,8 @@ export interface Consumption {
   id: number;
   amount: number;
   createdAt: Date;
+  updatedAt: Date;
+  date: Date;
   productId: number;
   userId: number;
   product: Product;
@@ -35,6 +38,18 @@ export interface UpdateConsumptionInput {
 
 export interface DeleteConsumptionInput {
   id: number;
+}
+
+export interface NutritionGoals {
+  id: number;
+  userId: number;
+  dailyCalories: number;
+  dailyProtein: number;
+  dailyFat: number;
+  dailyCarbs: number;
+  goalType: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface MutationResult<T> {
