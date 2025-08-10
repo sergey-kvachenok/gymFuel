@@ -32,6 +32,9 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body className="min-h-screen flex flex-col items-center  bg-gradient-to-br from-blue-50 via-white to-pink-50">
         <Providers>
           <EnvironmentBanner />

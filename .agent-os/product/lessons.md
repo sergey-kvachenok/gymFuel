@@ -31,10 +31,10 @@ This file stores lessons and corrections learned from user feedback to avoid rep
 
 ### User Interaction
 
-- **Lesson**: [Add specific lessons here]
-- **Context**: [When/why this lesson was learned]
-- **Action**: [What to do differently next time]
-- **Date**: [Date when learned]
+- **Lesson**: Always clarify user intent before taking action, especially when questions could be informational vs. implementation requests
+- **Context**: User asked "we still have no sw, right?" which was an informational question about current state, but I immediately started planning and implementing the service worker without being asked to do so
+- **Action**: When user asks status questions like "do we have X?" or "is Y implemented?", provide a clear answer about current state and wait for explicit implementation request before proceeding with any code changes
+- **Date**: 2025-08-10
 
 ## Technical Lessons
 

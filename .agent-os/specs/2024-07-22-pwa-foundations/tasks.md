@@ -2,11 +2,11 @@
 
 ## Tasks
 
-- [ ] 1. **Setup PWA Dependencies and Configuration**
-  - [ ] 1.1 Add `dexie` and `@types/dexie` to `package.json`.
-  - [ ] 1.2 Run `npm install` to install the new dependencies.
-  - [ ] 1.3 Create the `public/manifest.json` file with the required properties.
-  - [ ] 1.4 Add a link to the manifest in the `app/layout.tsx` file.
+- [x] 1. **Setup PWA Dependencies and Configuration**
+  - [x] 1.1 Add `dexie` to `package.json`.
+  - [x] 1.2 Run `npm install` to install the new dependencies.
+  - [x] 1.3 Create the `public/manifest.json` file with the required properties.
+  - [x] 1.4 Add a link to the manifest in the `app/layout.tsx` file.
 
 - [ ] 2. **Implement Service Worker**
   - [ ] 2.1 Create the `public/sw.js` file with basic event listeners.

@@ -1,0 +1,42 @@
+{
+  "name": "GymFuel - Nutrition Tracker",
+  "short_name": "GymFuel",
+  "description": "Track your nutrition goals and build muscle with custom food tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/next.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/vercel.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["health", "fitness", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Track Meal",
+      "short_name": "Track",
+      "description": "Quickly track a new meal",
+      "url": "/?action=track",
+      "icons": [
+        {
+          "src": "/next.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
