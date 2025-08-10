@@ -2,9 +2,9 @@
 
 ## Tasks
 
-- [ ] 1. **Update Database Schema**
-  - [ ] 1.1 Add the `lastUpdated` field to the `Product`, `Consumption`, and `UserNutritionGoal` models in `prisma/schema.prisma`.
-  - [ ] 1.2 Generate and run a new database migration.
+- [x] 1. **Update Database Schema**
+  - [x] 1.1 Add the `updatedAt` field to the `Product`, `Consumption`, and `NutritionGoals` models in `prisma/schema.prisma`.
+  - [x] 1.2 Generate and run a new database migration.
 
 - [ ] 2. **Setup Dexie.js and Sync Queue**
   - [ ] 2.1 Define the Dexie.js database schema, including tables for products, consumption, goals, and a `sync_queue`.
@@ -22,3 +22,14 @@
 - [ ] 5. **Update UI**
   - [ ] 5.1 Update the `OfflineBanner` to display the number of items in the `sync_queue`.
   - [ ] 5.2 Verify that the entire offline workflow is functioning correctly.
+
+## Changes
+
+### Task Modifications During Implementation
+
+#### Task 1.1 Field Naming (2025-08-10)
+
+- **Original**: Add the `lastUpdated` field to the models
+- **Modified**: Add the `updatedAt` field to the models
+- **Reason**: Consistency with existing `NutritionGoals.updatedAt` field already in the schema
+- **Impact**: All models now use consistent `updatedAt` naming convention

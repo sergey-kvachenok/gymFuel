@@ -39,5 +39,16 @@ As a user, I want to see how many of my offline changes are waiting to be synced
 
 1.  Users can fully manage their products, consumption, and goals while offline.
 2.  All offline changes are automatically synced to the server when the user comes back online.
-3.  Data conflicts are resolved based on the most recent `lastUpdated` timestamp.
+3.  Data conflicts are resolved based on the most recent `updatedAt` timestamp.
 4.  The offline banner shows the number of items pending synchronization.
+
+## Changes
+
+### Implementation Decisions Made During Development
+
+#### Field Naming Consistency (2025-08-10)
+
+- **Decision**: Changed field name from `lastUpdated` to `updatedAt` in database schema
+- **Rationale**: The existing `NutritionGoals` model already used `updatedAt` field, so changed Product and Consumption models to use the same naming for consistency
+- **Implementation**: All three models now consistently use `updatedAt` timestamp field
+- **Impact**: Better code consistency and maintainability across the data model
