@@ -4,6 +4,8 @@ import { trpc } from '../../../../lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { useOnlineStatus } from '../../../../hooks/use-online-status';
+import { offlineDataService } from '../../../../lib/offline-data-service';
 
 const nutritionFields = [
   {
@@ -37,24 +39,29 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
     carbs: '',
   });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const utils = trpc.useUtils();
+  const isOnline = useOnlineStatus();
 
   const createProduct = trpc.product.create.useMutation({
     onSuccess: () => {
       utils.product.getAll.invalidate();
       setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
       setError('');
+      setIsSubmitting(false);
       onSuccess?.();
     },
     onError: (error) => {
       setError(error.message);
+      setIsSubmitting(false);
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     const caloriesNum = parseFloat(formData.calories);
     const proteinNum = parseFloat(formData.protein);
@@ -69,16 +76,37 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
       isNaN(carbsNum)
     ) {
       setError('Please fill all fields with valid numbers');
+      setIsSubmitting(false);
       return;
     }
 
-    createProduct.mutate({
+    const productData = {
       name: formData.name,
       calories: caloriesNum,
       protein: proteinNum,
       fat: fatNum,
       carbs: carbsNum,
-    });
+    };
+
+    if (isOnline) {
+      createProduct.mutate(productData);
+    } else {
+      try {
+        // TODO: Get actual userId from auth context
+        await offlineDataService.createProduct({ ...productData, userId: 1 });
+
+        utils.product.getAll.invalidate();
+        setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
+        setError('');
+        setIsSubmitting(false);
+        onSuccess?.();
+      } catch (error) {
+        setError(
+          `Error creating product offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+        setIsSubmitting(false);
+      }
+    }
   };
 
   const handleFieldChange = (key: string, value: string) => {
@@ -125,8 +153,12 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
             ))}
           </div>
 
-          <Button type="submit" disabled={createProduct.isPending} className="w-full">
-            {createProduct.isPending ? 'Adding...' : 'Add Product'}
+          <Button
+            type="submit"
+            disabled={isSubmitting || createProduct.isPending}
+            className="w-full"
+          >
+            {isSubmitting || createProduct.isPending ? 'Adding...' : 'Add Product'}
           </Button>
         </form>
       </CardContent>

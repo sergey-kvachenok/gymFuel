@@ -6,6 +6,8 @@ import { RecommendationForm } from './components/RecommendationForm';
 import { GoalType, IFormData } from './types';
 import { CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useOnlineStatus } from '../../../hooks/use-online-status';
+import { offlineDataService } from '../../../lib/offline-data-service';
 
 const nutritionFields = [
   {
@@ -48,6 +50,7 @@ export default function GoalsForm() {
   });
 
   const [showRecommendations, setShowRecommendations] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: currentGoals, isLoading } = trpc.goals.get.useQuery();
   const { data: recommendations, isLoading: isRecommendationsLoading } =
@@ -57,13 +60,16 @@ export default function GoalsForm() {
     );
 
   const utils = trpc.useUtils();
+  const isOnline = useOnlineStatus();
 
   const saveGoalsMutation = trpc.goals.upsert.useMutation({
     onSuccess: () => {
       utils.goals.get.invalidate();
+      setIsSubmitting(false);
       alert('Goals saved successfully!');
     },
     onError: (error) => {
+      setIsSubmitting(false);
       alert(`Error saving goals: ${error.message}`);
     },
   });
@@ -90,9 +96,31 @@ export default function GoalsForm() {
     }
   }, [currentGoals]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveGoalsMutation.mutate(formData);
+    setIsSubmitting(true);
+
+    if (isOnline) {
+      saveGoalsMutation.mutate(formData);
+    } else {
+      try {
+        // TODO: Get actual userId from auth context
+        await offlineDataService.upsertNutritionGoals({
+          ...formData,
+          userId: 1,
+          id: currentGoals?.id || 0,
+        });
+
+        utils.goals.get.invalidate();
+        setIsSubmitting(false);
+        alert('Goals saved successfully!');
+      } catch (error) {
+        setIsSubmitting(false);
+        alert(
+          `Error saving goals offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
   };
 
   const handleUseRecommendations = () => {
@@ -157,10 +185,10 @@ export default function GoalsForm() {
                 <div className="flex gap-2">
                   <Button
                     type="submit"
-                    disabled={saveGoalsMutation.isPending}
+                    disabled={isSubmitting || saveGoalsMutation.isPending}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    {saveGoalsMutation.isPending ? 'Saving...' : 'Save Goals'}
+                    {isSubmitting || saveGoalsMutation.isPending ? 'Saving...' : 'Save Goals'}
                   </Button>
 
                   {currentGoals && (

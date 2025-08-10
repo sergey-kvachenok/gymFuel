@@ -11,7 +11,12 @@
   - [x] 2.2 Create a data abstraction layer that directs operations to IndexedDB.
 
 - [x] 3. **Implement Offline CRUD and Sync Logic**
-  - [x] 3.1 Modify all data mutation hooks (`use-product-manipulation`, etc.) to write to IndexedDB and add an entry to the `sync_queue`.
+  - [x] 3.1 Modify all data mutation hooks to write to IndexedDB and add an entry to the `sync_queue`:
+    - [x] `use-product-manipulation` (update/delete products)
+    - [x] `use-meal-manipulation` (update/delete consumptions)
+    - [x] Product creation in `ProductForm.tsx` (create products)
+    - [x] Consumption creation in `ConsumptionManager.tsx` (create meals/consumptions)
+    - [x] Nutrition goals in `GoalsForm.tsx` (create/update goals)
   - [x] 3.2 Create a `SyncService` that processes the `sync_queue` when the app is online.
   - [x] 3.3 Implement the `sync.batchSync` tRPC endpoint on the server to handle incoming sync operations.
 

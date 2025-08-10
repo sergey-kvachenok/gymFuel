@@ -7,6 +7,8 @@ import ProductForm from '../ProductForm';
 import { trpc } from '@/lib/trpc-client';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
 import { useProductSearch } from '@/hooks/use-product-search';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { offlineDataService } from '@/lib/offline-data-service';
 
 const enum PopupTypes {
   Consumption = 'consumption',
@@ -31,12 +33,14 @@ const ConsumptionManager: FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { allProducts: products } = useProductSearch({
     orderBy: 'name',
     orderDirection: 'asc',
   });
   const utils = trpc.useUtils();
+  const isOnline = useOnlineStatus();
 
   const createConsumption = trpc.consumption.create.useMutation({
     onSuccess: () => {
@@ -46,31 +50,61 @@ const ConsumptionManager: FC = () => {
       setSelectedProduct(null);
       setAmount(undefined);
       setError('');
+      setIsSubmitting(false);
       setOpenModal(null);
     },
     onError: (error) => {
       setError(error.message);
+      setIsSubmitting(false);
     },
   });
 
   const submitConsumption = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setError('');
+      setIsSubmitting(true);
 
       const productId = selectedProduct?.id;
 
       if (!productId || !amount || amount <= 0) {
         setError('Please select a product and enter a valid amount');
+        setIsSubmitting(false);
         return;
       }
 
-      createConsumption.mutate({
+      const consumptionData = {
         productId,
         amount,
-      });
+      };
+
+      if (isOnline) {
+        createConsumption.mutate(consumptionData);
+      } else {
+        try {
+          // TODO: Get actual userId from auth context
+          await offlineDataService.createConsumption({
+            ...consumptionData,
+            userId: 1,
+            date: new Date(),
+          });
+
+          utils.consumption.getDailyStats.invalidate();
+          utils.consumption.getByDate.invalidate();
+          setSelectedProduct(null);
+          setAmount(undefined);
+          setError('');
+          setIsSubmitting(false);
+          setOpenModal(null);
+        } catch (error) {
+          setError(
+            `Error creating consumption offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+          setIsSubmitting(false);
+        }
+      }
     },
-    [selectedProduct, amount, createConsumption],
+    [selectedProduct, amount, createConsumption, isOnline, utils],
   );
 
   const onAmountChange = useCallback(
@@ -111,7 +145,7 @@ const ConsumptionManager: FC = () => {
                 setSelectedProduct={setSelectedProduct}
                 amount={amount}
                 error={error}
-                isPending={createConsumption.isPending}
+                isPending={isSubmitting || createConsumption.isPending}
                 isProductsPresented={!!products && products.length > 0}
                 onAmountChange={onAmountChange}
               />
