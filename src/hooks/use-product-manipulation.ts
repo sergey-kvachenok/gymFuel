@@ -1,9 +1,12 @@
 import { useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { UpdateProductInput, DeleteProductInput } from '../types/api';
+import { useOnlineStatus } from './use-online-status';
+import { offlineDataService } from '../lib/offline-data-service';
 
 export const useProductManipulation = () => {
   const utils = trpc.useUtils();
+  const isOnline = useOnlineStatus();
 
   const updateMutation = trpc.product.update.useMutation({
     onSuccess: () => {
@@ -24,17 +27,41 @@ export const useProductManipulation = () => {
   });
 
   const updateProduct = useCallback(
-    (data: UpdateProductInput) => {
-      updateMutation.mutate(data);
+    async (data: UpdateProductInput) => {
+      if (isOnline) {
+        updateMutation.mutate(data);
+      } else {
+        try {
+          await offlineDataService.updateProduct(data.id, data);
+          // Invalidate queries to refresh UI from IndexedDB
+          utils.product.getAll.invalidate();
+        } catch (error) {
+          alert(
+            `Error updating product offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
     },
-    [updateMutation],
+    [updateMutation, isOnline, utils.product.getAll],
   );
 
   const deleteProduct = useCallback(
-    (data: DeleteProductInput) => {
-      deleteMutation.mutate(data);
+    async (data: DeleteProductInput) => {
+      if (isOnline) {
+        deleteMutation.mutate(data);
+      } else {
+        try {
+          await offlineDataService.deleteProduct(data.id);
+          // Invalidate queries to refresh UI from IndexedDB
+          utils.product.getAll.invalidate();
+        } catch (error) {
+          alert(
+            `Error deleting product offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
     },
-    [deleteMutation],
+    [deleteMutation, isOnline, utils.product.getAll],
   );
 
   return {

@@ -1,9 +1,12 @@
 import { useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { UpdateConsumptionInput, DeleteConsumptionInput } from '../types/api';
+import { useOnlineStatus } from './use-online-status';
+import { offlineDataService } from '../lib/offline-data-service';
 
 export const useMealManipulation = () => {
   const utils = trpc.useUtils();
+  const isOnline = useOnlineStatus();
 
   const updateMutation = trpc.consumption.update.useMutation({
     onSuccess: () => {
@@ -24,17 +27,41 @@ export const useMealManipulation = () => {
   });
 
   const updateMeal = useCallback(
-    (data: { id: number; amount: number }) => {
-      updateMutation.mutate(data as UpdateConsumptionInput);
+    async (data: { id: number; amount: number }) => {
+      if (isOnline) {
+        updateMutation.mutate(data as UpdateConsumptionInput);
+      } else {
+        try {
+          await offlineDataService.updateConsumption(data.id, { amount: data.amount });
+          // Invalidate queries to refresh UI from IndexedDB
+          utils.consumption.invalidate();
+        } catch (error) {
+          alert(
+            `Error updating meal offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
     },
-    [updateMutation],
+    [updateMutation, isOnline, utils.consumption],
   );
 
   const deleteMeal = useCallback(
-    (data: { id: number }) => {
-      deleteMutation.mutate(data as DeleteConsumptionInput);
+    async (data: { id: number }) => {
+      if (isOnline) {
+        deleteMutation.mutate(data as DeleteConsumptionInput);
+      } else {
+        try {
+          await offlineDataService.deleteConsumption(data.id);
+          // Invalidate queries to refresh UI from IndexedDB
+          utils.consumption.invalidate();
+        } catch (error) {
+          alert(
+            `Error deleting meal offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+        }
+      }
     },
-    [deleteMutation],
+    [deleteMutation, isOnline, utils.consumption],
   );
 
   return {

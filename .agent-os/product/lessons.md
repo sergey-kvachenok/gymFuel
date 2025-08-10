@@ -99,6 +99,44 @@ This file stores lessons and corrections learned from user feedback to avoid rep
   5. Follow DRY principle - single source of truth for data types
 - **Date**: 2025-08-10
 
+### Avoid "any" Type - Use Proper Type Definitions
+
+- **Lesson**: Never use `any` type to work around unknown return types - always create proper interfaces/types
+- **Context**: During sync service implementation, initially used `(result as any)` to access properties on unknown tRPC response instead of defining proper types
+- **Action**: When working with unknown types from external libraries/APIs:
+  1. Define proper interfaces that match the expected response structure
+  2. Use type assertions with specific types (e.g., `as BatchSyncResult`) instead of `any`
+  3. Check code style guides - they explicitly forbid `any` type usage
+  4. Create reusable type definitions for API responses/external data structures
+  5. Use `unknown` as return type initially, then narrow with proper type assertions
+- **Date**: 2025-08-10
+
+### Question Unnecessary Abstraction Layers
+
+- **Lesson**: Critically evaluate if wrapper functions/classes add value or just increase complexity
+- **Context**: Created `use-offline-mutations` hook that was essentially just wrapping `OfflineDataService` without adding significant value, creating unnecessary indirection
+- **Action**: Before creating abstraction layers:
+  1. Ask "Does this abstraction simplify the code or add unnecessary complexity?"
+  2. Check if the wrapper provides clear benefits (error handling, state management, etc.)
+  3. Consider if direct usage of underlying service would be cleaner
+  4. Remove abstraction layers that don't provide clear value
+  5. Focus on single responsibility principle - each layer should have a distinct purpose
+- **Date**: 2025-08-10
+
+### Work WITH TypeScript, Not Against It - Use Proper Schema Design
+
+- **Lesson**: When dealing with dynamic data, define proper schemas instead of fighting TypeScript with `any`/`unknown`
+- **Context**: Initially tried to handle sync operations using `unknown` data types and `any` casts, creating type errors and fighting against TypeScript's type system. User correctly pointed out this was the wrong approach.
+- **Action**: When handling dynamic/variable data structures:
+  1. Define explicit Zod schemas for each data variant (ProductDataSchema, ConsumptionDataSchema, etc.)
+  2. Use union types and proper type guards instead of `any`/`unknown`
+  3. Let TypeScript infer types from Zod schemas (`z.infer<typeof Schema>`)
+  4. Validate data at runtime with Zod, get compile-time safety with TypeScript
+  5. If you're fighting TypeScript extensively, step back and reconsider the approach
+  6. TypeScript errors usually indicate design issues, not TypeScript limitations
+- **Benefits**: Type safety, runtime validation, better maintainability, cleaner code
+- **Date**: 2025-08-10
+
 ---
 
 ## How to Use This File
@@ -107,3 +145,32 @@ This file stores lessons and corrections learned from user feedback to avoid rep
 2. **Reference this file** before starting similar tasks to avoid repeating mistakes
 3. **Update existing lessons** if additional context or corrections are provided
 4. **Review regularly** to ensure lessons are being applied consistently
+
+## Pre-Implementation Checklist
+
+**MANDATORY: Complete this checklist BEFORE writing ANY code**
+
+### Code Style Verification ✓
+
+- [ ] **TypeScript**: Use arrow functions (`const func = () => {}`) NOT function declarations (`function func() {}`)
+- [ ] **TypeScript**: Define proper types/interfaces, NEVER use `any` - create Zod schemas when needed
+- [ ] **TypeScript**: Use proper type inference (`z.infer<typeof Schema>`) instead of `unknown`
+- [ ] **React**: Use `FC` type annotation for components
+- [ ] **Imports**: Group by type (3rd party, project, relative) with blank lines between groups
+- [ ] **Naming**: camelCase for variables/functions, PascalCase for classes/interfaces
+- [ ] **Functions**: End arrow function blocks with semicolon (`;`)
+
+### Architecture & Design ✓
+
+- [ ] **Types**: Search for existing types/interfaces before creating new ones - reuse when possible
+- [ ] **Abstraction**: Question if wrapper layers add value or just complexity
+- [ ] **TypeScript**: If fighting TypeScript extensively, step back and reconsider approach
+- [ ] **Documentation**: Add "Changes" section to spec/task files for implementation decisions
+
+### File Management ✓
+
+- [ ] **Corrections**: NEVER create duplicate files (-corrected, -new) - modify originals directly
+- [ ] **Structure**: Avoid unnecessary wrapper elements - keep DOM flat and efficient
+- [ ] **Cleanup**: Remove unused imports and temporary files
+
+**🔥 If you violate these guidelines, the user WILL call you out. Follow them religiously!**

@@ -29,24 +29,10 @@ export class OfflineDataService {
   }
 
   /**
-   * Get sync queue count
-   */
-  async getSyncQueueCount(): Promise<number> {
-    return await offlineDb.syncQueue.count();
-  }
-
-  /**
    * Get all pending sync operations
    */
   async getPendingSyncOperations(): Promise<SyncQueueItem[]> {
     return await offlineDb.syncQueue.orderBy('timestamp').toArray();
-  }
-
-  /**
-   * Clear sync queue (after successful sync)
-   */
-  async clearSyncQueue(): Promise<void> {
-    await offlineDb.syncQueue.clear();
   }
 
   // === PRODUCT OPERATIONS ===
@@ -218,6 +204,32 @@ export class OfflineDataService {
    */
   async getNutritionGoals(userId: number): Promise<NutritionGoals | undefined> {
     return await offlineDb.nutritionGoals.where('userId').equals(userId).first();
+  }
+
+  // === SYNC QUEUE OPERATIONS ===
+
+  /**
+   * Get the current count of items in the sync queue for a user
+   */
+  async getSyncQueueCount(userId?: number): Promise<number> {
+    if (userId) {
+      return await offlineDb.syncQueue.where('userId').equals(userId).count();
+    }
+    return await offlineDb.syncQueue.count();
+  }
+
+  /**
+   * Get all sync queue items for a user
+   */
+  async getSyncQueueItems(userId: number): Promise<SyncQueueItem[]> {
+    return await offlineDb.syncQueue.where('userId').equals(userId).sortBy('timestamp');
+  }
+
+  /**
+   * Clear all sync queue items for a user
+   */
+  async clearSyncQueue(userId: number): Promise<void> {
+    await offlineDb.syncQueue.where('userId').equals(userId).delete();
   }
 }
 
