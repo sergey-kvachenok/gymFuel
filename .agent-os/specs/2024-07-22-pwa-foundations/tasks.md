@@ -13,11 +13,11 @@
   - [x] 2.2 Add service worker registration logic to `providers.tsx`.
   - [x] 2.3 Use a `useEffect` hook to ensure the registration logic only runs on the client side after mount.
 
-- [ ] 3. **Implement Offline Banner**
-  - [ ] 3.1 Create a reusable `useOnlineStatus` hook to track the browser's connectivity.
-  - [ ] 3.2 Create the `OfflineBanner` component that utilizes the `useOnlineStatus` hook.
-  - [ ] 3.3 Integrate the `OfflineBanner` into the main application layout.
-  - [ ] 3.4 Verify that the banner displays correctly based on the network status.
+- [x] 3. **Implement Offline Banner**
+  - [x] 3.1 Create a reusable `useOnlineStatus` hook to track the browser's connectivity.
+  - [x] 3.2 Create the `OfflineBanner` component that utilizes the `useOnlineStatus` hook.
+  - [x] 3.3 Integrate the `OfflineBanner` into the main application layout.
+  - [x] 3.4 Verify that the banner displays correctly based on network status.
 
 ## Changes
 

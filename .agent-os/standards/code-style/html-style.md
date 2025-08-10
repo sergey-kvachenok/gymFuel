@@ -12,6 +12,13 @@
 - Align attributes vertically
 - Keep the closing `>` on the same line as the last attribute
 
+## Clean Structure Principles
+
+- **Minimize wrapper elements**: Use single wrapper elements when possible instead of nested containers
+- **Combine related classes**: Apply related CSS classes to one element rather than creating extra divs
+- **Question each wrapper**: Each wrapper should serve a distinct purpose
+- **Prefer flat DOM**: Avoid deeply nested elements for better performance and maintainability
+
 ## Example HTML Structure
 
 ```html
@@ -29,5 +36,27 @@
       <a href="/about" class="btn-ghost"> About </a>
     </nav>
   </header>
+</div>
+```
+
+## Bad vs Good Examples
+
+**❌ Bad - Unnecessary nested wrapper:**
+
+```html
+<div class="w-full bg-red-600 text-white text-center py-2 px-4">
+  <div class="flex items-center justify-center gap-2">
+    <span>Content</span>
+  </div>
+</div>
+```
+
+**✅ Good - Single wrapper with combined classes:**
+
+```html
+<div
+  class="w-full bg-red-600 text-white text-center py-2 px-4 flex items-center justify-center gap-2"
+>
+  <span>Content</span>
 </div>
 ```
