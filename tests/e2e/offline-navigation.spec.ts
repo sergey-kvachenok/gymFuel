@@ -65,8 +65,9 @@ test.describe('Offline Navigation', () => {
       await expect(page).toHaveURL(`http://localhost:3000${pageInfo.path}`, { timeout: 30000 });
 
       // Check for hydration errors in console
-      const consoleMessages = await page.evaluate(() => {
-        return window.console.messages || [];
+      const consoleMessages: any[] = [];
+      page.on('console', (msg) => {
+        consoleMessages.push({ text: msg.text(), type: msg.type() });
       });
 
       const hasHydrationError = consoleMessages.some(
@@ -111,8 +112,9 @@ test.describe('Offline Navigation', () => {
       await page.waitForLoadState('networkidle', { timeout: 30000 });
 
       // Check for hydration errors in console
-      const consoleMessages = await page.evaluate(() => {
-        return window.console.messages || [];
+      const consoleMessages: any[] = [];
+      page.on('console', (msg) => {
+        consoleMessages.push({ text: msg.text(), type: msg.type() });
       });
 
       const hasHydrationError = consoleMessages.some(
@@ -154,8 +156,9 @@ test.describe('Offline Navigation', () => {
       await page.waitForLoadState('networkidle', { timeout: 30000 });
 
       // Check for hydration errors in console
-      const consoleMessages = await page.evaluate(() => {
-        return window.console.messages || [];
+      const consoleMessages: any[] = [];
+      page.on('console', (msg) => {
+        consoleMessages.push({ text: msg.text(), type: msg.type() });
       });
 
       const hasHydrationError = consoleMessages.some(

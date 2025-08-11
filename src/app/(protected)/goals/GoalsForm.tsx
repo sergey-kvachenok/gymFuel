@@ -40,7 +40,11 @@ const nutritionFields = [
   },
 ];
 
-export default function GoalsForm() {
+interface GoalsFormProps {
+  userId: number | null;
+}
+
+export default function GoalsForm({ userId }: GoalsFormProps) {
   const [formData, setFormData] = useState<IFormData>({
     dailyCalories: 0,
     dailyProtein: 0,
@@ -104,10 +108,15 @@ export default function GoalsForm() {
       saveGoalsMutation.mutate(formData);
     } else {
       try {
-        // TODO: Get actual userId from auth context
+        if (!userId) {
+          alert('User not authenticated');
+          setIsSubmitting(false);
+          return;
+        }
+
         await offlineDataService.upsertNutritionGoals({
           ...formData,
-          userId: 1,
+          userId,
           id: currentGoals?.id || 0,
         });
 
@@ -203,10 +212,8 @@ export default function GoalsForm() {
                   )}
                 </div>
 
-                <Link href="/">
-                  <Button variant="outline" size="sm">
-                    Back to Dashboard
-                  </Button>
+                <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  Back to Dashboard
                 </Link>
               </div>
             </form>

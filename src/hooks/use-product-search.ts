@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { useOnlineStatus } from './use-online-status';
 import { offlineDataService } from '../lib/offline-data-service';
+import { Product } from '../types/api';
 
 interface ProductSearchOptions {
   query?: string;
@@ -19,7 +20,7 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
   } = options;
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [offlineProducts, setOfflineProducts] = useState<any[]>([]);
+  const [offlineProducts, setOfflineProducts] = useState<Product[]>([]);
   const [isOfflineLoading, setIsOfflineLoading] = useState(false);
   const [offlineError, setOfflineError] = useState<Error | null>(null);
 

@@ -16,26 +16,20 @@ export class OfflineDataService {
     data?: unknown,
     userId?: number,
   ): Promise<void> {
+    if (!userId) {
+      throw new Error('userId is required for sync queue operations');
+    }
+
     const syncItem: SyncQueueItem = {
       tableName,
       operation,
       recordId,
       data,
       timestamp: new Date(),
-      userId: userId || 0, // TODO: Get from auth context
+      userId,
     };
 
     await offlineDb.syncQueue.add(syncItem);
-  }
-
-  /**
-   * Get the current user ID from the session
-   * This is a placeholder - in a real app, you'd get this from the auth context
-   */
-  private getCurrentUserId(): number {
-    // TODO: This should be passed in from the calling code
-    // For now, we'll throw an error to ensure proper implementation
-    throw new Error('getCurrentUserId() must be implemented with actual user ID');
   }
 
   /**
@@ -122,7 +116,8 @@ export class OfflineDataService {
     consumptionData: Omit<Consumption, 'id' | 'createdAt' | 'updatedAt' | 'product'>,
   ): Promise<Consumption> {
     // Generate a temporary negative ID for offline records
-    const tempId = -(Date.now() + Math.random());
+    // Use a more deterministic approach to prevent hydration issues
+    const tempId = -(Date.now() + Math.floor(Math.random() * 1000));
 
     console.log('createConsumption: Attempting to create consumption with data:', consumptionData);
 

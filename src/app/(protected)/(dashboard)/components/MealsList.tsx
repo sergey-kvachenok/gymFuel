@@ -11,6 +11,7 @@ interface MealsListProps {
   error?: string | null;
   title?: string;
   showActions?: boolean;
+  userId?: number | null;
 }
 
 const MealsList: FC<MealsListProps> = ({
@@ -19,8 +20,9 @@ const MealsList: FC<MealsListProps> = ({
   error = null,
   title = "Today's Meals",
   showActions = false,
+  userId = null,
 }) => {
-  const { updateMeal, deleteMeal, isUpdating, isDeleting } = useMealManipulation();
+  const { updateMeal, deleteMeal, isUpdating, isDeleting } = useMealManipulation(userId);
 
   const renderMeal = useCallback((consumption: ConsumptionItem) => {
     const nutrients = calculateNutrients(consumption);

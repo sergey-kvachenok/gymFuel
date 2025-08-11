@@ -3,6 +3,7 @@ import './globals.css';
 import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
 import OfflineBanner from '../components/OfflineBanner';
+import ClientOnly from '../components/ClientOnly';
 
 // const geistSans = Geist({
 //   variable: '--font-geist-sans',
@@ -38,7 +39,9 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col items-center  bg-gradient-to-br from-blue-50 via-white to-pink-50">
         <Providers>
-          <OfflineBanner />
+          <ClientOnly>
+            <OfflineBanner />
+          </ClientOnly>
           <EnvironmentBanner />
           <main className="max-w-[800px] w-full flex-1">{children}</main>
         </Providers>

@@ -50,8 +50,9 @@ test.describe('Goals Page', () => {
     await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Check for hydration error in console
-    const consoleMessages = await page.evaluate(() => {
-      return window.console.messages || [];
+    const consoleMessages: any[] = [];
+    page.on('console', (msg) => {
+      consoleMessages.push({ text: msg.text(), type: msg.type() });
     });
 
     // Check if there are any hydration errors
@@ -95,17 +96,18 @@ test.describe('Goals Page', () => {
     await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Check for hydration error in console
-    const consoleMessages = await page.evaluate(() => {
-      return window.console.messages || [];
+    const consoleMessagesAfterRefresh: any[] = [];
+    page.on('console', (msg) => {
+      consoleMessagesAfterRefresh.push({ text: msg.text(), type: msg.type() });
     });
 
     // Check if there are any hydration errors
-    const hasHydrationError = consoleMessages.some(
+    const hasHydrationErrorAfterRefresh = consoleMessagesAfterRefresh.some(
       (msg: any) => msg.text && msg.text.includes('Hydration failed'),
     );
 
-    console.log('DEBUG: Console messages after refresh:', consoleMessages);
-    console.log('DEBUG: Has hydration error after refresh:', hasHydrationError);
+    console.log('DEBUG: Console messages after refresh:', consoleMessagesAfterRefresh);
+    console.log('DEBUG: Has hydration error after refresh:', hasHydrationErrorAfterRefresh);
 
     // Check if offline banner is visible
     const offlineBanner = page.getByText(

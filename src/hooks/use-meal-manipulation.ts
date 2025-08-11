@@ -4,7 +4,7 @@ import { UpdateConsumptionInput, DeleteConsumptionInput } from '../types/api';
 import { useOnlineStatus } from './use-online-status';
 import { offlineDataService } from '../lib/offline-data-service';
 
-export const useMealManipulation = () => {
+export const useMealManipulation = (userId: number | null) => {
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
 
@@ -32,6 +32,10 @@ export const useMealManipulation = () => {
         updateMutation.mutate(data as UpdateConsumptionInput);
       } else {
         try {
+          if (!userId) {
+            alert('User not authenticated');
+            return;
+          }
           await offlineDataService.updateConsumption(data.id, { amount: data.amount });
           // Invalidate queries to refresh UI from IndexedDB
           utils.consumption.invalidate();
@@ -42,7 +46,7 @@ export const useMealManipulation = () => {
         }
       }
     },
-    [updateMutation, isOnline, utils.consumption],
+    [updateMutation, isOnline, utils.consumption, userId],
   );
 
   const deleteMeal = useCallback(
@@ -51,6 +55,10 @@ export const useMealManipulation = () => {
         deleteMutation.mutate(data as DeleteConsumptionInput);
       } else {
         try {
+          if (!userId) {
+            alert('User not authenticated');
+            return;
+          }
           await offlineDataService.deleteConsumption(data.id);
           // Invalidate queries to refresh UI from IndexedDB
           utils.consumption.invalidate();
@@ -61,7 +69,7 @@ export const useMealManipulation = () => {
         }
       }
     },
-    [deleteMutation, isOnline, utils.consumption],
+    [deleteMutation, isOnline, utils.consumption, userId],
   );
 
   return {

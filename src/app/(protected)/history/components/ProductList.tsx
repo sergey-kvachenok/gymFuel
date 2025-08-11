@@ -100,7 +100,6 @@ const ProductList: FC<ProductListProps> = ({ userId }) => {
         <ProductSearch
           onSearchChange={setSearchQuery}
           placeholder="Search your products..."
-          userId={userId}
         />
       </div>
 

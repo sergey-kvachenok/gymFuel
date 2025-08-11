@@ -4,7 +4,7 @@ import { UpdateProductInput, DeleteProductInput } from '../types/api';
 import { useOnlineStatus } from './use-online-status';
 import { offlineDataService } from '../lib/offline-data-service';
 
-export const useProductManipulation = () => {
+export const useProductManipulation = (userId: number | null) => {
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
 
@@ -32,6 +32,10 @@ export const useProductManipulation = () => {
         updateMutation.mutate(data);
       } else {
         try {
+          if (!userId) {
+            alert('User not authenticated');
+            return;
+          }
           await offlineDataService.updateProduct(data.id, data);
           // Invalidate queries to refresh UI from IndexedDB
           utils.product.getAll.invalidate();
@@ -42,7 +46,7 @@ export const useProductManipulation = () => {
         }
       }
     },
-    [updateMutation, isOnline, utils.product.getAll],
+    [updateMutation, isOnline, utils.product.getAll, userId],
   );
 
   const deleteProduct = useCallback(
@@ -51,6 +55,10 @@ export const useProductManipulation = () => {
         deleteMutation.mutate(data);
       } else {
         try {
+          if (!userId) {
+            alert('User not authenticated');
+            return;
+          }
           await offlineDataService.deleteProduct(data.id);
           // Invalidate queries to refresh UI from IndexedDB
           utils.product.getAll.invalidate();
@@ -61,7 +69,7 @@ export const useProductManipulation = () => {
         }
       }
     },
-    [deleteMutation, isOnline, utils.product.getAll],
+    [deleteMutation, isOnline, utils.product.getAll, userId],
   );
 
   return {
