@@ -17,6 +17,7 @@ interface IConsumptionFormProps {
   isPending: boolean;
   isProductsPresented: boolean;
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  userId: number | null;
 }
 
 export const ConsumptionForm: FC<IConsumptionFormProps> = ({
@@ -28,6 +29,7 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
   isPending,
   isProductsPresented,
   onAmountChange,
+  userId,
 }) => {
   if (!isProductsPresented) {
     return (
@@ -48,7 +50,7 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
 
       <CardContent>
         <form onSubmit={submitConsumption} className="space-y-4 flex flex-col ">
-          <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} />
+          <ProductCombobox value={selectedProduct} onChange={setSelectedProduct} userId={userId} />
 
           <Input
             type="number"
@@ -56,11 +58,17 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
             placeholder="Amount in grams"
             value={amount}
             onChange={onAmountChange}
+            data-testid="consumption-amount"
           />
 
           <div className="text-red-500 text-xs h-3 text-center">{error}</div>
 
-          <Button type="submit" disabled={isPending} variant="default">
+          <Button
+            type="submit"
+            disabled={isPending}
+            variant="default"
+            data-testid="consumption-submit"
+          >
             {isPending ? 'Adding...' : 'Add to Meals'}
           </Button>
         </form>

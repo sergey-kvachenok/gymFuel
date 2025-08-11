@@ -1,7 +1,5 @@
 'use client';
 import { useState, FC } from 'react';
-import { useDebounce } from '@/hooks/use-debounce';
-import { trpc } from '@/lib/trpc-client';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
@@ -18,21 +16,18 @@ interface ProductSearchProps {
   onSearchChange: (query: string) => void;
   placeholder?: string;
   className?: string;
+  isLoading?: boolean;
+  productCount?: number;
 }
 
 export const ProductSearch: FC<ProductSearchProps> = ({
   onSearchChange,
   placeholder = 'Search products...',
   className = '',
+  isLoading = false,
+  productCount = 0,
 }) => {
   const [search, setSearch] = useState('');
-  const debounced = useDebounce(search, 300);
-
-  const { data: products = [], isLoading } = trpc.product.getAll.useQuery({
-    query: debounced,
-    orderBy: 'name',
-    orderDirection: 'asc',
-  });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -59,7 +54,7 @@ export const ProductSearch: FC<ProductSearchProps> = ({
             <span>Searching...</span>
           ) : (
             <span>
-              {products.length} {products.length === 1 ? 'product' : 'products'} found
+              {productCount} {productCount === 1 ? 'product' : 'products'} found
             </span>
           )}
         </div>

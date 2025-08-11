@@ -29,9 +29,14 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
   const pathname = usePathname() || '';
 
   return (
-    <Card className="mb-4 flex flex-row justify-between items-center">
+    <Card
+      className="mb-4 flex flex-row justify-between items-center"
+      data-testid="dashboard-header"
+    >
       <div>
-        <CardTitle className="text-xl font-bold text-gray-900">Welcome back, {userName}!</CardTitle>
+        <CardTitle className="text-xl font-bold text-gray-900" data-testid="dashboard-welcome">
+          Welcome back, {userName}!
+        </CardTitle>
 
         <CardDescription className="mt-1">
           Track your nutrition and reach your goals
@@ -47,6 +52,7 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
               <Link key={index} href={button.href}>
                 <span
                   className={`${isActive ? 'text-red-950 font-semibold' : 'text-gray-600 font-medium'}  text-sm transition-colors hover:text-gray-800`}
+                  data-testid={`nav-${button.label.toLowerCase()}`}
                 >
                   {button.label}
                 </span>
@@ -55,7 +61,12 @@ export const DashboardClient: FC<DashboardClientProps> = ({ userName = '' }) => 
           })}
         </div>
 
-        <Button variant="destructive" size="sm" onClick={() => signOut()}>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => signOut()}
+          data-testid="logout-button"
+        >
           Logout
         </Button>
       </div>

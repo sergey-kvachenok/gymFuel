@@ -19,9 +19,15 @@ type ProductComboboxProps = {
   value: ProductOption | null;
   onChange: (product: ProductOption | null) => void;
   disabled?: boolean;
+  userId: number | null;
 };
 
-export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, disabled }) => {
+export const ProductCombobox: FC<ProductComboboxProps> = ({
+  value,
+  onChange,
+  disabled,
+  userId,
+}) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +35,7 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
     setSearchQuery,
     products = [],
     isLoading,
-  } = useProductSearch({
+  } = useProductSearch(userId, {
     orderBy: 'name',
     orderDirection: 'asc',
   });
@@ -96,6 +102,8 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({ value, onChange, dis
             onSearchChange={setSearchQuery}
             placeholder="Search product..."
             className="mb-2"
+            isLoading={isLoading}
+            productCount={products.length}
           />
 
           <ul className="max-h-[100px] sm:max-h-[200px] overflow-y-auto px-2">

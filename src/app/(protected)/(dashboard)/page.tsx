@@ -22,9 +22,9 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <DailyStats userId={userId} />
-      <ConsumptionManager />
+      <ConsumptionManager userId={userId} />
 
-      <TodaysMealsHybrid>
+      <TodaysMealsHybrid userId={userId}>
         <TodaysMealsServer meals={meals || undefined} error={error} />
       </TodaysMealsHybrid>
 

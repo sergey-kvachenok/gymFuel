@@ -12,25 +12,35 @@ const nutritionFields = [
     key: 'calories',
     placeholder: 'Calories (per 100g)',
     step: 1,
+    testId: 'product-calories',
   },
   {
     key: 'protein',
     placeholder: 'Protein (g)',
     step: 0.1,
+    testId: 'product-protein',
   },
   {
     key: 'fat',
     placeholder: 'Fat (g)',
     step: 0.1,
+    testId: 'product-fat',
   },
   {
     key: 'carbs',
     placeholder: 'Carbs (g)',
     step: 0.1,
+    testId: 'product-carbs',
   },
 ];
 
-export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function ProductForm({
+  onSuccess,
+  userId,
+}: {
+  onSuccess?: () => void;
+  userId: number | null;
+}) {
   const [formData, setFormData] = useState({
     name: '',
     calories: '',
@@ -92,8 +102,10 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
       createProduct.mutate(productData);
     } else {
       try {
-        // TODO: Get actual userId from auth context
-        await offlineDataService.createProduct({ ...productData, userId: 1 });
+        if (!userId) {
+          throw new Error('User ID is required for offline product creation');
+        }
+        await offlineDataService.createProduct({ ...productData, userId });
 
         utils.product.getAll.invalidate();
         setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
@@ -115,16 +127,27 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <Card>
-      <CardTitle className="mb-4">Add New Product</CardTitle>
-      {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+      <CardTitle className="mb-4" data-testid="product-form-title">
+        Add New Product
+      </CardTitle>
+      {error && (
+        <div className="text-red-500 text-sm mb-4" data-testid="product-form-error">
+          {error}
+        </div>
+      )}
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col gap-2">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 flex flex-col gap-2"
+          data-testid="product-form"
+        >
           <Input
             type="text"
             placeholder="Product name"
             value={formData.name}
             onChange={(e) => handleFieldChange('name', e.target.value)}
+            data-testid="product-name"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -136,6 +159,7 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
                 placeholder={field.placeholder}
                 value={formData[field.key as keyof typeof formData] as string}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                data-testid={field.testId}
               />
             ))}
           </div>
@@ -149,6 +173,7 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
                 placeholder={field.placeholder}
                 value={formData[field.key as keyof typeof formData] as string}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                data-testid={field.testId}
               />
             ))}
           </div>
@@ -157,6 +182,7 @@ export default function ProductForm({ onSuccess }: { onSuccess?: () => void }) {
             type="submit"
             disabled={isSubmitting || createProduct.isPending}
             className="w-full"
+            data-testid="product-submit"
           >
             {isSubmitting || createProduct.isPending ? 'Adding...' : 'Add Product'}
           </Button>

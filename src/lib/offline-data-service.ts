@@ -93,7 +93,17 @@ export class OfflineDataService {
    * Get all products for a user
    */
   async getProducts(userId: number): Promise<Product[]> {
-    return await offlineDb.products.where('userId').equals(userId).toArray();
+    console.log('getProducts: Called with userId:', userId);
+
+    const products = await offlineDb.products.where('userId').equals(userId).toArray();
+
+    console.log('getProducts: Found products:', products.length, 'items');
+    console.log(
+      'getProducts: Products:',
+      products.map((p) => ({ id: p.id, name: p.name, userId: p.userId })),
+    );
+
+    return products;
   }
 
   /**
@@ -111,7 +121,23 @@ export class OfflineDataService {
   async createConsumption(
     consumptionData: Omit<Consumption, 'id' | 'createdAt' | 'updatedAt' | 'product'>,
   ): Promise<Consumption> {
-    const id = await offlineDb.consumptions.add(consumptionData as Consumption);
+    // Generate a temporary negative ID for offline records
+    const tempId = -(Date.now() + Math.random());
+
+    console.log('createConsumption: Attempting to create consumption with data:', consumptionData);
+
+    // Create consumption object without the product field for IndexedDB storage
+    const consumptionForStorage = {
+      ...consumptionData,
+      id: tempId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    console.log('createConsumption: Consumption for storage:', consumptionForStorage);
+
+    // Type assertion to match IndexedDB schema (which doesn't include the product field)
+    const id = await offlineDb.consumptions.add(consumptionForStorage as unknown as Consumption);
     const consumption = await offlineDb.consumptions.get(id);
 
     if (consumption) {
@@ -124,7 +150,23 @@ export class OfflineDataService {
       );
     }
 
-    return consumption!;
+    // Return the consumption with a minimal product object for compatibility
+    const consumptionWithProduct = {
+      ...consumption,
+      product: {
+        id: consumptionData.productId,
+        name: 'Unknown Product',
+        calories: 0,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        userId: consumptionData.userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as Product,
+    } as Consumption;
+
+    return consumptionWithProduct;
   }
 
   /**
@@ -248,18 +290,32 @@ export class OfflineDataService {
    * Cache server products to IndexedDB (without adding to sync queue)
    */
   async cacheServerProducts(products: Product[]): Promise<void> {
+    console.log('cacheServerProducts: Starting to cache', products.length, 'items');
+
     for (const product of products) {
+      console.log('cacheServerProducts: Caching product', product.id, product.name);
       await offlineDb.products.put(product);
     }
+
+    console.log('cacheServerProducts: Finished caching all products');
   }
 
   /**
    * Cache server consumptions to IndexedDB (without adding to sync queue)
    */
   async cacheServerConsumptions(consumptions: Consumption[]): Promise<void> {
+    console.log('cacheServerConsumptions: Starting to cache', consumptions.length, 'items');
+
     for (const consumption of consumptions) {
+      console.log(
+        'cacheServerConsumptions: Caching consumption',
+        consumption.id,
+        consumption.product.name,
+      );
       await offlineDb.consumptions.put(consumption);
     }
+
+    console.log('cacheServerConsumptions: Finished caching all items');
   }
 
   /**
@@ -293,7 +349,12 @@ export class OfflineDataService {
         changes.push({ id: syncItem.recordId, _deleted: true });
       } else if (syncItem.data) {
         // For create/update, use the data from sync queue
-        changes.push({ ...(syncItem.data as Record<string, unknown>), _modified: true });
+        changes.push({ ...(syncItem.data as Record<string, unknown>), _modified: true } as {
+          id: number;
+          _deleted?: boolean;
+          _modified?: boolean;
+          [key: string]: unknown;
+        });
       }
     }
 
@@ -381,7 +442,7 @@ export class OfflineDataService {
 
     if (offlineChanges.length > 0) {
       // Return the most recent offline change
-      return offlineChanges[offlineChanges.length - 1];
+      return offlineChanges[offlineChanges.length - 1] as unknown as NutritionGoals;
     }
 
     return serverGoals;

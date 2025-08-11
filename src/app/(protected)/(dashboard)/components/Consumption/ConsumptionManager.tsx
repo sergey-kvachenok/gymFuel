@@ -28,14 +28,14 @@ const formButtons = [
   },
 ];
 
-const ConsumptionManager: FC = () => {
+const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
   const [openModal, setOpenModal] = useState<PopupTypes | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { allProducts: products } = useProductSearch({
+  const { allProducts: products } = useProductSearch(userId, {
     orderBy: 'name',
     orderDirection: 'asc',
   });
@@ -82,12 +82,22 @@ const ConsumptionManager: FC = () => {
         createConsumption.mutate(consumptionData);
       } else {
         try {
-          // TODO: Get actual userId from auth context
-          await offlineDataService.createConsumption({
+          if (!userId) {
+            setError('User not authenticated');
+            setIsSubmitting(false);
+            return;
+          }
+
+          const offlineConsumptionData = {
             ...consumptionData,
-            userId: 1,
+            userId,
             date: new Date(),
-          });
+          };
+          console.log(
+            'ConsumptionManager: Creating offline consumption with data:',
+            offlineConsumptionData,
+          );
+          await offlineDataService.createConsumption(offlineConsumptionData);
 
           utils.consumption.getDailyStats.invalidate();
           utils.consumption.getByDate.invalidate();
@@ -104,7 +114,7 @@ const ConsumptionManager: FC = () => {
         }
       }
     },
-    [selectedProduct, amount, createConsumption, isOnline, utils],
+    [selectedProduct, amount, createConsumption, isOnline, utils, userId],
   );
 
   const onAmountChange = useCallback(
@@ -148,10 +158,11 @@ const ConsumptionManager: FC = () => {
                 isPending={isSubmitting || createConsumption.isPending}
                 isProductsPresented={!!products && products.length > 0}
                 onAmountChange={onAmountChange}
+                userId={userId}
               />
             )}
             {button.modal === PopupTypes.Product && (
-              <ProductForm onSuccess={() => setOpenModal(null)} />
+              <ProductForm onSuccess={() => setOpenModal(null)} userId={userId} />
             )}
           </DialogContent>
         </Dialog>

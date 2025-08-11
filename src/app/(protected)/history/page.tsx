@@ -1,12 +1,15 @@
 import { createTrpcServer } from '../../../lib/trpc-server';
+import { getCurrentUserId } from '../../../lib/auth-utils';
 import HistoryClient from './HistoryClient';
 
 export default async function HistoryPage() {
   let history = null;
   let error = null;
+  let userId = null;
 
   try {
     const trpcServer = await createTrpcServer();
+    userId = await getCurrentUserId();
     history = await trpcServer.consumption.getHistory({ days: 30 });
   } catch (err) {
     error = err instanceof Error ? err.message : 'Error loading history';
@@ -19,7 +22,7 @@ export default async function HistoryPage() {
         <p className="text-gray-600">Track your daily nutrition over time</p>
       </div>
 
-      <HistoryClient initialHistory={history} initialError={error} />
+      <HistoryClient initialHistory={history} initialError={error} userId={userId} />
     </div>
   );
 }

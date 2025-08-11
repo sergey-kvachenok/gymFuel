@@ -32,9 +32,16 @@ export default function LoginPage() {
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-8 border"
+        data-testid="login-form"
       >
-        <h1 className="text-2xl font-bold text-center mb-2">Sign in</h1>
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+        <h1 className="text-2xl font-bold text-center mb-2" data-testid="login-title">
+          Sign in
+        </h1>
+        {error && (
+          <div className="text-red-500 text-sm text-center" data-testid="login-error">
+            {error}
+          </div>
+        )}
         <div className="space-y-6 flex flex-col gap-4">
           <input
             type="email"
@@ -43,6 +50,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full border border-gray-300 px-6 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base bg-white placeholder-gray-400"
+            data-testid="login-email"
           />
           <input
             type="password"
@@ -51,18 +59,24 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             className="w-full border border-gray-300 px-6 py-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base bg-white placeholder-gray-400"
+            data-testid="login-password"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed text-base mt-2"
+          data-testid="login-submit"
         >
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
         <div className="text-center text-sm mt-4">
           Don&apos;t have an account?{' '}
-          <a href="/register" className="text-blue-600 hover:underline">
+          <a
+            href="/register"
+            className="text-blue-600 hover:underline"
+            data-testid="login-register-link"
+          >
             Register
           </a>
         </div>

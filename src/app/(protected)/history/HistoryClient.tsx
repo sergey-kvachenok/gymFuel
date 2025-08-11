@@ -12,9 +12,14 @@ import ProductList from './components/ProductList';
 type HistoryClientProps = {
   initialHistory: HistoryItem[] | null;
   initialError: string | null;
+  userId: number | null;
 };
 
-export default function HistoryClient({ initialHistory, initialError }: HistoryClientProps) {
+export default function HistoryClient({
+  initialHistory,
+  initialError,
+  userId,
+}: HistoryClientProps) {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [daysFilter, setDaysFilter] = useState(30);
   const [selectedDay, setSelectedDay] = useState<HistoryItem | null>(null);
@@ -49,10 +54,10 @@ export default function HistoryClient({ initialHistory, initialError }: HistoryC
           </Button>
         }
       >
-        <ProductList />
+        <ProductList userId={userId} />
       </SidePanel>
     ),
-    [isSidePanelOpen],
+    [isSidePanelOpen, userId],
   );
 
   if (displayError) {

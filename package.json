@@ -17,6 +17,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:offline": "./scripts/test-offline.sh",
     "db:migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev",
     "db:migrate:staging": "dotenv -e .env.staging -- npx prisma migrate deploy",
     "db:migrate:prod": "npx prisma migrate deploy",
@@ -58,6 +62,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.48.0",
     "@testing-library/jest-dom": "^6.1.0",
     "@testing-library/react": "^15.0.0",
     "@types/bcryptjs": "^2.4.6",

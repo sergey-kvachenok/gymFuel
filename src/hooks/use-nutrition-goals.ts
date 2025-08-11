@@ -11,7 +11,7 @@ export const useNutritionGoals = (userId: number | null) => {
 
   const isOnline = useOnlineStatus();
 
-  // Always use tRPC when online - this gives us automatic invalidation
+  // Always use tRPC when online
   const serverQuery = trpc.goals.get.useQuery(undefined, {
     enabled: isOnline,
     refetchOnWindowFocus: false,

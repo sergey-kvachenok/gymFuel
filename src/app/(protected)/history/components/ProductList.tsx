@@ -14,8 +14,12 @@ const fields = [
   { key: 'carbs', label: 'Carbs (g)', type: 'number' as const, min: 0, step: 0.1 },
 ];
 
-const ProductList: FC = () => {
-  const { setSearchQuery, products, isLoading, error } = useProductSearch({
+interface ProductListProps {
+  userId: number | null;
+}
+
+const ProductList: FC<ProductListProps> = ({ userId }) => {
+  const { setSearchQuery, products, isLoading, error } = useProductSearch(userId, {
     orderBy: 'name',
     orderDirection: 'asc',
   });
@@ -93,7 +97,11 @@ const ProductList: FC = () => {
   return (
     <div>
       <div className="mb-4">
-        <ProductSearch onSearchChange={setSearchQuery} placeholder="Search your products..." />
+        <ProductSearch
+          onSearchChange={setSearchQuery}
+          placeholder="Search your products..."
+          userId={userId}
+        />
       </div>
 
       <EditableList

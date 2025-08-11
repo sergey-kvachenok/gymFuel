@@ -2,8 +2,8 @@
 
 import { FC } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
-import { useDailyStats } from '../../../../hooks/use-daily-stats';
 import { useNutritionGoals } from '../../../../hooks/use-nutrition-goals';
+import { useConsumptionsByDate } from '../../../../hooks/use-consumptions-by-date';
 
 const COLORS = {
   calories: '#ef4444', // red-500
@@ -23,8 +23,24 @@ interface GoalsProgressProps {
 }
 
 export const GoalsProgress: FC<GoalsProgressProps> = ({ userId }) => {
+  // Use hybrid hooks for offline/online data
   const { data: goals, isLoading: goalsLoading } = useNutritionGoals(userId);
-  const { data: currentStats, isLoading: statsLoading } = useDailyStats(userId);
+  const { data: consumptions = [], isLoading: statsLoading } = useConsumptionsByDate(userId);
+
+  // Calculate current stats from consumptions
+  const currentStats = consumptions.reduce(
+    (acc, consumption) => {
+      const product = consumption.product;
+      const quantity = consumption.amount / 100; // Convert from grams to 100g units
+      return {
+        totalCalories: acc.totalCalories + product.calories * quantity,
+        totalProtein: acc.totalProtein + product.protein * quantity,
+        totalFat: acc.totalFat + product.fat * quantity,
+        totalCarbs: acc.totalCarbs + product.carbs * quantity,
+      };
+    },
+    { totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0 },
+  );
 
   if (goalsLoading || statsLoading) {
     return (
@@ -52,7 +68,7 @@ export const GoalsProgress: FC<GoalsProgressProps> = ({ userId }) => {
     );
   }
 
-  const current = currentStats || { totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0 };
+  const current = currentStats;
 
   const progressData = [
     {

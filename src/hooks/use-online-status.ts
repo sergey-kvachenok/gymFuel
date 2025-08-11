@@ -9,11 +9,8 @@ import { useState, useEffect } from 'react';
 export function useOnlineStatus(): boolean {
   // Initialize with current online status
   const [isOnline, setIsOnline] = useState(() => {
-    // Check if we're in a browser environment
-    if (typeof window !== 'undefined' && 'navigator' in window) {
-      return navigator.onLine;
-    }
-    // Default to online for SSR
+    // Always default to online for SSR to prevent hydration mismatch
+    // The actual online status will be set in useEffect after hydration
     return true;
   });
 
@@ -22,6 +19,9 @@ export function useOnlineStatus(): boolean {
     if (typeof window === 'undefined') {
       return;
     }
+
+    // Set the actual online status after hydration
+    setIsOnline(navigator.onLine);
 
     const handleOnline = () => {
       console.log('Network: Back online');

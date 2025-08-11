@@ -4,7 +4,7 @@ import { FC } from 'react';
 import { statsFields } from '@/constants/DailyStats.constants';
 import StatsCardMessage from '@/components/GenericStatsCard';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { useDailyStats } from '../../../../hooks/use-daily-stats';
+import { useConsumptionsByDate } from '../../../../hooks/use-consumptions-by-date';
 
 type StatsKey = 'totalCalories' | 'totalProtein' | 'totalFat' | 'totalCarbs';
 
@@ -13,7 +13,8 @@ interface DailyStatsProps {
 }
 
 const DailyStats: FC<DailyStatsProps> = ({ userId }) => {
-  const { data: stats, error, isLoading } = useDailyStats(userId);
+  // Use hybrid hook for offline/online data
+  const { data: consumptions, error, isLoading } = useConsumptionsByDate(userId);
 
   if (isLoading) {
     return <StatsCardMessage title="Daily Nutrition" message="Loading..." />;
@@ -28,6 +29,29 @@ const DailyStats: FC<DailyStatsProps> = ({ userId }) => {
       />
     );
   }
+
+  // Calculate stats from consumptions
+  const stats = consumptions
+    ? consumptions.reduce(
+        (acc, consumption) => {
+          const ratio = consumption.amount / 100;
+          acc.totalCalories += consumption.product.calories * ratio;
+          acc.totalProtein += consumption.product.protein * ratio;
+          acc.totalFat += consumption.product.fat * ratio;
+          acc.totalCarbs += consumption.product.carbs * ratio;
+          acc.consumptionsCount += 1;
+          return acc;
+        },
+        {
+          date: new Date().toISOString().split('T')[0],
+          totalCalories: 0,
+          totalProtein: 0,
+          totalFat: 0,
+          totalCarbs: 0,
+          consumptionsCount: 0,
+        },
+      )
+    : null;
 
   return (
     <Card>
