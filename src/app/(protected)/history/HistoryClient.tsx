@@ -69,7 +69,7 @@ export default function HistoryClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="history-filters">
       <HistoryFilters
         daysFilter={daysFilter}
         onDaysFilterChange={setDaysFilter}
@@ -83,7 +83,9 @@ export default function HistoryClient({
       )}
 
       {displayHistory && displayHistory.length > 0 ? (
-        <HistoryList history={displayHistory} onDayClick={setSelectedDay} />
+        <div data-testid="history-list">
+          <HistoryList history={displayHistory} onDayClick={setSelectedDay} />
+        </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-lg p-8 border text-center">
           <div className="text-gray-500">No nutrition data found for the selected period.</div>

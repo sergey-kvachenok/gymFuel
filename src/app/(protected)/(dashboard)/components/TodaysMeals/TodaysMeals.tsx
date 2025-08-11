@@ -14,12 +14,14 @@ export default function TodaysMeals({ userId }: TodaysMealsProps) {
   console.log('TodaysMeals: Received consumptions:', consumptions.length, 'items:', consumptions);
 
   return (
-    <MealsList
-      consumptions={consumptions as ConsumptionItem[]}
-      isLoading={isLoading}
-      title="Today's Meals"
-      showActions={true}
-      userId={userId}
-    />
+    <div data-testid="todays-meals">
+      <MealsList
+        consumptions={consumptions as ConsumptionItem[]}
+        isLoading={isLoading}
+        title="Today's Meals"
+        showActions={true}
+        userId={userId}
+      />
+    </div>
   );
 }

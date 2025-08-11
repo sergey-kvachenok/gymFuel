@@ -95,12 +95,9 @@ const ProductList: FC<ProductListProps> = ({ userId }) => {
   const handleDelete = useCallback((id: number) => ({ id }), []);
 
   return (
-    <div>
+    <div data-testid="product-list">
       <div className="mb-4">
-        <ProductSearch
-          onSearchChange={setSearchQuery}
-          placeholder="Search your products..."
-        />
+        <ProductSearch onSearchChange={setSearchQuery} placeholder="Search your products..." />
       </div>
 
       <EditableList

@@ -5,12 +5,21 @@ import EditableList from '../../../../components/EditableList';
 import { ConsumptionItem } from '../../../../types/api';
 import { useMealManipulation } from '../../../../hooks/use-meal-manipulation';
 
+/**
+ * Props for the MealsList component
+ */
 interface MealsListProps {
+  /** List of consumption items to display */
   consumptions?: ConsumptionItem[];
+  /** Whether the component is in a loading state */
   isLoading?: boolean;
+  /** Error message to display if any */
   error?: string | null;
+  /** Title to display for the meals list */
   title?: string;
+  /** Whether to show action buttons (edit/delete) */
   showActions?: boolean;
+  /** The current user's ID. Required for actions, can be null for read-only display */
   userId?: number | null;
 }
 
@@ -101,22 +110,24 @@ const MealsList: FC<MealsListProps> = ({
   );
 
   return (
-    <EditableList
-      items={consumptions}
-      isLoading={isLoading}
-      error={error}
-      title={title}
-      showActions={showActions}
-      renderItem={renderMeal}
-      editConfig={editConfig}
-      deleteConfig={deleteConfig}
-      updateMutation={updateMutation}
-      deleteMutation={deleteMutation}
-      onEdit={handleEdit}
-      onSave={handleSave}
-      onDelete={handleDelete}
-      height={250}
-    />
+    <div data-testid="meals-list">
+      <EditableList
+        items={consumptions}
+        isLoading={isLoading}
+        error={error}
+        title={title}
+        showActions={showActions}
+        renderItem={renderMeal}
+        editConfig={editConfig}
+        deleteConfig={deleteConfig}
+        updateMutation={updateMutation}
+        deleteMutation={deleteMutation}
+        onEdit={handleEdit}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        height={250}
+      />
+    </div>
   );
 };
 

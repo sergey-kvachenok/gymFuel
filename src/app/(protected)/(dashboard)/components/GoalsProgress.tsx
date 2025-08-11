@@ -44,7 +44,7 @@ export const GoalsProgress: FC<GoalsProgressProps> = ({ userId }) => {
 
   if (goalsLoading || statsLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <div className="bg-white rounded-2xl shadow-lg p-6 border" data-testid="goals-progress">
         <h2 className="text-xl font-bold mb-4">Daily Goals Progress</h2>
         <div className="text-gray-500">Loading...</div>
       </div>
@@ -53,7 +53,7 @@ export const GoalsProgress: FC<GoalsProgressProps> = ({ userId }) => {
 
   if (!goals) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border">
+      <div className="bg-white rounded-2xl shadow-lg p-6 border" data-testid="goals-progress">
         <h2 className="text-xl font-bold mb-4">Daily Goals Progress</h2>
         <div className="text-center py-6">
           <div className="text-gray-500 mb-4">No nutrition goals set yet</div>
@@ -106,7 +106,7 @@ export const GoalsProgress: FC<GoalsProgressProps> = ({ userId }) => {
   ];
 
   return (
-    <Card>
+    <Card data-testid="goals-progress">
       <CardTitle className="flex justify-between items-center mb-4">
         Daily Goals Progress
         <p className="text-xs text-gray-500 capitalize">Goal: {goals.goalType} weight</p>

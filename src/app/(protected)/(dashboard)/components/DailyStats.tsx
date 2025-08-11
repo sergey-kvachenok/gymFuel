@@ -54,7 +54,7 @@ const DailyStats: FC<DailyStatsProps> = ({ userId }) => {
     : null;
 
   return (
-    <Card>
+    <Card data-testid="daily-stats">
       <CardTitle>Daily Nutrition</CardTitle>
       <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {!stats ? (

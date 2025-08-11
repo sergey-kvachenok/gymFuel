@@ -12,15 +12,17 @@ export default async function GoalsPage() {
   }
 
   return (
-    <Card>
-      <CardTitle>Nutrition Goals</CardTitle>
-      <CardDescription>
-        Set your daily nutrition targets to reach your fitness goals
-      </CardDescription>
+    <div data-testid="goals-page">
+      <Card>
+        <CardTitle>Nutrition Goals</CardTitle>
+        <CardDescription>
+          Set your daily nutrition targets to reach your fitness goals
+        </CardDescription>
 
-      <CardContent>
-        <GoalsForm userId={userId} />
-      </CardContent>
-    </Card>
+        <CardContent>
+          <GoalsForm userId={userId} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

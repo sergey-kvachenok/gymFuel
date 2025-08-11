@@ -172,7 +172,11 @@ const EditableList = <T extends EditableItem>({
               }
 
               return (
-                <div key={item.id} className="p-4 bg-gray-50 rounded-lg">
+                <div
+                  key={item.id}
+                  className="p-4 bg-gray-50 rounded-lg"
+                  data-testid={`${title.toLowerCase().replace(/\s+/g, '-')}-item`}
+                >
                   {renderItem(item, isEditing, isDeleting)}
 
                   {showActions && (

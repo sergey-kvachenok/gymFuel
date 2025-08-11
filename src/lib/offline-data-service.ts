@@ -87,15 +87,7 @@ export class OfflineDataService {
    * Get all products for a user
    */
   async getProducts(userId: number): Promise<Product[]> {
-    console.log('getProducts: Called with userId:', userId);
-
     const products = await offlineDb.products.where('userId').equals(userId).toArray();
-
-    console.log('getProducts: Found products:', products.length, 'items');
-    console.log(
-      'getProducts: Products:',
-      products.map((p) => ({ id: p.id, name: p.name, userId: p.userId })),
-    );
 
     return products;
   }
@@ -119,8 +111,6 @@ export class OfflineDataService {
     // Use a more deterministic approach to prevent hydration issues
     const tempId = -(Date.now() + Math.floor(Math.random() * 1000));
 
-    console.log('createConsumption: Attempting to create consumption with data:', consumptionData);
-
     // Create consumption object without the product field for IndexedDB storage
     const consumptionForStorage = {
       ...consumptionData,
@@ -128,8 +118,6 @@ export class OfflineDataService {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-
-    console.log('createConsumption: Consumption for storage:', consumptionForStorage);
 
     // Type assertion to match IndexedDB schema (which doesn't include the product field)
     const id = await offlineDb.consumptions.add(consumptionForStorage as unknown as Consumption);
@@ -285,32 +273,18 @@ export class OfflineDataService {
    * Cache server products to IndexedDB (without adding to sync queue)
    */
   async cacheServerProducts(products: Product[]): Promise<void> {
-    console.log('cacheServerProducts: Starting to cache', products.length, 'items');
-
     for (const product of products) {
-      console.log('cacheServerProducts: Caching product', product.id, product.name);
       await offlineDb.products.put(product);
     }
-
-    console.log('cacheServerProducts: Finished caching all products');
   }
 
   /**
    * Cache server consumptions to IndexedDB (without adding to sync queue)
    */
   async cacheServerConsumptions(consumptions: Consumption[]): Promise<void> {
-    console.log('cacheServerConsumptions: Starting to cache', consumptions.length, 'items');
-
     for (const consumption of consumptions) {
-      console.log(
-        'cacheServerConsumptions: Caching consumption',
-        consumption.id,
-        consumption.product.name,
-      );
       await offlineDb.consumptions.put(consumption);
     }
-
-    console.log('cacheServerConsumptions: Finished caching all items');
   }
 
   /**
