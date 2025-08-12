@@ -371,3 +371,39 @@ IF current task involves writing or updating Zod validation code:
 ELSE:
   SKIP: Zod style guide not relevant to current task
 </conditional-block>
+
+<conditional-block task-condition="playwright" context-check="playwright-style">
+IF current task involves writing or updating Playwright e2e tests:
+  IF playwright-style.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using Playwright style guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get Playwright style rules from code-style/playwright-style.md"
+        PROCESS: Returned style rules
+      ELSE:
+        READ: @~/.agent-os/standards/code-style/playwright-style.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: Playwright style guide not relevant to current task
+</conditional-block>
+
+<conditional-block task-condition="playwright-junior" context-check="playwright-junior-guide">
+IF current task involves teaching or onboarding junior QA engineers to Playwright:
+  IF PLAYWRIGHT_JUNIOR_QA_GUIDE.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using Playwright junior QA guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get Playwright junior QA guide from docs/PLAYWRIGHT_JUNIOR_QA_GUIDE.md"
+        PROCESS: Returned guide content
+      ELSE:
+        READ: @~/docs/PLAYWRIGHT_JUNIOR_QA_GUIDE.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: Playwright junior QA guide not relevant to current task
+</conditional-block>
