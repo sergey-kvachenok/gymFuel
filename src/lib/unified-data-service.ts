@@ -62,6 +62,54 @@ export class UnifiedDataService {
   }
 
   /**
+   * Get products with lazy loading support
+   */
+  async getProductsLazy(
+    userId: number,
+    options: {
+      page: number;
+      pageSize: number;
+      search?: string;
+      orderBy?: 'name' | 'createdAt' | 'updatedAt';
+      orderDirection?: 'asc' | 'desc';
+    },
+  ): Promise<{
+    products: UnifiedProduct[];
+    total: number;
+    hasMore: boolean;
+    page: number;
+    pageSize: number;
+  }> {
+    const { page, pageSize, search, orderDirection = 'asc' } = options;
+    const offset = page * pageSize;
+
+    // Get total count
+    let totalQuery = unifiedOfflineDb.products.where('userId').equals(userId);
+    if (search) {
+      totalQuery = totalQuery.filter((product) =>
+        product.name.toLowerCase().includes(search.toLowerCase()),
+      );
+    }
+    const total = await totalQuery.count();
+
+    // Get paginated results
+    const products = await unifiedOfflineDb.getProductsByUser(userId.toString(), {
+      limit: pageSize,
+      offset,
+      search,
+      orderDirection,
+    });
+
+    return {
+      products,
+      total,
+      hasMore: offset + pageSize < total,
+      page,
+      pageSize,
+    };
+  }
+
+  /**
    * Get a product by ID
    */
   async getProduct(id: number): Promise<UnifiedProduct | undefined> {

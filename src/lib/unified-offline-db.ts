@@ -18,12 +18,14 @@ export class UnifiedOfflineDatabase extends Dexie {
   constructor() {
     super('GymFuelUnifiedDB');
 
-    // Define schema version 11 with sync fields and optimized indexes
-    this.version(11).stores({
-      products: '&id, userId, name, createdAt, updatedAt, _synced, _lastModified, _version',
+    // Define schema version 12 with enhanced performance indexes
+    this.version(12).stores({
+      products:
+        '&id, userId, name, createdAt, updatedAt, _synced, _lastModified, _version, [userId+name], [userId+_synced]',
       consumptions:
-        '&id, userId, productId, date, createdAt, updatedAt, _synced, _lastModified, _version',
-      nutritionGoals: '&id, userId, createdAt, updatedAt, _synced, _lastModified, _version',
+        '&id, userId, productId, date, createdAt, updatedAt, _synced, _lastModified, _version, [userId+date], [userId+productId], [userId+_synced]',
+      nutritionGoals:
+        '&id, userId, createdAt, updatedAt, _synced, _lastModified, _version, [userId+_synced]',
     });
 
     // Add hooks for automatic timestamping and sync field management
@@ -93,6 +95,154 @@ export class UnifiedOfflineDatabase extends Dexie {
       (modifications as Partial<UnifiedNutritionGoals>)._syncError = null;
       (modifications as Partial<UnifiedNutritionGoals>)._lastModified = now;
     });
+  }
+
+  /**
+   * Optimized query methods for better performance
+   */
+
+  /**
+   * Get products by user with optimized query
+   */
+  async getProductsByUser(
+    userId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      search?: string;
+      orderDirection?: 'asc' | 'desc';
+    },
+  ) {
+    const { limit = 50, offset = 0, search, orderDirection = 'asc' } = options || {};
+
+    const query = this.products.where('userId').equals(userId);
+
+    if (search) {
+      const results = await query
+        .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()))
+        .toArray();
+
+      return orderDirection === 'desc'
+        ? results.reverse().slice(offset, offset + limit)
+        : results.slice(offset, offset + limit);
+    }
+
+    const results = await query.toArray();
+    return orderDirection === 'desc'
+      ? results.reverse().slice(offset, offset + limit)
+      : results.slice(offset, offset + limit);
+  }
+
+  /**
+   * Get consumptions by user and date range with optimized query
+   */
+  async getConsumptionsByUserAndDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    options?: {
+      limit?: number;
+      offset?: number;
+      includeProduct?: boolean;
+    },
+  ) {
+    const { limit = 100, offset = 0, includeProduct = false } = options || {};
+
+    const consumptions = await this.consumptions
+      .where('userId')
+      .equals(userId)
+      .and((consumption) => consumption.date >= startDate && consumption.date <= endDate)
+      .reverse()
+      .offset(offset)
+      .limit(limit)
+      .toArray();
+
+    if (includeProduct) {
+      // Batch load products for better performance
+      const productIds = [...new Set(consumptions.map((c) => c.productId))];
+      const products = await this.products.where('id').anyOf(productIds).toArray();
+
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      return consumptions.map((consumption) => ({
+        ...consumption,
+        product: productMap.get(consumption.productId),
+      }));
+    }
+
+    return consumptions;
+  }
+
+  /**
+   * Get unsynced items with optimized query
+   */
+  async getUnsyncedItems(
+    userId: string,
+    tableName: 'products' | 'consumptions' | 'nutritionGoals',
+  ) {
+    const table = this[tableName];
+    return await table
+      .where('userId')
+      .equals(userId)
+      .and((item) => !item._synced)
+      .toArray();
+  }
+
+  /**
+   * Bulk operations for better performance
+   */
+  async bulkAddProducts(products: Omit<UnifiedProduct, 'id'>[]) {
+    return await this.products.bulkAdd(products as UnifiedProduct[]);
+  }
+
+  async bulkAddConsumptions(consumptions: Omit<UnifiedConsumption, 'id'>[]) {
+    return await this.consumptions.bulkAdd(consumptions as UnifiedConsumption[]);
+  }
+
+  async bulkUpdateProducts(products: UnifiedProduct[]) {
+    return await this.products.bulkPut(products);
+  }
+
+  async bulkUpdateConsumptions(consumptions: UnifiedConsumption[]) {
+    return await this.consumptions.bulkPut(consumptions);
+  }
+
+  /**
+   * Cleanup old data for memory management
+   */
+  async cleanupOldData(userId: string, daysToKeep: number = 90) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+    // Clean up old consumptions
+    const oldConsumptions = await this.consumptions
+      .where('userId')
+      .equals(userId)
+      .and((consumption) => consumption.date < cutoffDate)
+      .toArray();
+
+    if (oldConsumptions.length > 0) {
+      await this.consumptions.bulkDelete(oldConsumptions.map((c) => c.id));
+      console.log(`Cleaned up ${oldConsumptions.length} old consumptions`);
+    }
+  }
+
+  /**
+   * Get database statistics for monitoring
+   */
+  async getDatabaseStats(userId: string) {
+    const [productCount, consumptionCount, goalsCount] = await Promise.all([
+      this.products.where('userId').equals(userId).count(),
+      this.consumptions.where('userId').equals(userId).count(),
+      this.nutritionGoals.where('userId').equals(userId).count(),
+    ]);
+
+    return {
+      products: productCount,
+      consumptions: consumptionCount,
+      goals: goalsCount,
+      total: productCount + consumptionCount + goalsCount,
+    };
   }
 
   /**
