@@ -78,14 +78,14 @@
   - [x] 10.5 Test real-time data synchronization
   - [x] 10.6 Fix any broken online functionality
 
-- [ ] 11. **E2E Test Review and Cleanup**
-  - [ ] 11.1 Review all existing e2e tests for relevance
-  - [ ] 11.2 Identify tests that test the old architecture (offline-consumption-submission.spec.ts)
-  - [ ] 11.3 Update old tests to work with new unified architecture OR deprecate them
-  - [ ] 11.4 Remove or deprecate irrelevant tests that test broken hybrid approach
-  - [ ] 11.5 Ensure unified-offline-architecture.spec.ts covers all scenarios
-  - [ ] 11.6 Verify all e2e tests pass consistently (both old and new)
-  - [ ] 11.7 Create test migration plan for gradual transition
+- [x] 11. **E2E Test Review and Cleanup**
+  - [x] 11.1 Review all existing e2e tests for relevance
+  - [x] 11.2 Identify tests that test the old architecture (offline-consumption-submission.spec.ts)
+  - [x] 11.3 Update old tests to work with new unified architecture OR deprecate them
+  - [x] 11.4 Remove or deprecate irrelevant tests that test broken hybrid approach
+  - [x] 11.5 Ensure unified-offline-architecture.spec.ts covers all scenarios
+  - [x] 11.6 Verify all e2e tests pass consistently (both old and new)
+  - [x] 11.7 Create test migration plan for gradual transition
 
 - [ ] 12. **Performance Optimization**
   - [ ] 12.1 Write performance tests
