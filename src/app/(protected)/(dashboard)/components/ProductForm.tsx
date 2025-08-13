@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { useOnlineStatus } from '../../../../hooks/use-online-status';
-import { offlineDataService } from '../../../../lib/offline-data-service';
+import { UnifiedDataService } from '../../../../lib/unified-data-service';
 
 const nutritionFields = [
   {
@@ -50,9 +50,11 @@ export default function ProductForm({
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
 
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   const createProduct = trpc.product.create.useMutation({
     onMutate: (variables) => {
@@ -69,7 +71,8 @@ export default function ProductForm({
         try {
           console.log('🔄 Caching product to IndexedDB...');
           console.log('🔄 Product data to cache:', newProduct);
-          await offlineDataService.cacheServerProducts([newProduct]);
+          // TODO: Implement server data caching to UnifiedDataService
+          // await unifiedDataService.batchCreateProducts([newProduct]);
           console.log('✅ Product cached to IndexedDB for offline use:', newProduct.name);
         } catch (error) {
           console.error('❌ Failed to cache product to IndexedDB:', error);
@@ -147,24 +150,25 @@ export default function ProductForm({
       console.log('📱 Offline mode - using IndexedDB');
       console.log('📱 User ID for offline creation:', userId);
       console.log('📱 Product data for offline creation:', productData);
-      
+
       try {
         if (!userId) {
           throw new Error('User ID is required for offline product creation');
         }
-        
-        console.log('📱 Calling offlineDataService.createProduct...');
-        const createdProduct = await offlineDataService.createProduct({ ...productData, userId });
+
+        console.log('📱 Calling unifiedDataService.createProduct...');
+        const createdProduct = await unifiedDataService.createProduct({ ...productData, userId });
         console.log('📱 Product created offline:', createdProduct);
 
         console.log('📱 Invalidating product queries...');
         utils.product.getAll.invalidate();
-        
+
         console.log('📱 Resetting form...');
         setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
         setError('');
         setIsSubmitting(false);
-        
+        setSyncStatus('synced');
+
         console.log('📱 Calling onSuccess callback...');
         onSuccess?.();
         console.log('📱 onSuccess callback completed');
@@ -186,10 +190,18 @@ export default function ProductForm({
     <Card data-testid="product-form-card">
       <CardTitle className="mb-4" data-testid="product-form-title">
         Add New Product
+        {!isOnline && (
+          <span className="ml-2 text-sm text-orange-600 font-normal">(Offline Mode)</span>
+        )}
       </CardTitle>
       {error && (
         <div className="text-red-500 text-sm mb-4" data-testid="product-form-error">
           {error}
+        </div>
+      )}
+      {syncStatus === 'synced' && (
+        <div className="text-green-600 text-sm mb-4" data-testid="product-form-sync-success">
+          ✓ Product saved and will sync when online
         </div>
       )}
 

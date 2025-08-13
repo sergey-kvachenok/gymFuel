@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { useOnlineStatus } from './use-online-status';
-import { offlineDataService } from '../lib/offline-data-service';
-import { Product } from '../types/api';
+import { UnifiedDataService } from '../lib/unified-data-service';
+import { UnifiedProduct } from '../lib/unified-offline-db';
 
 interface ProductSearchOptions {
   query?: string;
@@ -20,11 +20,13 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
   } = options;
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [offlineProducts, setOfflineProducts] = useState<Product[]>([]);
+  const [offlineProducts, setOfflineProducts] = useState<UnifiedProduct[]>([]);
   const [isOfflineLoading, setIsOfflineLoading] = useState(false);
   const [offlineError, setOfflineError] = useState<Error | null>(null);
 
   const isOnline = useOnlineStatus();
+  // Use a singleton instance of UnifiedDataService
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   // Always use tRPC when online
   const serverQuery = trpc.product.getAll.useQuery(
@@ -43,7 +45,8 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
   // Cache server data to IndexedDB when online
   useEffect(() => {
     if (isOnline && serverQuery.data) {
-      offlineDataService.cacheServerProducts(serverQuery.data).catch(console.error);
+      // TODO: Implement server data caching to UnifiedDataService
+      // unifiedDataService.batchCreateProducts(serverQuery.data).catch(console.error);
     }
   }, [isOnline, serverQuery.data]);
 
@@ -55,18 +58,18 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
           setIsOfflineLoading(true);
           setOfflineError(null);
 
-          const offlineData = await offlineDataService.getProducts(userId);
+          const offlineData = await unifiedDataService.getProducts(userId);
 
           // Apply search filter if query is provided
           let filteredProducts = offlineData;
           if (searchQuery.trim()) {
-            filteredProducts = offlineData.filter((product) =>
+            filteredProducts = offlineData.filter((product: UnifiedProduct) =>
               product.name.toLowerCase().includes(searchQuery.toLowerCase()),
             );
           }
 
           // Apply sorting
-          filteredProducts.sort((a, b) => {
+          filteredProducts.sort((a: UnifiedProduct, b: UnifiedProduct) => {
             if (orderBy === 'name') {
               return orderDirection === 'asc'
                 ? a.name.localeCompare(b.name)

@@ -18,6 +18,7 @@ interface IConsumptionFormProps {
   isProductsPresented: boolean;
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   userId: number | null;
+  syncStatus?: 'idle' | 'syncing' | 'synced' | 'error';
 }
 
 export const ConsumptionForm: FC<IConsumptionFormProps> = ({
@@ -30,6 +31,7 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
   isProductsPresented,
   onAmountChange,
   userId,
+  syncStatus = 'idle',
 }) => {
   if (!isProductsPresented) {
     return (
@@ -46,7 +48,14 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
 
   return (
     <Card data-testid="consumption-form">
-      <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>
+      <CardTitle className="mb-4">
+        Add to Today&apos;s Meals
+        {syncStatus === 'syncing' && (
+          <span className="text-sm text-blue-500 ml-2">(Syncing...)</span>
+        )}
+        {syncStatus === 'synced' && <span className="text-sm text-green-500 ml-2">(Synced)</span>}
+        {syncStatus === 'error' && <span className="text-sm text-red-500 ml-2">(Sync Error)</span>}
+      </CardTitle>
 
       <CardContent>
         <form onSubmit={submitConsumption} className="space-y-4 flex flex-col ">
@@ -64,6 +73,12 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
           {error && (
             <div className="text-red-500 text-xs h-3 text-center" data-testid="error-message">
               {error}
+            </div>
+          )}
+
+          {syncStatus === 'synced' && (
+            <div className="text-green-500 text-xs text-center" data-testid="sync-success-message">
+              ✓ Consumption saved and will sync when online
             </div>
           )}
 

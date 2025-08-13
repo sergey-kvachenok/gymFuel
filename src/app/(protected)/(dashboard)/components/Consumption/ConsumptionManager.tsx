@@ -8,7 +8,7 @@ import { trpc } from '@/lib/trpc-client';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
 import { useProductSearch } from '@/hooks/use-product-search';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { offlineDataService } from '@/lib/offline-data-service';
+import { UnifiedDataService } from '@/lib/unified-data-service';
 import { useConsumptionsByDate } from '@/hooks/use-consumptions-by-date';
 
 const enum PopupTypes {
@@ -35,6 +35,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
   const [amount, setAmount] = useState<number | undefined>();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
 
   const { allProducts: products } = useProductSearch(userId, {
     orderBy: 'name',
@@ -93,7 +94,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
         console.log('🌐 Online mode - using tRPC');
         createConsumption.mutate(consumptionData);
       } else {
-        console.log('📱 Offline mode - using IndexedDB');
+        console.log('📱 Offline mode - using UnifiedDataService');
         try {
           if (!userId) {
             console.log('❌ User not authenticated');
@@ -102,13 +103,28 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
             return;
           }
 
+          const unifiedDataService = UnifiedDataService.getInstance();
+
+          // Fetch the product to include in the consumption
+          const product = await unifiedDataService.getProduct(productId);
+          if (!product) {
+            throw new Error('Product not found');
+          }
+
           const offlineConsumptionData = {
             ...consumptionData,
             userId,
             date: new Date(),
+            product,
           };
           console.log('🔄 Creating offline consumption with data:', offlineConsumptionData);
-          await offlineDataService.createConsumption(offlineConsumptionData);
+
+          setSyncStatus('syncing');
+          const createdConsumption =
+            await unifiedDataService.createConsumption(offlineConsumptionData);
+          console.log('📱 Consumption created offline:', createdConsumption);
+
+          setSyncStatus('synced');
 
           // Refresh offline data to show the new consumption immediately
           console.log('🔄 Refreshing offline data...');
@@ -129,6 +145,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
           console.log('✅ Offline consumption created successfully');
         } catch (error) {
           console.error('❌ Offline consumption creation failed:', error);
+          setSyncStatus('error');
           setError(
             `Error creating consumption offline: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
           );
@@ -181,6 +198,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
                 isProductsPresented={!!products && products.length > 0}
                 onAmountChange={onAmountChange}
                 userId={userId}
+                syncStatus={syncStatus}
               />
             )}
             {button.modal === PopupTypes.Product && (

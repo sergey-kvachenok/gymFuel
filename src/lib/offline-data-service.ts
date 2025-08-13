@@ -54,7 +54,7 @@ export class OfflineDataService {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     const id = await offlineDb.products.add(tempProduct);
     const product = await offlineDb.products.get(id);
 

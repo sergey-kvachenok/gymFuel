@@ -1,16 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { useOnlineStatus } from './use-online-status';
-import { offlineDataService } from '../lib/offline-data-service';
-import { Consumption } from '../types/api';
+import { UnifiedDataService } from '../lib/unified-data-service';
+import { UnifiedConsumption } from '../lib/unified-data-service';
 
 export const useConsumptionsByDate = (userId: number | null) => {
-  const [offlineConsumptions, setOfflineConsumptions] = useState<Consumption[]>([]);
+  const [offlineConsumptions, setOfflineConsumptions] = useState<UnifiedConsumption[]>([]);
   const [isOfflineLoading, setIsOfflineLoading] = useState(false);
   const [offlineError, setOfflineError] = useState<Error | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const isOnline = useOnlineStatus();
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   // Function to refresh offline data
   const refreshOfflineData = useCallback(() => {
@@ -29,7 +30,8 @@ export const useConsumptionsByDate = (userId: number | null) => {
   // Cache server data to IndexedDB when online
   useEffect(() => {
     if (isOnline && serverQuery.data) {
-      offlineDataService.cacheServerConsumptions(serverQuery.data).catch(console.error);
+      // TODO: Implement server data caching to UnifiedDataService
+      // unifiedDataService.batchCreateConsumptions(serverQuery.data).catch(console.error);
     }
   }, [isOnline, serverQuery.data]);
 
@@ -47,7 +49,7 @@ export const useConsumptionsByDate = (userId: number | null) => {
           const endOfDay = new Date(today);
           endOfDay.setHours(23, 59, 59, 999);
 
-          const offlineData = await offlineDataService.getConsumptions(
+          const offlineData = await unifiedDataService.getConsumptionsByDateRange(
             userId,
             startOfDay,
             endOfDay,
@@ -65,7 +67,7 @@ export const useConsumptionsByDate = (userId: number | null) => {
 
       fetchOfflineConsumptions();
     }
-  }, [isOnline, userId, refreshTrigger]);
+  }, [isOnline, userId, refreshTrigger, unifiedDataService]);
 
   // Simple data source selection
   const data = isOnline ? serverQuery.data || [] : offlineConsumptions;

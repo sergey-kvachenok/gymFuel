@@ -1,5 +1,5 @@
 ---
-description: Rules to execute a task and its sub-tasks using Agent OS
+description: Rules to execute a task and its sub-tasks using Agent OS with role-switching
 globs:
 alwaysApply: false
 version: 1.0
@@ -10,252 +10,24 @@ encoding: UTF-8
 
 ## Overview
 
-Execute a specific task along with its sub-tasks systematically following a multi-agent development workflow with three distinct roles that switch until the task is correctly implemented.
+Execute a specific task along with its sub-tasks systematically following a **single-agent role-switching workflow** with three distinct roles that the AI assistant switches between until the task is correctly implemented.
 
-## Multi-Agent Role System
+## Shared Agent Workflow Concepts
 
-### Agent Roles and Responsibilities
+**REFERENCE**: @~/.agent-os/instructions/core/shared-agent-workflow.md
 
-<agent_roles>
-<senior_software_developer>
-**Role**: Senior Software Developer
-**Primary Responsibility**: Implement functionality and fix code issues
-**Focus Areas**:
+**IMPORTANT**: Before executing any task, you MUST investigate and understand the shared agent workflow concepts from the referenced file. This file contains essential information including:
 
-- Write and modify code
-- Implement features according to specifications
-- Fix bugs and issues identified by other agents
-- Ensure code follows best practices
-- Optimize performance and maintainability
+- Multi-Agent Role System (roles, responsibilities, problem-solving guidelines)
+- Role-Switching Workflow (6-phase process with role indicators)
+- Role-Switching Instructions (how to switch, context preservation, stuck situation handling)
+- Agent Communication and Documentation (documentation requirements, context management)
+- Critical Requirements (completion validation, role switching, test execution safety)
+- File Formats (technical implementation template)
 
-**Test Execution Guidelines**:
+**INSTRUCTION**: Read and follow all rules and guidelines from the shared workflow file during task implementation. Apply the role-switching system, critical requirements, and safety protocols as specified in that file.
 
-- **ALWAYS** use agent-timeout-protector.js for test execution
-- **NEVER** run `npx playwright test` directly without timeout protection
-- **ALWAYS** use: `node tests/e2e/agent-timeout-protector.js <test-file> <test-name> <timeout-ms>`
-- **NEVER** use: `npx playwright test --timeout=30000` (bypasses protection)
-- **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
-- **NEVER** allow tests to run indefinitely
-- **ALWAYS** monitor test progress and force termination if stuck
-  </senior_software_developer>
-
-<tech_lead>
-**Role**: Tech Lead
-**Primary Responsibility**: Critical review and technical guidance
-**Focus Areas**:
-
-- Review implemented code for correctness and completeness
-- Identify architectural issues and design problems
-- Provide technical feedback and recommendations
-- Ensure adherence to technical specifications
-- Validate implementation against requirements
-- Document review findings and issues
-  </tech_lead>
-
-<senior_qa_automation_engineer>
-**Role**: Senior QA Automation Engineer
-**Primary Responsibility**: Test implementation and quality assurance
-**Focus Areas**:
-
-- Write comprehensive E2E tests
-- Implement test automation frameworks
-- Ensure test coverage and quality
-- Debug test failures and issues
-- Maintain test infrastructure
-- Prevent agents from getting stuck with timeout protection
-
-**Test Execution and Safety Guidelines**:
-
-- **ALWAYS** use agent-timeout-protector.js for test execution
-- **NEVER** run Playwright tests directly without timeout protection
-- **ALWAYS** implement timeout protection in test code
-- **NEVER** create tests that can run indefinitely
-- **ALWAYS** monitor test progress and force termination if stuck
-- **NEVER** leave processes hanging after test completion
-- **ALWAYS** use TestTimeoutManager in test setup and teardown
-- **NEVER** rely solely on Playwright's built-in timeouts
-  </senior_qa_automation_engineer>
-  </agent_roles>
-
-### Agent Switching Workflow
-
-<agent_workflow>
-<phase_1_implementation>
-**Phase 1: Implementation**
-AGENT: Senior Software Developer
-ACTION: Implement the task functionality
-OUTCOME: Working implementation or identified issues
-</phase_1_implementation>
-
-<phase_2_review>
-**Phase 2: Review**
-AGENT: Tech Lead
-ACTION: Critically review the implementation
-OUTCOME: Feedback, issues, and recommendations
-DOCUMENT: All findings in task spec folder
-</phase_2_review>
-
-<phase_3_fixes>
-**Phase 3: Fixes**
-AGENT: Senior Software Developer
-ACTION: Fix code based on Tech Lead feedback
-OUTCOME: Improved implementation addressing review issues
-</phase_3_fixes>
-
-<phase_4_testing>
-**Phase 4: Testing**
-AGENT: Senior QA Automation Engineer
-ACTION: Implement comprehensive E2E tests
-OUTCOME: Test coverage and validation
-</phase_4_testing>
-
-<phase_5_resolution>
-**Phase 5: Resolution**
-IF tests fail due to code issues:
-AGENT: Senior Software Developer
-ACTION: Fix code issues
-ELSE IF tests fail due to test issues:
-AGENT: Senior QA Automation Engineer
-ACTION: Fix test implementation
-</phase_5_resolution>
-</agent_workflow>
-
-### Agent Communication and Documentation
-
-<agent_communication>
-<documentation_requirements>
-
-- All agent decisions must be documented in the task spec folder
-- Tech Lead reviews must be saved as separate review files
-- Agent conversations and feedback must be preserved
-- Implementation changes must be tracked and justified
-  </documentation_requirements>
-
-<context_management>
-**Context Management and Memory Preservation**:
-
-- **Monitor Context Usage**: Continuously monitor agent context fill level
-- **Context Threshold**: When context is filled more than 90%, trigger memory preservation
-- **Memory File**: Create/update `memory.md` in task spec folder with current progress
-- **Context Clearing**: Clear context after memory preservation to free space
-- **Context Restoration**: Review necessary specs and memory.md to restore working context
-- **Pipeline Continuity**: Ensure agents never lose scope of work in progress
-
-**Memory Preservation Process**:
-
-1. **Assess Context Level**: Check if context is >90% filled
-2. **Summarize Progress**: Document current findings, conclusions, and next steps
-3. **Write to Memory**: Update `memory.md` with structured progress summary
-4. **Clear Context**: Free up context space for continued work
-5. **Restore Context**: Review relevant specs and memory.md to restore working state
-6. **Continue Work**: Resume task execution with full context awareness
-
-**Memory File Format**:
-
-```markdown
-# Task Memory - [TASK_NAME]
-
-## Current Status
-
-- **Phase**: [Current agent phase]
-- **Progress**: [Percentage complete]
-- **Last Action**: [What was just completed]
-
-## Key Findings
-
-- [Finding 1]
-- [Finding 2]
-
-## Technical Conclusions
-
-- [Conclusion 1]
-- [Conclusion 2]
-
-## Next Steps
-
-- [Next step 1]
-- [Next step 2]
-
-## Blocking Issues
-
-- [Issue 1] - [Status]
-- [Issue 2] - [Status]
-
-## Context Restoration Notes
-
-- **Specs to Review**: [List of spec files]
-- **Key Files Modified**: [List of modified files]
-- **Test Status**: [Current test status]
-```
-
-**Context Restoration Checklist**:
-
-- [ ] Review task spec and requirements
-- [ ] Read memory.md for current progress
-- [ ] Review any recent Tech Lead feedback
-- [ ] Check current test status and failures
-- [ ] Verify implementation state
-- [ ] Confirm next steps from memory
-- [ ] Resume work with full context awareness
-      </context_management>
-
-<review_format>
-**Tech Lead Review Format**:
-
-- Issues identified with severity levels
-- Technical recommendations
-- Code quality assessment
-- Performance and security considerations
-- Acceptance criteria validation
-  </review_format>
-
-<timeout_protection>
-**QA Agent Timeout Protection**:
-
-- Implement timeout mechanisms to prevent agent stuck states
-- Force termination after 30 seconds of no progress
-- Automatic cleanup of stuck processes
-- Agent recovery and continuation capabilities
-  </timeout_protection>
-
-<test_execution_safety>
-**Test Execution Safety Guidelines**:
-
-**✅ SAFE Test Execution Commands**:
-
-```bash
-# Use agent timeout protector for safe test execution
-node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts "test name" 30000
-
-# For specific test with timeout protection
-node tests/e2e/agent-timeout-protector.js tests/e2e/offline-consumption-submission.spec.ts "should create consumption offline" 30000
-
-# For debugging with timeout protection
-node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts --headed 60000
-```
-
-**❌ UNSAFE Test Execution Commands**:
-
-```bash
-# These bypass timeout protection and can cause agent stuck states
-npx playwright test tests/e2e/feature.spec.ts --timeout=30000
-npx playwright test --grep "test name" --timeout=30000
-npx playwright test tests/e2e/feature.spec.ts --headed
-```
-
-**🛡️ Timeout Protection Features**:
-
-- Automatic process monitoring and cleanup
-- Force termination after 30 seconds of no progress
-- Kills all Playwright processes on timeout
-- Prevents agent stuck states
-- Automatic recovery and continuation
-  </test_execution_safety>
-  </agent_communication>
-
-<pre_flight_check>
-EXECUTE: @~/.agent-os/instructions/meta/pre-flight.md
-</pre_flight_check>
+## Process Flow
 
 <process_flow>
 
@@ -283,19 +55,23 @@ Read and analyze the given parent task and all its sub-tasks from tasks.md to ga
 
 ### Step 2: Technical Specification Review
 
-Search and extract relevant sections from technical-spec.md to understand the technical implementation approach for this task.
+Search and extract relevant sections from technical-spec.md and technical-implementation.md to understand the technical implementation approach for this task.
 
 <selective_reading>
 <search_technical_spec>
 FIND sections in technical-spec.md related to: - Current task functionality - Implementation approach for this feature - Integration requirements - Performance criteria
 </search_technical_spec>
+<search_technical_implementation>
+FIND sections in technical-implementation.md related to: - Solution rationale and chosen approach - Pros and cons of selected solution - Comparison with alternative approaches - Technical decision factors - Implementation details and considerations
+</search_technical_implementation>
 </selective_reading>
 
 <instructions>
-  ACTION: Search technical-spec.md for task-relevant sections
-  EXTRACT: Only implementation details for current task
+  ACTION: Search technical-spec.md and technical-implementation.md for task-relevant sections
+  EXTRACT: Implementation details and decision rationale for current task
   SKIP: Unrelated technical specifications
-  FOCUS: Technical approach for this specific feature
+  FOCUS: Technical approach and reasoning for this specific feature
+  UNDERSTAND: Why this solution was chosen and what alternatives were considered
 </instructions>
 
 </step>
@@ -371,38 +147,53 @@ Execute the parent task and all sub-tasks using the multi-agent role system, swi
 </typical_task_structure>
 
 <execution_order>
-<agent_cycle>
+<role_switching_cycle>
 FOR each sub-task until completion:
+
 <senior_developer_phase>
-**Senior Software Developer Phase**:
+**SWITCH TO**: Senior Software Developer role
+**PHASE**: Implementation
+**ACTIONS**:
 
 - Implement the sub-task functionality
 - Write initial code and logic
 - Ensure basic functionality works
 - Document implementation approach
+- Monitor performance and resource usage
+  **ROLE INDICATOR**: [SENIOR DEVELOPER MODE]
   </senior_developer_phase>
 
 <tech_lead_review_phase>
-**Tech Lead Review Phase**:
+**SWITCH TO**: Tech Lead role
+**PHASE**: Review
+**ACTIONS**:
 
 - Critically review the implementation
 - Identify issues, bugs, and improvements
 - Provide technical feedback and recommendations
 - Document review findings in task spec folder
 - Validate against requirements and best practices
+- Check code quality and security compliance
+  **ROLE INDICATOR**: [TECH LEAD MODE]
   </tech_lead_review_phase>
 
 <senior_developer_fix_phase>
-**Senior Software Developer Fix Phase**:
+**SWITCH TO**: Senior Software Developer role
+**PHASE**: Fixes
+**ACTIONS**:
 
 - Address Tech Lead feedback and issues
 - Fix identified problems
 - Improve code quality and architecture
 - Ensure all review recommendations are implemented
+- Optimize performance and maintainability
+  **ROLE INDICATOR**: [SENIOR DEVELOPER MODE]
   </senior_developer_fix_phase>
 
 <qa_testing_phase>
-**Senior QA Automation Engineer Phase**:
+**SWITCH TO**: Senior QA Automation Engineer role
+**PHASE**: Testing
+**ACTIONS**:
 
 - Implement comprehensive E2E tests
 - Ensure test coverage and quality
@@ -412,16 +203,37 @@ FOR each sub-task until completion:
 - **NEVER** run `npx playwright test` directly without protection
 - **ALWAYS** implement TestTimeoutManager in test setup
 - **NEVER** allow tests to run indefinitely
+- Clean up test database after each test run
+  **ROLE INDICATOR**: [QA ENGINEER MODE]
   </qa_testing_phase>
 
 <resolution_phase>
-**Resolution Phase**:
-IF tests fail due to code issues: - Switch back to Senior Software Developer - Fix code issues identified by tests
-ELSE IF tests fail due to test issues: - Switch to Senior QA Automation Engineer - Fix test implementation issues
-ELSE: - Mark sub-task complete - Proceed to next sub-task
+**PHASE**: Resolution
+IF tests fail due to code issues:
+**SWITCH TO**: Senior Software Developer role
+**ACTION**: Fix code issues identified by tests
+ELSE IF tests fail due to test issues:
+**SWITCH TO**: Senior QA Automation Engineer role
+**ACTION**: Fix test implementation issues
+ELSE IF all tests pass:
+**ACTION**: Mark sub-task complete and proceed to next sub-task
+ELSE:
+**ACTION**: Continue fixing until all tests pass (NEVER mark complete with failing tests)
 </resolution_phase>
-</agent_cycle>
-</execution_order>
+
+<cleanup_phase>
+**PHASE**: Cleanup
+**SWITCH TO**: All roles as needed
+**ACTIONS**:
+
+- Remove dead code, console logs, and unnecessary code
+- Clean up test database to initial state
+- Remove temporary files and test artifacts
+- Update documentation
+- Verify code quality and performance
+  </cleanup_phase>
+  </role_switching_cycle>
+  </execution_order>
 
 <test_management>
 <qa_agent_responsibility>
@@ -432,6 +244,7 @@ ELSE: - Mark sub-task complete - Proceed to next sub-task
 - Implement timeout protection mechanisms
 - Debug and fix test failures
 - Maintain test infrastructure and best practices
+- Clean up test environment after each test run
   </qa_agent_responsibility>
 
 <test_coverage>
@@ -442,6 +255,14 @@ ELSE: - Mark sub-task complete - Proceed to next sub-task
 - E2E tests for complete user workflows
 - Error handling and edge case scenarios
 - Performance and reliability testing
+
+**Test Completion Requirements**:
+
+- **ALL TESTS MUST PASS**: No task can be marked complete with failing tests
+- **100% PASS RATE**: Ensure all tests pass before proceeding
+- **NO SKIPPED TESTS**: All tests must run and pass successfully
+- **COMPREHENSIVE COVERAGE**: Tests must cover all implemented functionality
+- **VALIDATION REQUIRED**: Final test run must confirm all tests pass
   </test_coverage>
 
 <timeout_protection>
@@ -455,16 +276,38 @@ ELSE: - Mark sub-task complete - Proceed to next sub-task
   </test_management>
 
 <instructions>
-  ACTION: Execute sub-tasks using multi-agent role system
-  SWITCH: Between Senior Software Developer, Tech Lead, and Senior QA Automation Engineer
-  IMPLEMENT: Code functionality (Senior Software Developer)
-  REVIEW: Implementation quality and correctness (Tech Lead)
-  FIX: Issues based on review feedback (Senior Software Developer)
-  TEST: Comprehensive E2E testing (Senior QA Automation Engineer)
-  RESOLVE: Test failures by switching to appropriate agent
-  DOCUMENT: All agent decisions and reviews in task spec folder
-  PROTECT: Use timeout mechanisms to prevent agent stuck states
+  ACTION: Execute sub-tasks using single-agent role-switching system
+  SWITCH ROLES: Between Senior Software Developer, Tech Lead, and Senior QA Automation Engineer
+  ANNOUNCE: Each role switch with clear role indicators
+  IMPLEMENT: Code functionality (Senior Software Developer role)
+  REVIEW: Implementation quality and correctness (Tech Lead role)
+  FIX: Issues based on review feedback (Senior Software Developer role)
+  TEST: Comprehensive E2E testing (Senior QA Automation Engineer role)
+  RESOLVE: Test failures by switching to appropriate role
+  DOCUMENT: All role decisions and reviews in task spec folder
+  PROTECT: Use timeout mechanisms to prevent stuck states
   UPDATE: Mark each sub-task complete only after all tests pass
+  CLEANUP: Remove dead code, console logs, and clean test environment
+  
+  **CRITICAL COMPLETION REQUIREMENT**:
+  - **NEVER** mark a task or sub-task as complete if any tests are failing
+  - **ALWAYS** resolve all test failures before proceeding to next task
+  - **ALWAYS** ensure 100% test pass rate before marking complete
+  - **NEVER** skip test failures or mark tasks complete with broken tests
+  - **ALWAYS** fix code issues or test issues until all tests pass
+  
+  **ROLE SWITCHING REQUIREMENTS**:
+  - **ALWAYS** announce role changes with role indicators (e.g., [SENIOR DEVELOPER MODE])
+  - **ALWAYS** maintain context and previous work when switching roles
+  - **ALWAYS** think and respond from the current role's perspective
+  - **ALWAYS** document role switches in task documentation
+  
+  **STUCK SITUATION HANDLING**:
+  - **MAXIMUM 3 ATTEMPTS**: Senior Developer tries up to 3 different approaches
+  - **DOCUMENT ATTEMPTS**: Log what was tried and why it failed
+  - **SEEK TECH LEAD ADVICE**: Switch to Tech Lead role for guidance when stuck
+  - **IMPLEMENT ADVICE**: Switch back to Senior Developer and implement recommendations
+  - **ITERATE UNTIL RESOLVED**: Continue this cycle until issue is solved
   
   **CRITICAL TEST EXECUTION SAFETY**:
   - **ALWAYS** use agent-timeout-protector.js for test execution
@@ -472,6 +315,7 @@ ELSE: - Mark sub-task complete - Proceed to next sub-task
   - **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
   - **NEVER** allow tests to run indefinitely
   - **ALWAYS** monitor test progress and force termination if stuck
+  - **ALWAYS** clean up test database after each test run
 </instructions>
 
 </step>
@@ -505,9 +349,59 @@ ELSE: - Confirm all task tests passing - Ready to proceed
 
 </step>
 
-<step number="7" name="task_status_updates">
+<step number="7" name="final_cleanup">
 
-### Step 7: Task Status Updates
+### Step 7: Final Cleanup and Quality Assurance
+
+Perform comprehensive cleanup and quality assurance before marking the task complete.
+
+<cleanup_checklist>
+<code_cleanup>
+
+- Remove all console.log, console.debug, console.error statements
+- Remove dead code and unused functions
+- Remove commented-out code and temporary implementations
+- Clean up unused imports and dependencies
+- Remove unused variables and parameters
+- Update documentation with changes
+  </code_cleanup>
+
+<test_environment_cleanup>
+
+- Reset test database to initial state
+- Remove all test data and temporary records
+- Clean up temporary files and directories
+- Terminate all test processes
+- Clear caches and temporary storage
+- Remove test artifacts
+  </test_environment_cleanup>
+
+<quality_assurance>
+
+- Run code quality checks (ESLint, Prettier)
+- Verify security compliance
+- Check performance impact
+- Validate accessibility standards
+- Confirm test coverage requirements
+- Review documentation updates
+  </quality_assurance>
+  </cleanup_checklist>
+
+<instructions>
+  ACTION: Perform comprehensive cleanup
+  REMOVE: All console logs, dead code, and unnecessary code
+  RESET: Test database to initial state
+  CLEAN: Test environment and temporary files
+  VERIFY: Code quality and security compliance
+  UPDATE: Documentation with changes
+  CONFIRM: All cleanup requirements met
+</instructions>
+
+</step>
+
+<step number="8" name="task_status_updates">
+
+### Step 8: Task Status Updates
 
 Update the tasks.md file immediately after completing each task to track progress.
 
@@ -530,6 +424,13 @@ Update the tasks.md file immediately after completing each task to track progres
   MARK: [x] for completed items immediately
   DOCUMENT: Blocking issues with ⚠️ emoji
   LIMIT: 3 attempts before marking as blocked
+  
+  **TASK COMPLETION VALIDATION**:
+  - **VERIFY**: All tests are passing before marking task complete
+  - **CONFIRM**: No test failures exist for the completed task
+  - **ENSURE**: 100% test pass rate for all task-related tests
+  - **NEVER**: Mark task complete if any tests are failing
+  - **ALWAYS**: Run final test verification before updating status
 </instructions>
 
 </step>

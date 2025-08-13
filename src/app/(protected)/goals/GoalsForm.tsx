@@ -7,7 +7,7 @@ import { GoalType, IFormData } from './types';
 import { CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useOnlineStatus } from '../../../hooks/use-online-status';
-import { offlineDataService } from '../../../lib/offline-data-service';
+import { UnifiedDataService } from '../../../lib/unified-data-service';
 
 const nutritionFields = [
   {
@@ -118,11 +118,21 @@ export default function GoalsForm({ userId }: GoalsFormProps) {
           return;
         }
 
-        await offlineDataService.upsertNutritionGoals({
-          ...formData,
-          userId,
-          id: currentGoals?.id || 0,
-        });
+        const unifiedDataService = UnifiedDataService.getInstance();
+
+        if (currentGoals?.id) {
+          // Update existing goals
+          await unifiedDataService.updateNutritionGoals(currentGoals.id, {
+            ...formData,
+            userId,
+          });
+        } else {
+          // Create new goals
+          await unifiedDataService.createNutritionGoals({
+            ...formData,
+            userId,
+          });
+        }
 
         utils.goals.get.invalidate();
         setIsSubmitting(false);

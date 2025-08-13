@@ -737,7 +737,7 @@ test.describe('Offline Consumption Submission', () => {
     const submitButton = page.locator('[data-testid="product-submit"]');
     const isDisabled = await submitButton.isDisabled();
     console.log('📊 Submit button disabled before clicking:', isDisabled);
-    
+
     if (!isDisabled) {
       // Try to trigger the form submission by dispatching a submit event
       const formSubmitResult = await page.evaluate(() => {
@@ -751,7 +751,7 @@ test.describe('Offline Consumption Submission', () => {
         return 'form not found';
       });
       console.log('📊 Form submit event result:', formSubmitResult);
-      
+
       // Also try clicking the button
       await submitButton.click();
       console.log('📊 Submit button clicked');
@@ -759,14 +759,14 @@ test.describe('Offline Consumption Submission', () => {
       console.log('❌ Submit button is disabled, cannot click');
     }
 
-          // Wait for form submission to complete with timeout
-      console.log('🔄 Waiting for form submission to complete...');
-      try {
-        await page.waitForTimeout(5000); // Wait up to 5 seconds
-        console.log('✅ Form submission wait completed');
-      } catch {
-        console.log('⚠️ Form submission wait timed out');
-      }
+    // Wait for form submission to complete with timeout
+    console.log('🔄 Waiting for form submission to complete...');
+    try {
+      await page.waitForTimeout(5000); // Wait up to 5 seconds
+      console.log('✅ Form submission wait completed');
+    } catch {
+      console.log('⚠️ Form submission wait timed out');
+    }
 
     // In offline mode, there should be no tRPC requests
     const productCreateRequests = await page.evaluate(() => {
@@ -781,7 +781,10 @@ test.describe('Offline Consumption Submission', () => {
           startTime: entry.startTime,
         }));
     });
-    console.log('📊 Product create requests (should be empty in offline mode):', productCreateRequests);
+    console.log(
+      '📊 Product create requests (should be empty in offline mode):',
+      productCreateRequests,
+    );
 
     // Check submit button state before clicking
     const submitButtonState = await page.evaluate(() => {

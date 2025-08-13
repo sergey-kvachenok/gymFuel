@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { useOnlineStatus } from './use-online-status';
-import { offlineDataService } from '../lib/offline-data-service';
-import { NutritionGoals } from '../types/api';
+import { UnifiedDataService } from '../lib/unified-data-service';
+import { UnifiedNutritionGoals } from '../lib/unified-data-service';
 
 export const useNutritionGoals = (userId: number | null) => {
-  const [offlineGoals, setOfflineGoals] = useState<NutritionGoals | null>(null);
+  const [offlineGoals, setOfflineGoals] = useState<UnifiedNutritionGoals | null>(null);
   const [isOfflineLoading, setIsOfflineLoading] = useState(false);
   const [offlineError, setOfflineError] = useState<Error | null>(null);
 
   const isOnline = useOnlineStatus();
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   // Always use tRPC when online
   const serverQuery = trpc.goals.get.useQuery(undefined, {
@@ -20,7 +21,8 @@ export const useNutritionGoals = (userId: number | null) => {
   // Cache server data to IndexedDB when online
   useEffect(() => {
     if (isOnline && serverQuery.data) {
-      offlineDataService.cacheServerNutritionGoals(serverQuery.data).catch(console.error);
+      // TODO: Implement server data caching to UnifiedDataService
+      // unifiedDataService.createNutritionGoals(serverQuery.data).catch(console.error);
     }
   }, [isOnline, serverQuery.data]);
 
@@ -32,7 +34,7 @@ export const useNutritionGoals = (userId: number | null) => {
           setIsOfflineLoading(true);
           setOfflineError(null);
 
-          const offlineData = await offlineDataService.getNutritionGoals(userId);
+          const offlineData = await unifiedDataService.getNutritionGoals(userId);
           setOfflineGoals(offlineData || null);
         } catch (err) {
           setOfflineError(
@@ -45,7 +47,7 @@ export const useNutritionGoals = (userId: number | null) => {
 
       fetchOfflineGoals();
     }
-  }, [isOnline, userId]);
+  }, [isOnline, userId, unifiedDataService]);
 
   // Simple data source selection
   const data = isOnline ? serverQuery.data : offlineGoals;

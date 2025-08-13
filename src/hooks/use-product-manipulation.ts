@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { UpdateProductInput, DeleteProductInput } from '../types/api';
 import { useOnlineStatus } from './use-online-status';
-import { offlineDataService } from '../lib/offline-data-service';
+import { UnifiedDataService } from '../lib/unified-data-service';
 
 export const useProductManipulation = (userId: number | null) => {
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   const updateMutation = trpc.product.update.useMutation({
     onSuccess: () => {
@@ -36,7 +37,7 @@ export const useProductManipulation = (userId: number | null) => {
             alert('User not authenticated');
             return;
           }
-          await offlineDataService.updateProduct(data.id, data);
+          await unifiedDataService.updateProduct(data.id, data);
           // Invalidate queries to refresh UI from IndexedDB
           utils.product.getAll.invalidate();
         } catch (error) {
@@ -46,7 +47,7 @@ export const useProductManipulation = (userId: number | null) => {
         }
       }
     },
-    [updateMutation, isOnline, utils.product.getAll, userId],
+    [updateMutation, isOnline, utils.product.getAll, userId, unifiedDataService],
   );
 
   const deleteProduct = useCallback(
@@ -59,7 +60,7 @@ export const useProductManipulation = (userId: number | null) => {
             alert('User not authenticated');
             return;
           }
-          await offlineDataService.deleteProduct(data.id);
+          await unifiedDataService.deleteProduct(data.id);
           // Invalidate queries to refresh UI from IndexedDB
           utils.product.getAll.invalidate();
         } catch (error) {
@@ -69,7 +70,7 @@ export const useProductManipulation = (userId: number | null) => {
         }
       }
     },
-    [deleteMutation, isOnline, utils.product.getAll, userId],
+    [deleteMutation, isOnline, utils.product.getAll, userId, unifiedDataService],
   );
 
   return {

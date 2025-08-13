@@ -1,130 +1,212 @@
-import { offlineDb, SyncQueueItem } from './offline-db';
+import { UnifiedDataService } from './unified-data-service';
+import { trpcClient } from './trpc-client';
 
-/**
- * Response type from the batch sync tRPC endpoint
- */
-interface BatchSyncResult {
-  processed: number;
-  failed: number;
-  results: unknown[];
-  errors: unknown[];
+export interface SyncStatus {
+  pendingItems: number;
+  lastSyncTime: Date | null;
+  syncErrors: string[];
+  isSyncing: boolean;
 }
 
 /**
- * Service that processes the sync queue when the app comes online
- * Handles batching and conflict resolution for offline changes
+ * Service for handling synchronization between offline database and server
  */
 export class SyncService {
-  private isProcessing = false;
-  private trpcClient: {
-    sync: { batchSync: { mutate: (input: unknown) => Promise<unknown> } };
-  } | null = null;
+  private static instance: SyncService | null = null;
+  private unifiedDataService: UnifiedDataService;
 
-  /**
-   * Initialize the sync service with a tRPC client
-   */
-  initialize(trpcClient: {
-    sync: { batchSync: { mutate: (input: unknown) => Promise<unknown> } };
-  }): void {
-    this.trpcClient = trpcClient;
+  private constructor() {
+    this.unifiedDataService = UnifiedDataService.getInstance();
+  }
+
+  static getInstance(): SyncService {
+    if (!SyncService.instance) {
+      SyncService.instance = new SyncService();
+    }
+    return SyncService.instance;
   }
 
   /**
-   * Process all pending sync queue items
-   * Called when the app comes online or periodically
+   * Sync unsynced items with the server
    */
-  async processSyncQueue(userId: number): Promise<void> {
-    if (this.isProcessing) {
-      console.log('Sync already in progress, skipping...');
-      return;
-    }
-
-    this.isProcessing = true;
-    console.log('Starting sync queue processing...');
-
+  async syncToServer(userId: number): Promise<{ success: boolean; error?: string }> {
     try {
-      // Get all pending sync items for this user
-      const pendingItems = await offlineDb.syncQueue
-        .where('userId')
-        .equals(userId)
-        .sortBy('timestamp');
+      const { products, consumptions, nutritionGoals } =
+        await this.unifiedDataService.getAllUnsyncedItems(userId);
 
-      if (pendingItems.length === 0) {
-        console.log('No items to sync');
-        return;
+      if (products.length === 0 && consumptions.length === 0 && nutritionGoals.length === 0) {
+        return { success: true };
       }
 
-      console.log(`Found ${pendingItems.length} items to sync`);
+      // Prepare operations for products
+      const productOperations = products.map((product) => ({
+        tableName: 'products' as const,
+        operation: 'create' as const,
+        recordId: product.id,
+        data: {
+          name: product.name,
+          calories: product.calories,
+          protein: product.protein,
+          fat: product.fat,
+          carbs: product.carbs,
+        },
+        timestamp: product._lastModified,
+      }));
 
-      // Use the batch sync endpoint
-      await this.processBatchSync(pendingItems);
+      // Prepare operations for consumptions
+      const consumptionOperations = consumptions.map((consumption) => ({
+        tableName: 'consumptions' as const,
+        operation: 'create' as const,
+        recordId: consumption.id,
+        data: {
+          productId: consumption.productId,
+          amount: consumption.amount,
+          date: consumption.date,
+        },
+        timestamp: consumption._lastModified,
+      }));
 
-      // Remove all successfully synced items
-      const itemIds = pendingItems.map((item) => item.id).filter(Boolean) as number[];
-      await offlineDb.syncQueue.bulkDelete(itemIds);
+      // Prepare operations for nutrition goals
+      const nutritionGoalsOperations = nutritionGoals.map((goals) => ({
+        tableName: 'nutritionGoals' as const,
+        operation: 'create' as const,
+        recordId: goals.id,
+        data: {
+          dailyCalories: goals.dailyCalories,
+          dailyProtein: goals.dailyProtein,
+          dailyFat: goals.dailyFat,
+          dailyCarbs: goals.dailyCarbs,
+          goalType: goals.goalType,
+        },
+        timestamp: goals._lastModified,
+      }));
 
-      console.log('Sync queue processing completed successfully');
+      const allOperations = [
+        ...productOperations,
+        ...consumptionOperations,
+        ...nutritionGoalsOperations,
+      ];
+
+      // Use tRPC to sync with server
+      const result = await trpcClient.sync.batchSync.mutate({
+        operations: allOperations,
+      });
+
+      // Process the results
+      await this.processSyncResults(result);
+
+      return { success: true };
     } catch (error) {
-      console.error('Error processing sync queue:', error);
-      throw error;
-    } finally {
-      this.isProcessing = false;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Sync failed:', errorMessage);
+      return { success: false, error: errorMessage };
     }
   }
 
   /**
-   * Process batch sync using the tRPC batch sync endpoint
+   * Process sync results and update local database
    */
-  private async processBatchSync(items: SyncQueueItem[]): Promise<BatchSyncResult> {
-    if (!this.trpcClient) {
-      throw new Error('SyncService not initialized with tRPC client');
-    }
-
-    // Convert sync queue items to the format expected by the batch sync endpoint
-    const operations = items.map((item) => ({
-      tableName: item.tableName,
-      operation: item.operation,
-      recordId: item.recordId,
-      data: item.data,
-      timestamp: item.timestamp,
-    }));
-
-    console.log(`Calling tRPC batch sync with ${operations.length} operations`);
-
-    try {
-      const result = (await this.trpcClient.sync.batchSync.mutate({
-        operations,
-      })) as BatchSyncResult;
-
-      console.log('Batch sync completed:', result);
-
-      if (result.failed > 0) {
-        console.warn(`${result.failed} operations failed during sync:`, result.errors);
-        // TODO: Handle partial failures - could retry failed operations
+  private async processSyncResults(syncResult: {
+    results?: Array<{ success: boolean; operation: { tableName: string; recordId: number } }>;
+    errors?: Array<{ operation: { tableName: string; recordId: number }; error: string }>;
+  }): Promise<void> {
+    // Mark successful operations as synced
+    for (const result of syncResult.results || []) {
+      if (result.success) {
+        await this.unifiedDataService.markAsSynced(
+          result.operation.tableName,
+          result.operation.recordId,
+        );
       }
+    }
 
-      return result;
-    } catch (error) {
-      console.error('Batch sync failed:', error);
-      throw error;
+    // Mark failed operations with sync errors
+    for (const error of syncResult.errors || []) {
+      await this.unifiedDataService.markAsSyncError(
+        error.operation.tableName,
+        error.operation.recordId,
+        error.error,
+      );
     }
   }
 
   /**
-   * Get the current count of items in the sync queue
+   * Get sync status for a user
    */
-  async getSyncQueueCount(userId: number): Promise<number> {
-    return await offlineDb.syncQueue.where('userId').equals(userId).count();
+  async getSyncStatus(userId: number): Promise<SyncStatus> {
+    const { products, consumptions, nutritionGoals } =
+      await this.unifiedDataService.getAllUnsyncedItems(userId);
+
+    const pendingItems = products.length + consumptions.length + nutritionGoals.length;
+
+    // Get sync errors
+    const syncErrors: string[] = [];
+    for (const product of products) {
+      if (product._syncError) {
+        syncErrors.push(`Product ${product.id}: ${product._syncError}`);
+      }
+    }
+    for (const consumption of consumptions) {
+      if (consumption._syncError) {
+        syncErrors.push(`Consumption ${consumption.id}: ${consumption._syncError}`);
+      }
+    }
+    for (const goals of nutritionGoals) {
+      if (goals._syncError) {
+        syncErrors.push(`Nutrition Goals ${goals.id}: ${goals._syncError}`);
+      }
+    }
+
+    // Get last sync time (most recent _syncTimestamp)
+    const allItems = [...products, ...consumptions, ...nutritionGoals];
+    const lastSyncTime = allItems.reduce(
+      (latest, item) => {
+        if (item._syncTimestamp && (!latest || item._syncTimestamp > latest)) {
+          return item._syncTimestamp;
+        }
+        return latest;
+      },
+      null as Date | null,
+    );
+
+    return {
+      pendingItems,
+      lastSyncTime,
+      syncErrors,
+      isSyncing: false, // This would be managed by the BackgroundSyncManager
+    };
   }
 
   /**
-   * Clear all items from the sync queue (for testing/debugging)
+   * Clear sync errors for a user
    */
-  async clearSyncQueue(userId: number): Promise<void> {
-    await offlineDb.syncQueue.where('userId').equals(userId).delete();
-    console.log('Sync queue cleared');
+  async clearSyncErrors(userId: number): Promise<void> {
+    const { products, consumptions, nutritionGoals } =
+      await this.unifiedDataService.getAllUnsyncedItems(userId);
+
+    const clearPromises: Promise<void>[] = [];
+
+    // Clear sync errors for products
+    for (const product of products) {
+      if (product._syncError) {
+        clearPromises.push(this.unifiedDataService.clearSyncError('products', product.id));
+      }
+    }
+
+    // Clear sync errors for consumptions
+    for (const consumption of consumptions) {
+      if (consumption._syncError) {
+        clearPromises.push(this.unifiedDataService.clearSyncError('consumptions', consumption.id));
+      }
+    }
+
+    // Clear sync errors for nutrition goals
+    for (const goals of nutritionGoals) {
+      if (goals._syncError) {
+        clearPromises.push(this.unifiedDataService.clearSyncError('nutritionGoals', goals.id));
+      }
+    }
+
+    await Promise.all(clearPromises);
   }
 }
-
-// Export singleton instance
-export const syncService = new SyncService();
