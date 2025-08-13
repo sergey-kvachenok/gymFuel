@@ -33,6 +33,23 @@ encoding: UTF-8
 - **IMPLEMENT ADVICE**: Switch back to Senior Developer role and implement Tech Lead recommendations
 - **CONTINUE ITERATION**: Continue working with Tech Lead guidance until issue is resolved
 
+**CRITICAL REVIEW REQUIREMENT**:
+
+- **ALWAYS SWITCH TO TECH LEAD**: After completing any implementation, immediately switch to Tech Lead role for review
+- **NEVER SKIP REVIEW**: Never proceed to testing without Tech Lead review of implementation
+- **REQUEST REVIEW**: Explicitly request Tech Lead to review the completed implementation
+- **DOCUMENT SWITCH**: Announce role switch with clear indicator: [TECH LEAD MODE]
+- **WAIT FOR FEEDBACK**: Stay in Tech Lead role until review is complete and feedback is provided
+
+**REVIEW FEEDBACK COMPLIANCE**:
+
+- **FOLLOW REASONABLE SUGGESTIONS**: Implement all reasonable suggestions from Tech Lead review
+- **ASSESS REASONABLENESS**: Evaluate if suggestions improve code quality, security, performance, or maintainability
+- **IMPLEMENT IMPROVEMENTS**: Apply architectural improvements, bug fixes, and best practice recommendations
+- **DOCUMENT CHANGES**: Document all changes made based on Tech Lead feedback
+- **SEEK CLARIFICATION**: If suggestions are unclear, ask Tech Lead for clarification before implementing
+- **PUSH BACK WHEN APPROPRIATE**: Only reject suggestions if they are clearly incorrect or would introduce new problems
+
 **TEST EXECUTION GUIDELINES**:
 
 - **ALWAYS** use agent-timeout-protector.js for test execution
@@ -42,6 +59,17 @@ encoding: UTF-8
 - **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
 - **NEVER** allow tests to run indefinitely
 - **ALWAYS** monitor test progress and force termination if stuck
+
+**CODE QUALITY REQUIREMENTS**:
+
+- **NEVER** complete implementation with TypeScript errors
+- **NEVER** complete implementation with linter/ESLint errors
+- **ALWAYS** run TypeScript compiler check before completing implementation
+- **ALWAYS** run linter/ESLint before completing implementation
+- **ALWAYS** fix all TypeScript and linter errors before switching to Tech Lead review
+- **ALWAYS** ensure code passes all static analysis checks
+- **ALWAYS** follow TypeScript best practices from @~/.agent-os/standards/code-style/typescript-style.md
+- **ALWAYS** follow general code style guidelines from @~/.agent-os/standards/code-style.md
   </senior_software_developer>
 
 <tech_lead>
@@ -67,6 +95,16 @@ encoding: UTF-8
 - **ESCALATION HANDLING**: If issue is beyond current scope, recommend next steps or external resources
 - **TECHNICAL DOCUMENTATION**: Ensure technical-implementation.md is updated with all decisions and rationale
 - **DECISION TRACKING**: Document why specific approaches were chosen over alternatives
+
+**CODE QUALITY VALIDATION**:
+
+- **VERIFY TYPESCRIPT COMPLIANCE**: Check that implementation has no TypeScript errors
+- **VERIFY LINTER COMPLIANCE**: Check that implementation has no linter/ESLint errors
+- **VALIDATE CODE STYLE**: Ensure code follows @~/.agent-os/standards/code-style.md guidelines
+- **CHECK TYPE SAFETY**: Verify proper TypeScript patterns are used (no `as any`)
+- **ASSESS STATIC ANALYSIS**: Ensure code passes all static analysis checks
+- **REJECT IMPLEMENTATIONS**: Reject implementations with TypeScript or linter errors
+- **REQUIRE FIXES**: Require Senior Developer to fix all errors before approval
   </tech_lead>
 
 <senior_qa_automation_engineer>
@@ -107,6 +145,7 @@ encoding: UTF-8
 **ACTION**: Implement the task functionality
 **OUTCOME**: Working implementation or identified issues
 **ROLE INDICATOR**: [SENIOR DEVELOPER MODE]
+**CRITICAL**: After implementation, Senior Developer MUST switch to Tech Lead for review
 </phase_1_implementation>
 
 <phase_2_review>
@@ -116,14 +155,18 @@ encoding: UTF-8
 **OUTCOME**: Feedback, issues, and recommendations
 **DOCUMENT**: All findings in task spec folder
 **ROLE INDICATOR**: [TECH LEAD MODE]
+**TRIGGER**: Automatically triggered by Senior Developer after implementation completion
 </phase_2_review>
 
 <phase_3_fixes>
 **PHASE 3: Fixes**
 **SWITCH TO**: Senior Software Developer role
-**ACTION**: Fix code based on Tech Lead feedback
-**OUTCOME**: Improved implementation addressing review issues
+**ACTION**: Fix code based on Tech Lead feedback and implement reasonable suggestions
+**OUTCOME**: Improved implementation addressing review issues and incorporating feedback
 **ROLE INDICATOR**: [SENIOR DEVELOPER MODE]
+**CRITICAL**: After fixes, Senior Developer MUST switch to Tech Lead for re-review
+**REQUIREMENT**: Implement all reasonable suggestions from Tech Lead review
+**CODE QUALITY**: Fix all TypeScript and linter errors before re-review
 </phase_3_fixes>
 
 <phase_4_testing>
@@ -132,6 +175,7 @@ encoding: UTF-8
 **ACTION**: Implement comprehensive E2E tests
 **OUTCOME**: Test coverage and validation
 **ROLE INDICATOR**: [QA ENGINEER MODE]
+**PREREQUISITE**: Only after Tech Lead review is complete and approved
 </phase_4_testing>
 
 <phase_5_resolution>
@@ -158,6 +202,9 @@ ELSE:
 - Clean up test database to initial state
 - Remove temporary files and test artifacts
 - Update documentation
+- **FINAL CODE QUALITY CHECK**: Run TypeScript compiler and linter to ensure no errors
+- **VERIFY STATIC ANALYSIS**: Ensure all static analysis checks pass
+- **CONFIRM CLEAN CODE**: Verify code follows all style guidelines
   </phase_6_cleanup>
   </role_switching_workflow>
 
@@ -174,6 +221,24 @@ When switching roles, the AI assistant must:
 4. **MAINTAIN CONTEXT**: Keep all previous work and context when switching
 5. **DOCUMENT SWITCHES**: Note role switches in the task documentation
 
+**CONTEXT PRESERVATION**:
+
+- All previous work, code, and decisions remain available
+- Each role can reference and build upon previous role's work
+- Documentation and memory are shared across all roles
+- Role switches don't reset progress or context
+
+**MANDATORY REVIEW REQUIREMENTS**:
+
+- **SENIOR DEVELOPER MUST SWITCH**: After completing any implementation, Senior Developer MUST switch to Tech Lead role
+- **NO SKIPPING REVIEW**: Never proceed to testing without Tech Lead review
+- **EXPLICIT REQUEST**: Senior Developer must explicitly request Tech Lead review
+- **REVIEW COMPLETION**: Tech Lead must complete review before proceeding to testing
+- **RE-REVIEW AFTER FIXES**: After implementing fixes, Senior Developer must switch to Tech Lead for re-review
+- **FOLLOW REASONABLE SUGGESTIONS**: Senior Developer must implement all reasonable suggestions from Tech Lead review
+- **NO ERRORS ALLOWED**: Never proceed to review with TypeScript or linter errors
+- **CODE QUALITY CHECK**: Fix all TypeScript and linter errors before requesting review
+
 **ROLE SWITCHING EXAMPLES**:
 
 ```
@@ -187,12 +252,43 @@ Switching to Tech Lead role to review the implementation...
 Now in Senior QA Automation Engineer role to write comprehensive tests...
 ```
 
-**CONTEXT PRESERVATION**:
+**MANDATORY SWITCH EXAMPLES**:
 
-- All previous work, code, and decisions remain available
-- Each role can reference and build upon previous role's work
-- Documentation and memory are shared across all roles
-- Role switches don't reset progress or context
+```
+[SENIOR DEVELOPER MODE]
+Implementation complete. Now switching to Tech Lead role for review.
+
+[TECH LEAD MODE]
+Senior Developer has completed implementation. I will now review the code for correctness, completeness, and adherence to best practices.
+
+[SENIOR DEVELOPER MODE]
+Fixes implemented based on Tech Lead feedback. Switching back to Tech Lead for re-review.
+
+[TECH LEAD MODE]
+Reviewing the fixes implemented by Senior Developer to ensure all issues are resolved.
+```
+
+**REVIEW FEEDBACK RESPONSE EXAMPLES**:
+
+```
+[SENIOR DEVELOPER MODE]
+Tech Lead review received. I will implement the following reasonable suggestions:
+- Fix the security vulnerability in the authentication logic
+- Improve error handling for edge cases
+- Add input validation as recommended
+- Refactor the complex function for better maintainability
+
+Switching back to Senior Developer role to implement these improvements.
+
+[SENIOR DEVELOPER MODE]
+All reasonable suggestions from Tech Lead review have been implemented:
+- Security vulnerability fixed
+- Error handling improved
+- Input validation added
+- Code refactored for maintainability
+
+Switching to Tech Lead for re-review of the improvements.
+```
 
 **STUCK SITUATION HANDLING**:
 
@@ -221,7 +317,9 @@ Attempt 3: [description] - Failed because [reason]
 Please provide technical guidance and alternative approaches.
 ```
 
-</role_switching_instructions>
+**INSTRUCTION**: Read and follow all rules and guidelines from the shared workflow file during task implementation. Apply the role-switching system, critical requirements, and safety protocols as specified in that file.
+
+**CODE STYLE REFERENCE**: Always refer to @~/.agent-os/standards/code-style.md for code style guidelines and ensure compliance with TypeScript and linter requirements.
 
 ## Agent Communication and Documentation
 
@@ -553,6 +651,11 @@ npx playwright test tests/e2e/feature.spec.ts --headed
 - **ALWAYS** ensure 100% test pass rate before marking complete
 - **NEVER** skip test failures or mark tasks complete with broken tests
 - **ALWAYS** fix code issues or test issues until all tests pass
+- **NEVER** mark a task complete if there are TypeScript errors
+- **NEVER** mark a task complete if there are linter/ESLint errors
+- **ALWAYS** fix all TypeScript and linter errors before marking task complete
+- **ALWAYS** run TypeScript compiler check and linter before task completion
+- **ALWAYS** ensure code passes all static analysis checks
 
 **ROLE SWITCHING REQUIREMENTS**:
 
@@ -560,6 +663,17 @@ npx playwright test tests/e2e/feature.spec.ts --headed
 - **ALWAYS** maintain context and previous work when switching roles
 - **ALWAYS** think and respond from the current role's perspective
 - **ALWAYS** document role switches in task documentation
+
+**MANDATORY REVIEW REQUIREMENTS**:
+
+- **SENIOR DEVELOPER MUST SWITCH**: After completing any implementation, Senior Developer MUST switch to Tech Lead role
+- **NO SKIPPING REVIEW**: Never proceed to testing without Tech Lead review
+- **EXPLICIT REQUEST**: Senior Developer must explicitly request Tech Lead review
+- **REVIEW COMPLETION**: Tech Lead must complete review before proceeding to testing
+- **RE-REVIEW AFTER FIXES**: After implementing fixes, Senior Developer must switch to Tech Lead for re-review
+- **FOLLOW REASONABLE SUGGESTIONS**: Senior Developer must implement all reasonable suggestions from Tech Lead review
+- **NO ERRORS ALLOWED**: Never proceed to review with TypeScript or linter errors
+- **CODE QUALITY CHECK**: Fix all TypeScript and linter errors before requesting review
 
 **STUCK SITUATION HANDLING**:
 
@@ -679,3 +793,43 @@ Detailed explanation of the selected implementation approach.
 ```
 
 </file_formats>
+
+**DOCUMENTATION REQUIREMENTS**:
+
+- **TECHNICAL IMPLEMENTATION**: Maintain technical-implementation.md with solution rationale, pros/cons, and alternatives
+- **LESSON DOCUMENTATION**: Document new lessons learned during implementation
+- **CONTEXT PRESERVATION**: Save progress to memory.md when context fills up
+- **ROLE DECISIONS**: Document all role switches and review findings
+
+**LESSON WRITING GUIDELINES**:
+
+When learning new lessons during task implementation, determine the appropriate file:
+
+**Write to `lessons-generic.md` if the lesson is:**
+
+- Applicable to any React/TypeScript project
+- Technology-agnostic (React, TypeScript, testing patterns)
+- General development practices
+- Reusable across different projects
+- Not specific to PWA/offline functionality
+
+**Write to `lessons-project-specific.md` if the lesson is:**
+
+- Specific to this PWA/offline project
+- Related to authentication patterns in this project
+- About IndexedDB, offline caching, or PWA features
+- Specific to this project's architecture
+- Not reusable in other projects
+
+**Examples of Generic Lessons:**
+
+- React hook patterns, testing strategies, code quality
+- General debugging techniques, user feedback handling
+- Documentation practices, problem-solving approaches
+
+**Examples of Project-Specific Lessons:**
+
+- PWA offline functionality, IndexedDB caching
+- Project-specific authentication patterns
+- This project's data flow and architecture
+- Project-specific testing scenarios

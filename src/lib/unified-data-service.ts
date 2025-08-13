@@ -44,7 +44,7 @@ export class UnifiedDataService {
       _version: 1,
     };
 
-    const id = await unifiedOfflineDb.products.add(unifiedProduct);
+    const id = await unifiedOfflineDb.products.add(unifiedProduct as UnifiedProduct);
     const product = await unifiedOfflineDb.products.get(id);
 
     if (!product) {
@@ -122,7 +122,7 @@ export class UnifiedDataService {
       _version: 1,
     };
 
-    const id = await unifiedOfflineDb.consumptions.add(unifiedConsumption);
+    const id = await unifiedOfflineDb.consumptions.add(unifiedConsumption as UnifiedConsumption);
     const consumption = await unifiedOfflineDb.consumptions.get(id);
 
     if (!consumption) {
@@ -220,7 +220,7 @@ export class UnifiedDataService {
       _version: 1,
     };
 
-    const id = await unifiedOfflineDb.nutritionGoals.add(unifiedGoals);
+    const id = await unifiedOfflineDb.nutritionGoals.add(unifiedGoals as UnifiedNutritionGoals);
     const goals = await unifiedOfflineDb.nutritionGoals.get(id);
 
     if (!goals) {
@@ -388,7 +388,7 @@ export class UnifiedDataService {
       _version: 1,
     }));
 
-    const ids = await unifiedOfflineDb.products.bulkAdd(unifiedProducts);
+    const ids = await unifiedOfflineDb.products.bulkPut(unifiedProducts);
     return await unifiedOfflineDb.products.bulkGet(ids);
   }
 
@@ -442,7 +442,7 @@ export class UnifiedDataService {
       }),
     );
 
-    const ids = await unifiedOfflineDb.consumptions.bulkAdd(unifiedConsumptions);
+    const ids = await unifiedOfflineDb.consumptions.bulkPut(unifiedConsumptions);
     return await unifiedOfflineDb.consumptions.bulkGet(ids);
   }
 

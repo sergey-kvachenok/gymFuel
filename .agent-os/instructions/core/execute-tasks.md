@@ -141,8 +141,9 @@ Review lessons learned and code style guidelines before beginning task execution
 
 <review_checklist>
 <lessons_check>
-IF lessons.md NOT already in context:
-READ @~/.agent-os/product/lessons.md
+IF lessons-generic.md AND lessons-project-specific.md NOT already in context:
+READ @~/.agent-os/product/lessons-generic.md
+READ @~/.agent-os/product/lessons-project-specific.md
 REVIEW: Lessons relevant to current task type and technology stack
 APPLY: Documented best practices and avoid known mistakes
 ELSE:

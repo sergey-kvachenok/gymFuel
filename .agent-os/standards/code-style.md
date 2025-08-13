@@ -12,7 +12,7 @@ Global code style rules for Agent OS projects.
 - Always discuss all details, requirements, and implementation approach first
 - Ask clarifying questions to understand the full scope and requirements
 - Present the proposed solution and get confirmation before proceeding
-- **Review `@lessons.md`** to check for relevant lessons before planning similar tasks
+- **Review `@lessons-generic.md` and `@lessons-project-specific.md`** to check for relevant lessons before planning similar tasks
 
 ### Implementation Confirmation
 
@@ -25,7 +25,7 @@ Global code style rules for Agent OS projects.
 - Only write code after explicit confirmation to implement
 - Follow all style guidelines below when implementing
 - Break down complex implementations into smaller, manageable tasks
-- **Check `@lessons.md` file** before starting any task to avoid repeating previous mistakes
+- **Check `@lessons-generic.md` and `@lessons-project-specific.md` files** before starting any task to avoid repeating previous mistakes
 - **Refer to `@remember-lesson.md`** for guidance on learning from feedback and avoiding repeated errors
 
 ### Lead Senior Software Developer Review Phase
@@ -41,7 +41,7 @@ After completing a task and its subtasks, the agent should switch to the role of
 
 2. **Review Against Standards**:
    - Check compliance with `@code-style.md` guidelines
-   - Verify adherence to lessons learned in `@lessons.md`
+   - Verify adherence to lessons learned in `@lessons-generic.md` and `@lessons-project-specific.md`
    - Assess architectural decisions and patterns used
    - Evaluate error handling and edge cases
    - Review test coverage and quality
@@ -111,7 +111,7 @@ After completing a task and its subtasks, the agent should switch to the role of
 - **Clear Role Separation**: When switching to Lead Senior Developer role, explicitly state the role change
 - **Objective Perspective**: Review code as if it was written by another developer
 - **Constructive Feedback**: Provide actionable, specific feedback
-- **Knowledge Integration**: Apply both `@code-style.md` and `@lessons.md` insights
+- **Knowledge Integration**: Apply both `@code-style.md` and lessons insights
 - **Quality Focus**: Prioritize code quality, maintainability, and user experience
 
 This review process ensures that all code meets senior-level standards and incorporates lessons learned from previous development cycles.

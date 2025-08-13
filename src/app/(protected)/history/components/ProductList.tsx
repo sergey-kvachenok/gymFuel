@@ -23,7 +23,7 @@ const ProductList: FC<ProductListProps> = ({ userId }) => {
     orderBy: 'name',
     orderDirection: 'asc',
   });
-  const { updateProduct, deleteProduct, isUpdating, isDeleting } = useProductManipulation();
+  const { updateProduct, deleteProduct, isUpdating, isDeleting } = useProductManipulation(userId);
 
   const renderProduct = useCallback(
     (product: Product) => (

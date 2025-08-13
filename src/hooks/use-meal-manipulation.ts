@@ -2,11 +2,12 @@ import { useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { UpdateConsumptionInput, DeleteConsumptionInput } from '../types/api';
 import { useOnlineStatus } from './use-online-status';
-import { offlineDataService } from '../lib/offline-data-service';
+import { UnifiedDataService } from '../lib/unified-data-service';
 
 export const useMealManipulation = (userId: number | null) => {
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
+  const unifiedDataService = UnifiedDataService.getInstance();
 
   const updateMutation = trpc.consumption.update.useMutation({
     onSuccess: () => {
@@ -36,7 +37,7 @@ export const useMealManipulation = (userId: number | null) => {
             alert('User not authenticated');
             return;
           }
-          await offlineDataService.updateConsumption(data.id, { amount: data.amount });
+          await unifiedDataService.updateConsumption(data.id, { amount: data.amount });
           // Invalidate queries to refresh UI from IndexedDB
           utils.consumption.invalidate();
         } catch (error) {
@@ -46,7 +47,7 @@ export const useMealManipulation = (userId: number | null) => {
         }
       }
     },
-    [updateMutation, isOnline, utils.consumption, userId],
+    [updateMutation, isOnline, utils.consumption, userId, unifiedDataService],
   );
 
   const deleteMeal = useCallback(
@@ -59,7 +60,7 @@ export const useMealManipulation = (userId: number | null) => {
             alert('User not authenticated');
             return;
           }
-          await offlineDataService.deleteConsumption(data.id);
+          await unifiedDataService.deleteConsumption(data.id);
           // Invalidate queries to refresh UI from IndexedDB
           utils.consumption.invalidate();
         } catch (error) {
@@ -69,7 +70,7 @@ export const useMealManipulation = (userId: number | null) => {
         }
       }
     },
-    [deleteMutation, isOnline, utils.consumption, userId],
+    [deleteMutation, isOnline, utils.consumption, userId, unifiedDataService],
   );
 
   return {

@@ -80,7 +80,7 @@ FIND sections in technical-implementation.md related to: - Solution rationale an
 
 ### Step 3: Lessons and Best Practices Review
 
-Use the context-fetcher subagent to retrieve relevant lessons from @~/.agent-os/product/lessons.md and sections from @~/.agent-os/standards/best-practices.md that apply to the current task's technology stack and feature type.
+Use the context-fetcher subagent to retrieve relevant lessons from @~/.agent-os/product/lessons-generic.md and @~/.agent-os/product/lessons-project-specific.md and sections from @~/.agent-os/standards/best-practices.md that apply to the current task's technology stack and feature type.
 
 <selective_reading>
 <search_lessons>
@@ -93,19 +93,14 @@ FIND sections relevant to: - Task's technology stack - Feature type being implem
 
 <instructions>
   ACTION: Use context-fetcher subagent
-  REQUEST: "Find relevant lessons from lessons.md for:
+  REQUEST: "Find relevant lessons from lessons-generic.md and lessons-project-specific.md for:
             - Task type: [CURRENT_TASK_TYPE]
             - Technology stack: [CURRENT_TECH]
             - Implementation patterns being used
             - Common mistakes to avoid"
-  REQUEST: "Find best practices sections relevant to:
-            - Task's technology stack: [CURRENT_TECH]
-            - Feature type: [CURRENT_FEATURE_TYPE]
-            - Testing approaches needed
-            - Code organization patterns"
   PROCESS: Returned lessons and best practices
   APPLY: Relevant patterns and avoid documented mistakes
-</instructions>
+  </instructions>
 
 </step>
 
@@ -295,6 +290,11 @@ ELSE:
   - **ALWAYS** ensure 100% test pass rate before marking complete
   - **NEVER** skip test failures or mark tasks complete with broken tests
   - **ALWAYS** fix code issues or test issues until all tests pass
+  - **NEVER** mark a task complete if there are TypeScript errors
+  - **NEVER** mark a task complete if there are linter/ESLint errors
+  - **ALWAYS** fix all TypeScript and linter errors before marking task complete
+  - **ALWAYS** run TypeScript compiler check and linter before task completion
+  - **ALWAYS** ensure code passes all static analysis checks
   
   **ROLE SWITCHING REQUIREMENTS**:
   - **ALWAYS** announce role changes with role indicators (e.g., [SENIOR DEVELOPER MODE])
@@ -379,6 +379,9 @@ Perform comprehensive cleanup and quality assurance before marking the task comp
 <quality_assurance>
 
 - Run code quality checks (ESLint, Prettier)
+- **Run TypeScript compiler check to ensure no type errors**
+- **Run linter/ESLint to ensure no linting errors**
+- **Verify all static analysis checks pass**
 - Verify security compliance
 - Check performance impact
 - Validate accessibility standards

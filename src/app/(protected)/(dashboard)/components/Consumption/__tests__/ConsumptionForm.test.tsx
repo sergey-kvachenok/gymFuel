@@ -1,18 +1,31 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ConsumptionForm } from '../ConsumptionForm';
 import { ProductOption } from '../ProductCombobox';
 
 // Mock the ProductCombobox component
 jest.mock('../ProductCombobox', () => ({
-  ProductCombobox: ({ value, onChange, userId }: any) => (
+  ProductCombobox: ({
+    value,
+    onChange,
+  }: {
+    value: ProductOption | null;
+    onChange: (product: ProductOption | null) => void;
+  }) => (
     <div data-testid="product-combobox">
       <select
         data-testid="product-select"
         value={value?.id || ''}
         onChange={(e) => {
           const product = e.target.value
-            ? { id: parseInt(e.target.value), name: 'Test Product' }
+            ? {
+                id: parseInt(e.target.value),
+                name: 'Test Product',
+                calories: 100,
+                protein: 10,
+                fat: 5,
+                carbs: 20,
+              }
             : null;
           onChange(product);
         }}
@@ -99,7 +112,14 @@ describe('ConsumptionForm', () => {
     });
 
     it('should display selected product in combobox', () => {
-      const selectedProduct = { id: 1, name: 'Test Product 1' };
+      const selectedProduct = {
+        id: 1,
+        name: 'Test Product 1',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+      };
       render(<ConsumptionForm {...defaultProps} selectedProduct={selectedProduct} />);
 
       const productSelect = screen.getByTestId('product-select');
@@ -133,7 +153,14 @@ describe('ConsumptionForm', () => {
   describe('Form Validation', () => {
     it('should be able to submit form with valid data', () => {
       const mockSubmitConsumption = jest.fn();
-      const selectedProduct = { id: 1, name: 'Test Product 1' };
+      const selectedProduct = {
+        id: 1,
+        name: 'Test Product 1',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+      };
 
       render(
         <ConsumptionForm

@@ -97,7 +97,7 @@
 
 ## Task 7: Documentation and Cleanup
 
-- [ ] 7.1 Update lessons.md with new findings
+- [ ] 7.1 Update lessons-project-specific.md with new findings
 - [ ] 7.2 Document the fixes applied
 - [ ] 7.3 Remove any debug code or console logs
 - [ ] 7.4 Verify code follows style guidelines

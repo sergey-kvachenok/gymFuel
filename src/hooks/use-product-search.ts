@@ -98,7 +98,7 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
 
       fetchOfflineProducts();
     }
-  }, [isOnline, userId, searchQuery, orderBy, orderDirection, limit]); // Include all dependencies
+  }, [isOnline, userId, searchQuery, orderBy, orderDirection, limit, unifiedDataService]); // Include all dependencies
 
   // Simple data source selection
   const products = isOnline ? serverQuery.data || [] : offlineProducts;

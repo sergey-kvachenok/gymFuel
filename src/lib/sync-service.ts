@@ -125,7 +125,7 @@ export class SyncService {
       await this.unifiedDataService.markAsSyncError(
         error.operation.tableName,
         error.operation.recordId,
-        error.error,
+        new Error(error.error),
       );
     }
   }

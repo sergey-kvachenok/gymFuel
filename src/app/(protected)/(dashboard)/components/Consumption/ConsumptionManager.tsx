@@ -153,7 +153,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
         }
       }
     },
-    [selectedProduct, amount, createConsumption, isOnline, utils, userId],
+    [selectedProduct, amount, createConsumption, isOnline, utils, userId, refreshOfflineData],
   );
 
   const onAmountChange = useCallback(
