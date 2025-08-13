@@ -388,7 +388,7 @@ export class UnifiedDataService {
       _version: 1,
     }));
 
-    const ids = await unifiedOfflineDb.products.bulkPut(unifiedProducts);
+    const ids = await unifiedOfflineDb.products.bulkAdd(unifiedProducts as UnifiedProduct[]);
     return await unifiedOfflineDb.products.bulkGet(ids);
   }
 
