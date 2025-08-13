@@ -81,12 +81,22 @@ User Action → IndexedDB → UI Update → Background Sync → Server
 - Update UI components
 - Implement server integration
 
-### Phase 3: Migration & Testing (Tasks 8-10)
+### Phase 3: Migration & Testing (Tasks 8-9)
 
 - Migrate existing data
 - Remove old code
 - Comprehensive testing
-- Performance optimization
+
+### Phase 4: Online Functionality & Test Cleanup (Tasks 10-11)
+
+- Verify online functionality still works
+- Review and update e2e tests
+- Ensure backward compatibility
+
+### Phase 5: Performance Optimization (Task 12)
+
+- Performance testing and optimization
+- Memory management improvements
 
 ## Migration Strategy
 

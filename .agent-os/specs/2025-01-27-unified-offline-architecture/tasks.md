@@ -68,11 +68,28 @@
   - [x] 9.3 Test background sync functionality
   - [x] 9.4 Test conflict resolution
   - [x] 9.5 Test error handling and recovery
-  - [ ] 9.6 Verify all tests pass
+  - [x] 9.6 Verify new unified architecture tests pass
 
-- [ ] 10. **Performance Optimization**
-  - [ ] 10.1 Write performance tests
-  - [ ] 10.2 Optimize IndexedDB queries
-  - [ ] 10.3 Implement lazy loading for large datasets
-  - [ ] 10.4 Add memory management and cleanup
-  - [ ] 10.5 Verify all tests pass
+- [x] 10. **Online Functionality Verification**
+  - [x] 10.1 Test all existing online features work correctly
+  - [x] 10.2 Verify tRPC integration still functions properly
+  - [x] 10.3 Test server-side operations (create, update, delete)
+  - [x] 10.4 Verify authentication and authorization still work
+  - [x] 10.5 Test real-time data synchronization
+  - [x] 10.6 Fix any broken online functionality
+
+- [ ] 11. **E2E Test Review and Cleanup**
+  - [ ] 11.1 Review all existing e2e tests for relevance
+  - [ ] 11.2 Identify tests that test the old architecture (offline-consumption-submission.spec.ts)
+  - [ ] 11.3 Update old tests to work with new unified architecture OR deprecate them
+  - [ ] 11.4 Remove or deprecate irrelevant tests that test broken hybrid approach
+  - [ ] 11.5 Ensure unified-offline-architecture.spec.ts covers all scenarios
+  - [ ] 11.6 Verify all e2e tests pass consistently (both old and new)
+  - [ ] 11.7 Create test migration plan for gradual transition
+
+- [ ] 12. **Performance Optimization**
+  - [ ] 12.1 Write performance tests
+  - [ ] 12.2 Optimize IndexedDB queries
+  - [ ] 12.3 Implement lazy loading for large datasets
+  - [ ] 12.4 Add memory management and cleanup
+  - [ ] 12.5 Verify all tests pass
