@@ -25,8 +25,8 @@ export class OfflineDatabase extends Dexie {
   constructor() {
     super('GymFuelOfflineDB');
 
-    // Define schema version 1
-    this.version(1).stores({
+    // Define schema version 10
+    this.version(10).stores({
       products: '&id, userId, name, createdAt, updatedAt',
       consumptions: '&id, userId, productId, date, createdAt, updatedAt',
       nutritionGoals: '&id, userId, createdAt, updatedAt',

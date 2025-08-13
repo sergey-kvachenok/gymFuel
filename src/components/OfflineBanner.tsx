@@ -13,7 +13,10 @@ const OfflineBanner: FC = () => {
   }
 
   return (
-    <div className="w-full bg-red-600 text-white text-center py-2 px-4 shadow-md flex items-center justify-center gap-2">
+    <div
+      className="w-full bg-red-600 text-white text-center py-2 px-4 shadow-md flex items-center justify-center gap-2"
+      data-testid="offline-banner"
+    >
       <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
       <span className="text-sm font-medium">
         You are currently offline. Some features may not be available.

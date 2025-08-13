@@ -63,6 +63,7 @@ export const ProductCombobox: FC<ProductComboboxProps> = ({
         type="button"
         onClick={() => setOpen(!open)}
         disabled={disabled}
+        data-testid="product-combobox-button"
         className={`w-full p-2 border border-gray-300 rounded-md bg-white text-left ${
           disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-gray-400'
         }`}

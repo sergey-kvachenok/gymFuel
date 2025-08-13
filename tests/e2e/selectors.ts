@@ -88,6 +88,8 @@ export const UI_SELECTORS = {
   ERROR: 'error',
   SUCCESS: 'success',
   EMPTY_STATE: 'empty-state',
+  OFFLINE_BANNER: 'offline-banner',
+  ERROR_MESSAGE: 'error-message',
 } as const;
 
 // CSS Class Selectors (for cases where data-testid is not available)

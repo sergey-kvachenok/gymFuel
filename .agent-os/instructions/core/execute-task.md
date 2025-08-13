@@ -10,7 +10,248 @@ encoding: UTF-8
 
 ## Overview
 
-Execute a specific task along with its sub-tasks systematically following a TDD development workflow.
+Execute a specific task along with its sub-tasks systematically following a multi-agent development workflow with three distinct roles that switch until the task is correctly implemented.
+
+## Multi-Agent Role System
+
+### Agent Roles and Responsibilities
+
+<agent_roles>
+<senior_software_developer>
+**Role**: Senior Software Developer
+**Primary Responsibility**: Implement functionality and fix code issues
+**Focus Areas**:
+
+- Write and modify code
+- Implement features according to specifications
+- Fix bugs and issues identified by other agents
+- Ensure code follows best practices
+- Optimize performance and maintainability
+
+**Test Execution Guidelines**:
+
+- **ALWAYS** use agent-timeout-protector.js for test execution
+- **NEVER** run `npx playwright test` directly without timeout protection
+- **ALWAYS** use: `node tests/e2e/agent-timeout-protector.js <test-file> <test-name> <timeout-ms>`
+- **NEVER** use: `npx playwright test --timeout=30000` (bypasses protection)
+- **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
+- **NEVER** allow tests to run indefinitely
+- **ALWAYS** monitor test progress and force termination if stuck
+  </senior_software_developer>
+
+<tech_lead>
+**Role**: Tech Lead
+**Primary Responsibility**: Critical review and technical guidance
+**Focus Areas**:
+
+- Review implemented code for correctness and completeness
+- Identify architectural issues and design problems
+- Provide technical feedback and recommendations
+- Ensure adherence to technical specifications
+- Validate implementation against requirements
+- Document review findings and issues
+  </tech_lead>
+
+<senior_qa_automation_engineer>
+**Role**: Senior QA Automation Engineer
+**Primary Responsibility**: Test implementation and quality assurance
+**Focus Areas**:
+
+- Write comprehensive E2E tests
+- Implement test automation frameworks
+- Ensure test coverage and quality
+- Debug test failures and issues
+- Maintain test infrastructure
+- Prevent agents from getting stuck with timeout protection
+
+**Test Execution and Safety Guidelines**:
+
+- **ALWAYS** use agent-timeout-protector.js for test execution
+- **NEVER** run Playwright tests directly without timeout protection
+- **ALWAYS** implement timeout protection in test code
+- **NEVER** create tests that can run indefinitely
+- **ALWAYS** monitor test progress and force termination if stuck
+- **NEVER** leave processes hanging after test completion
+- **ALWAYS** use TestTimeoutManager in test setup and teardown
+- **NEVER** rely solely on Playwright's built-in timeouts
+  </senior_qa_automation_engineer>
+  </agent_roles>
+
+### Agent Switching Workflow
+
+<agent_workflow>
+<phase_1_implementation>
+**Phase 1: Implementation**
+AGENT: Senior Software Developer
+ACTION: Implement the task functionality
+OUTCOME: Working implementation or identified issues
+</phase_1_implementation>
+
+<phase_2_review>
+**Phase 2: Review**
+AGENT: Tech Lead
+ACTION: Critically review the implementation
+OUTCOME: Feedback, issues, and recommendations
+DOCUMENT: All findings in task spec folder
+</phase_2_review>
+
+<phase_3_fixes>
+**Phase 3: Fixes**
+AGENT: Senior Software Developer
+ACTION: Fix code based on Tech Lead feedback
+OUTCOME: Improved implementation addressing review issues
+</phase_3_fixes>
+
+<phase_4_testing>
+**Phase 4: Testing**
+AGENT: Senior QA Automation Engineer
+ACTION: Implement comprehensive E2E tests
+OUTCOME: Test coverage and validation
+</phase_4_testing>
+
+<phase_5_resolution>
+**Phase 5: Resolution**
+IF tests fail due to code issues:
+AGENT: Senior Software Developer
+ACTION: Fix code issues
+ELSE IF tests fail due to test issues:
+AGENT: Senior QA Automation Engineer
+ACTION: Fix test implementation
+</phase_5_resolution>
+</agent_workflow>
+
+### Agent Communication and Documentation
+
+<agent_communication>
+<documentation_requirements>
+
+- All agent decisions must be documented in the task spec folder
+- Tech Lead reviews must be saved as separate review files
+- Agent conversations and feedback must be preserved
+- Implementation changes must be tracked and justified
+  </documentation_requirements>
+
+<context_management>
+**Context Management and Memory Preservation**:
+
+- **Monitor Context Usage**: Continuously monitor agent context fill level
+- **Context Threshold**: When context is filled more than 90%, trigger memory preservation
+- **Memory File**: Create/update `memory.md` in task spec folder with current progress
+- **Context Clearing**: Clear context after memory preservation to free space
+- **Context Restoration**: Review necessary specs and memory.md to restore working context
+- **Pipeline Continuity**: Ensure agents never lose scope of work in progress
+
+**Memory Preservation Process**:
+
+1. **Assess Context Level**: Check if context is >90% filled
+2. **Summarize Progress**: Document current findings, conclusions, and next steps
+3. **Write to Memory**: Update `memory.md` with structured progress summary
+4. **Clear Context**: Free up context space for continued work
+5. **Restore Context**: Review relevant specs and memory.md to restore working state
+6. **Continue Work**: Resume task execution with full context awareness
+
+**Memory File Format**:
+
+```markdown
+# Task Memory - [TASK_NAME]
+
+## Current Status
+
+- **Phase**: [Current agent phase]
+- **Progress**: [Percentage complete]
+- **Last Action**: [What was just completed]
+
+## Key Findings
+
+- [Finding 1]
+- [Finding 2]
+
+## Technical Conclusions
+
+- [Conclusion 1]
+- [Conclusion 2]
+
+## Next Steps
+
+- [Next step 1]
+- [Next step 2]
+
+## Blocking Issues
+
+- [Issue 1] - [Status]
+- [Issue 2] - [Status]
+
+## Context Restoration Notes
+
+- **Specs to Review**: [List of spec files]
+- **Key Files Modified**: [List of modified files]
+- **Test Status**: [Current test status]
+```
+
+**Context Restoration Checklist**:
+
+- [ ] Review task spec and requirements
+- [ ] Read memory.md for current progress
+- [ ] Review any recent Tech Lead feedback
+- [ ] Check current test status and failures
+- [ ] Verify implementation state
+- [ ] Confirm next steps from memory
+- [ ] Resume work with full context awareness
+      </context_management>
+
+<review_format>
+**Tech Lead Review Format**:
+
+- Issues identified with severity levels
+- Technical recommendations
+- Code quality assessment
+- Performance and security considerations
+- Acceptance criteria validation
+  </review_format>
+
+<timeout_protection>
+**QA Agent Timeout Protection**:
+
+- Implement timeout mechanisms to prevent agent stuck states
+- Force termination after 30 seconds of no progress
+- Automatic cleanup of stuck processes
+- Agent recovery and continuation capabilities
+  </timeout_protection>
+
+<test_execution_safety>
+**Test Execution Safety Guidelines**:
+
+**✅ SAFE Test Execution Commands**:
+
+```bash
+# Use agent timeout protector for safe test execution
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts "test name" 30000
+
+# For specific test with timeout protection
+node tests/e2e/agent-timeout-protector.js tests/e2e/offline-consumption-submission.spec.ts "should create consumption offline" 30000
+
+# For debugging with timeout protection
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts --headed 60000
+```
+
+**❌ UNSAFE Test Execution Commands**:
+
+```bash
+# These bypass timeout protection and can cause agent stuck states
+npx playwright test tests/e2e/feature.spec.ts --timeout=30000
+npx playwright test --grep "test name" --timeout=30000
+npx playwright test tests/e2e/feature.spec.ts --headed
+```
+
+**🛡️ Timeout Protection Features**:
+
+- Automatic process monitoring and cleanup
+- Force termination after 30 seconds of no progress
+- Kills all Playwright processes on timeout
+- Prevents agent stuck states
+- Automatic recovery and continuation
+  </test_execution_safety>
+  </agent_communication>
 
 <pre_flight_check>
 EXECUTE: @~/.agent-os/instructions/meta/pre-flight.md
@@ -119,9 +360,9 @@ FIND style rules for: - Languages used in this task - File types being modified 
 
 <step number="5" name="task_execution">
 
-### Step 5: Task and Sub-task Execution
+### Step 5: Multi-Agent Task Execution
 
-Execute the parent task and all sub-tasks in order using test-driven development (TDD) approach.
+Execute the parent task and all sub-tasks using the multi-agent role system, switching between agents until the task is correctly implemented and all tests pass.
 
 <typical_task_structure>
 <first_subtask>Write tests for [feature]</first_subtask>
@@ -130,32 +371,107 @@ Execute the parent task and all sub-tasks in order using test-driven development
 </typical_task_structure>
 
 <execution_order>
-<subtask_1_tests>
-IF sub-task 1 is "Write tests for [feature]": - Write all tests for the parent feature - Include unit tests, integration tests, edge cases - Run tests to ensure they fail appropriately - Mark sub-task 1 complete
-</subtask_1_tests>
+<agent_cycle>
+FOR each sub-task until completion:
+<senior_developer_phase>
+**Senior Software Developer Phase**:
 
-<middle_subtasks_implementation>
-FOR each implementation sub-task (2 through n-1): - Implement the specific functionality - Make relevant tests pass - Update any adjacent/related tests if needed - Refactor while keeping tests green - Mark sub-task complete
-</middle_subtasks_implementation>
+- Implement the sub-task functionality
+- Write initial code and logic
+- Ensure basic functionality works
+- Document implementation approach
+  </senior_developer_phase>
 
-<final_subtask_verification>
-IF final sub-task is "Verify all tests pass": - Run entire test suite - Fix any remaining failures - Ensure no regressions - Mark final sub-task complete
-</final_subtask_verification>
+<tech_lead_review_phase>
+**Tech Lead Review Phase**:
+
+- Critically review the implementation
+- Identify issues, bugs, and improvements
+- Provide technical feedback and recommendations
+- Document review findings in task spec folder
+- Validate against requirements and best practices
+  </tech_lead_review_phase>
+
+<senior_developer_fix_phase>
+**Senior Software Developer Fix Phase**:
+
+- Address Tech Lead feedback and issues
+- Fix identified problems
+- Improve code quality and architecture
+- Ensure all review recommendations are implemented
+  </senior_developer_fix_phase>
+
+<qa_testing_phase>
+**Senior QA Automation Engineer Phase**:
+
+- Implement comprehensive E2E tests
+- Ensure test coverage and quality
+- Run tests and validate functionality
+- Use timeout protection to prevent stuck states
+- **ALWAYS** use agent-timeout-protector.js for test execution
+- **NEVER** run `npx playwright test` directly without protection
+- **ALWAYS** implement TestTimeoutManager in test setup
+- **NEVER** allow tests to run indefinitely
+  </qa_testing_phase>
+
+<resolution_phase>
+**Resolution Phase**:
+IF tests fail due to code issues: - Switch back to Senior Software Developer - Fix code issues identified by tests
+ELSE IF tests fail due to test issues: - Switch to Senior QA Automation Engineer - Fix test implementation issues
+ELSE: - Mark sub-task complete - Proceed to next sub-task
+</resolution_phase>
+</agent_cycle>
 </execution_order>
 
 <test_management>
-<new_tests> - Written in first sub-task - Cover all aspects of parent feature - Include edge cases and error handling
-</new_tests>
-<test_updates> - Made during implementation sub-tasks - Update expectations for changed behavior - Maintain backward compatibility
-</test_updates>
-</test_management>
+<qa_agent_responsibility>
+**Senior QA Automation Engineer Responsibility**:
+
+- Write comprehensive E2E tests for each sub-task
+- Ensure test coverage includes edge cases and error handling
+- Implement timeout protection mechanisms
+- Debug and fix test failures
+- Maintain test infrastructure and best practices
+  </qa_agent_responsibility>
+
+<test_coverage>
+**Test Coverage Requirements**:
+
+- Unit tests for individual components
+- Integration tests for feature interactions
+- E2E tests for complete user workflows
+- Error handling and edge case scenarios
+- Performance and reliability testing
+  </test_coverage>
+
+<timeout_protection>
+**Timeout Protection**:
+
+- Use agent-timeout-protector.js for stuck test prevention
+- Force termination after 30 seconds of no progress
+- Automatic cleanup of stuck processes
+- Agent recovery and continuation capabilities
+  </timeout_protection>
+  </test_management>
 
 <instructions>
-  ACTION: Execute sub-tasks in their defined order
-  RECOGNIZE: First sub-task typically writes all tests
-  IMPLEMENT: Middle sub-tasks build functionality
-  VERIFY: Final sub-task ensures all tests pass
-  UPDATE: Mark each sub-task complete as finished
+  ACTION: Execute sub-tasks using multi-agent role system
+  SWITCH: Between Senior Software Developer, Tech Lead, and Senior QA Automation Engineer
+  IMPLEMENT: Code functionality (Senior Software Developer)
+  REVIEW: Implementation quality and correctness (Tech Lead)
+  FIX: Issues based on review feedback (Senior Software Developer)
+  TEST: Comprehensive E2E testing (Senior QA Automation Engineer)
+  RESOLVE: Test failures by switching to appropriate agent
+  DOCUMENT: All agent decisions and reviews in task spec folder
+  PROTECT: Use timeout mechanisms to prevent agent stuck states
+  UPDATE: Mark each sub-task complete only after all tests pass
+  
+  **CRITICAL TEST EXECUTION SAFETY**:
+  - **ALWAYS** use agent-timeout-protector.js for test execution
+  - **NEVER** run `npx playwright test` directly without timeout protection
+  - **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
+  - **NEVER** allow tests to run indefinitely
+  - **ALWAYS** monitor test progress and force termination if stuck
 </instructions>
 
 </step>

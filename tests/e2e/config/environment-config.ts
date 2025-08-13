@@ -76,7 +76,7 @@ const DEFAULT_CONFIGS: Record<Environment, Partial<EnvironmentConfig>> = {
     NAVIGATION_TIMEOUT: 30000,
     ACTION_TIMEOUT: 10000,
     SHORT_TIMEOUT: 5000,
-    NETWORK_IDLE_WAIT: 2000,
+    NETWORK_IDLE_WAIT: 10000, // Increased from 2000ms to 10000ms
     ELEMENT_WAIT: 1000,
     WORKERS: 5,
     RETRY_ATTEMPTS: 2,

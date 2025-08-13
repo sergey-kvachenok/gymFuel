@@ -45,7 +45,7 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
   }
 
   return (
-    <Card>
+    <Card data-testid="consumption-form">
       <CardTitle className="mb-4">Add to Today&apos;s Meals</CardTitle>
 
       <CardContent>
@@ -61,7 +61,11 @@ export const ConsumptionForm: FC<IConsumptionFormProps> = ({
             data-testid="consumption-amount"
           />
 
-          <div className="text-red-500 text-xs h-3 text-center">{error}</div>
+          {error && (
+            <div className="text-red-500 text-xs h-3 text-center" data-testid="error-message">
+              {error}
+            </div>
+          )}
 
           <Button
             type="submit"

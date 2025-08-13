@@ -47,7 +47,15 @@ export class OfflineDataService {
   async createProduct(
     productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<Product> {
-    const id = await offlineDb.products.add(productData as Product);
+    // Create a temporary product object with required fields
+    const tempProduct: Product = {
+      ...productData,
+      id: 0, // Temporary ID that will be replaced by Dexie
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    const id = await offlineDb.products.add(tempProduct);
     const product = await offlineDb.products.get(id);
 
     if (product) {

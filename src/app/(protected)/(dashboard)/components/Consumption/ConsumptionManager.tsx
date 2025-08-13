@@ -9,6 +9,7 @@ import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumpt
 import { useProductSearch } from '@/hooks/use-product-search';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { offlineDataService } from '@/lib/offline-data-service';
+import { useConsumptionsByDate } from '@/hooks/use-consumptions-by-date';
 
 const enum PopupTypes {
   Consumption = 'consumption',
@@ -41,6 +42,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
   });
   const utils = trpc.useUtils();
   const isOnline = useOnlineStatus();
+  const { refreshOfflineData } = useConsumptionsByDate(userId);
 
   const createConsumption = trpc.consumption.create.useMutation({
     onSuccess: () => {
@@ -61,6 +63,12 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
 
   const submitConsumption = useCallback(
     async (e: React.FormEvent) => {
+      console.log('🔄 submitConsumption function called');
+      console.log('📊 Online status:', isOnline);
+      console.log('📊 User ID:', userId);
+      console.log('📊 Selected product:', selectedProduct);
+      console.log('📊 Amount:', amount);
+
       e.preventDefault();
       setError('');
       setIsSubmitting(true);
@@ -68,10 +76,13 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
       const productId = selectedProduct?.id;
 
       if (!productId || !amount || amount <= 0) {
+        console.log('❌ Validation failed:', { productId, amount });
         setError('Please select a product and enter a valid amount');
         setIsSubmitting(false);
         return;
       }
+
+      console.log('✅ Validation passed, proceeding with consumption creation');
 
       const consumptionData = {
         productId,
@@ -79,10 +90,13 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
       };
 
       if (isOnline) {
+        console.log('🌐 Online mode - using tRPC');
         createConsumption.mutate(consumptionData);
       } else {
+        console.log('📱 Offline mode - using IndexedDB');
         try {
           if (!userId) {
+            console.log('❌ User not authenticated');
             setError('User not authenticated');
             setIsSubmitting(false);
             return;
@@ -93,22 +107,30 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
             userId,
             date: new Date(),
           };
-          console.log(
-            'ConsumptionManager: Creating offline consumption with data:',
-            offlineConsumptionData,
-          );
+          console.log('🔄 Creating offline consumption with data:', offlineConsumptionData);
           await offlineDataService.createConsumption(offlineConsumptionData);
 
+          // Refresh offline data to show the new consumption immediately
+          console.log('🔄 Refreshing offline data...');
+          refreshOfflineData();
+
+          // Invalidate server queries to ensure UI consistency
           utils.consumption.getDailyStats.invalidate();
           utils.consumption.getByDate.invalidate();
+
+          // Reset form state
           setSelectedProduct(null);
           setAmount(undefined);
           setError('');
           setIsSubmitting(false);
           setOpenModal(null);
+
+          // Show success feedback to user
+          console.log('✅ Offline consumption created successfully');
         } catch (error) {
+          console.error('❌ Offline consumption creation failed:', error);
           setError(
-            `Error creating consumption offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            `Error creating consumption offline: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
           );
           setIsSubmitting(false);
         }

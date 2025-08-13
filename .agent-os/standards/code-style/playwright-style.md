@@ -200,32 +200,179 @@ export function getTestConfig() {
 
 ## Error Handling and Resilience
 
-### Retry Mechanisms
+### Timeout Protection
+
+- **ALWAYS** implement timeout protection mechanisms
+- **NEVER** allow tests to run indefinitely
+- **ALWAYS** use agent-timeout-protector.js for stuck test prevention
+- **NEVER** rely solely on Playwright's default timeouts
 
 ```typescript
-// ✅ GOOD - Robust error handling
-test('should handle network issues gracefully', async ({ page }) => {
-  await expect(async () => {
-    await page.getByTestId(DASHBOARD_SELECTORS.WELCOME).toBeVisible({
-      timeout: TEST_CONFIG.TIMEOUTS.ACTION,
-    });
-  }).toPass({
-    intervals: [1000, 2000, 4000],
-    timeout: TEST_CONFIG.TIMEOUTS.ACTION,
+// ✅ GOOD - Timeout protection with agent protector
+import { runProtectedTest } from './agent-timeout-protector';
+
+test('should complete within timeout limits', async ({ page }) => {
+  await runProtectedTest('tests/e2e/feature-test.spec.ts', 'should handle complex workflow', {
+    maxTestTime: 60000,
+    maxNoProgressTime: 30000,
   });
+});
+
+// ✅ GOOD - Test-level timeout protection
+test('should handle timeout scenarios', async ({ page }) => {
+  const timeoutManager = new TestTimeoutManager({
+    maxTestTime: 60000,
+    maxNoProgressTime: 30000,
+    forceExit: true,
+  });
+
+  try {
+    await timeoutManager.startTest('timeout-protected-test');
+
+    // Test logic here
+    await page.getByTestId(DASHBOARD_SELECTORS.WELCOME).toBeVisible();
+  } catch (error) {
+    await timeoutManager.forceStopTest('Test exceeded timeout limits');
+    throw error;
+  } finally {
+    await timeoutManager.cleanup();
+  }
+});
+
+// ✅ GOOD - Process-level timeout protection
+test('should use process-level timeout', async ({ page }) => {
+  // Run test with process-level timeout protection
+  const result = await runTestWithTimeout(
+    'npx playwright test tests/e2e/feature.spec.ts',
+    60000, // 1 minute timeout
+  );
+
+  expect(result.success).toBe(true);
 });
 ```
 
-### Screenshot Capture
+### Timeout Configuration
 
 ```typescript
-// ✅ GOOD - Automatic screenshot capture
-test('should capture screenshot on failure', async ({ page }) => {
+// ✅ GOOD - Comprehensive timeout configuration
+export const TIMEOUT_CONFIG = {
+  TEST: {
+    MAX_TIME: 60000, // 1 minute per test
+    NO_PROGRESS_TIME: 30000, // 30 seconds no progress
+    FORCE_EXIT: true,
+    KILL_PROCESSES: true,
+  },
+  PLAYWRIGHT: {
+    ACTION: 30000,
+    NAVIGATION: 30000,
+    ASSERTION: 10000,
+    NETWORK_IDLE: 10000,
+  },
+  AGENT: {
+    STUCK_THRESHOLD: 30000, // 30 seconds before considering stuck
+    CLEANUP_TIMEOUT: 10000, // 10 seconds for cleanup
+    RECOVERY_TIMEOUT: 5000, // 5 seconds for recovery
+  },
+} as const;
+
+// ✅ GOOD - Environment-specific timeout configuration
+export function getTimeoutConfig() {
+  const env = process.env.NODE_ENV || 'development';
+
+  return {
+    testTimeout: env === 'production' ? 120000 : 60000,
+    noProgressTimeout: env === 'production' ? 60000 : 30000,
+    forceExit: env === 'production' ? true : false,
+  };
+}
+```
+
+### Agent Timeout Protection Integration
+
+```typescript
+// ✅ GOOD - Agent timeout protection in test setup
+import { AgentTimeoutProtector } from './agent-timeout-protector';
+
+test.beforeEach(async ({ page }) => {
+  const protector = new AgentTimeoutProtector({
+    maxTestTime: 60000,
+    maxNoProgressTime: 30000,
+    forceExit: true,
+    killAllPlaywright: true,
+  });
+
+  protector.startProtection(`test-${Date.now()}`);
+
+  // Register page for monitoring
+  protector.registerProcess(page.context().browser()?.process());
+});
+
+test.afterEach(async ({ page }) => {
+  // Cleanup timeout protection
+  await protector.cleanup();
+});
+
+// ✅ GOOD - Progress tracking in tests
+test('should track progress and prevent stuck states', async ({ page }) => {
+  const protector = new AgentTimeoutProtector();
+
   try {
+    // Update progress at key points
+    protector.updateProgress();
+    await page.getByTestId(DASHBOARD_SELECTORS.WELCOME).toBeVisible();
+
+    protector.updateProgress();
+    await page.getByTestId(PRODUCT_SELECTORS.NAME).fill('Test Product');
+
+    protector.updateProgress();
+    await page.getByTestId(PRODUCT_SELECTORS.SUBMIT).click();
+  } finally {
+    await protector.cleanup();
+  }
+});
+```
+
+### Retry Mechanisms
+
+```typescript
+// ✅ GOOD - Robust error handling with timeout protection
+test('should handle network issues gracefully', async ({ page }) => {
+  const timeoutManager = new TestTimeoutManager();
+
+  try {
+    await timeoutManager.startTest('network-resilience-test');
+
+    await expect(async () => {
+      await page.getByTestId(DASHBOARD_SELECTORS.WELCOME).toBeVisible({
+        timeout: TEST_CONFIG.TIMEOUTS.ACTION,
+      });
+    }).toPass({
+      intervals: [1000, 2000, 4000],
+      timeout: TEST_CONFIG.TIMEOUTS.ACTION,
+    });
+  } finally {
+    await timeoutManager.cleanup();
+  }
+});
+```
+
+### Screenshot Capture with Timeout Protection
+
+```typescript
+// ✅ GOOD - Automatic screenshot capture with timeout protection
+test('should capture screenshot on failure with timeout', async ({ page }) => {
+  const timeoutManager = new TestTimeoutManager();
+
+  try {
+    await timeoutManager.startTest('screenshot-test');
+
     await page.getByTestId('non-existent-element').toBeVisible();
   } catch (error) {
     await page.screenshot({ path: 'failure-screenshot.png' });
+    await timeoutManager.forceStopTest('Test failed with screenshot captured');
     throw error;
+  } finally {
+    await timeoutManager.cleanup();
   }
 });
 ```
@@ -497,6 +644,17 @@ test('should validate test data before use', async ({ page }) => {
 - **ALWAYS** reset database state between tests
 - **NEVER** rely on data created by other tests
 
+### 2. **Timeout Protection and Agent Safety**
+
+- **ALWAYS** implement timeout protection mechanisms
+- **NEVER** allow tests to run indefinitely
+- **ALWAYS** use agent-timeout-protector.js for stuck test prevention
+- **NEVER** rely solely on Playwright's default timeouts
+- **ALWAYS** track progress at key test points
+- **NEVER** create infinite loops or stuck states
+- **ALWAYS** implement force termination capabilities
+- **NEVER** leave processes hanging after test completion
+
 ### 2. **Descriptive Assertions**
 
 - Use descriptive assertion messages
@@ -621,6 +779,45 @@ test('should display error when product name is empty', async ({ page }) => {
    });
    ```
 
+9. **No Timeout Protection**
+
+   ```typescript
+   // ❌ BAD - No timeout protection
+   test('should work without timeout', async ({ page }) => {
+     // Test can run indefinitely
+     await page.getByTestId('slow-loading-element').toBeVisible();
+   });
+
+   // ❌ BAD - Relying only on Playwright defaults
+   test('should use default timeouts', async ({ page }) => {
+     // No custom timeout protection
+     await page.getByTestId('element').click();
+   });
+
+   // ❌ BAD - No progress tracking
+   test('should not track progress', async ({ page }) => {
+     // No way to detect stuck states
+     await page.waitForLoadState('networkidle');
+   });
+   ```
+
+10. **Infinite Loops and Stuck States**
+
+    ```typescript
+    // ❌ BAD - Potential infinite loop
+    test('should wait for element forever', async ({ page }) => {
+      while (!(await page.getByTestId('element').isVisible())) {
+        await page.waitForTimeout(1000); // Infinite loop potential
+      }
+    });
+
+    // ❌ BAD - No stuck state detection
+    test('should not detect stuck states', async ({ page }) => {
+      // No mechanism to detect if test is stuck
+      await page.getByTestId('never-appearing-element').toBeVisible();
+    });
+    ```
+
 ## Performance Guidelines
 
 ### Execution Time Targets
@@ -628,12 +825,16 @@ test('should display error when product name is empty', async ({ page }) => {
 - **Individual tests**: < 10 seconds
 - **Test suite**: < 1 minute
 - **CI/CD pipeline**: < 5 minutes
+- **Timeout limits**: 60 seconds per test maximum
+- **No-progress threshold**: 30 seconds before stuck detection
 
 ### Resource Usage
 
 - **Memory**: < 512MB per test
 - **CPU**: Optimize for parallel execution
 - **Network**: Minimize external dependencies
+- **Process cleanup**: Automatic cleanup within 10 seconds
+- **Agent recovery**: < 5 seconds for agent state recovery
 
 ## Documentation Requirements
 
@@ -659,6 +860,9 @@ test('should display error when product name is empty', async ({ page }) => {
 - **Flaky tests**: 0
 - **Code coverage**: 80%+
 - **Execution time**: < 1 minute for full suite
+- **Timeout compliance**: 100% of tests use timeout protection
+- **Stuck test incidents**: 0 per test run
+- **Agent recovery rate**: 100% successful recovery from stuck states
 
 ### Monitoring
 
@@ -666,6 +870,9 @@ test('should display error when product name is empty', async ({ page }) => {
 - Monitor flaky test frequency
 - Report on test coverage trends
 - Alert on test failures
+- Monitor timeout protection effectiveness
+- Track stuck test incidents and recovery
+- Report on agent timeout protection usage
 
 ## Integration with CI/CD
 

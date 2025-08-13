@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { trpc } from '../lib/trpc-client';
 import { useOnlineStatus } from './use-online-status';
 import { offlineDataService } from '../lib/offline-data-service';
@@ -8,8 +8,14 @@ export const useConsumptionsByDate = (userId: number | null) => {
   const [offlineConsumptions, setOfflineConsumptions] = useState<Consumption[]>([]);
   const [isOfflineLoading, setIsOfflineLoading] = useState(false);
   const [offlineError, setOfflineError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const isOnline = useOnlineStatus();
+
+  // Function to refresh offline data
+  const refreshOfflineData = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   // Always use tRPC when online
   const serverQuery = trpc.consumption.getByDate.useQuery(
@@ -27,7 +33,7 @@ export const useConsumptionsByDate = (userId: number | null) => {
     }
   }, [isOnline, serverQuery.data]);
 
-  // Fetch offline data when going offline
+  // Fetch offline data when going offline or when refresh is triggered
   useEffect(() => {
     if (!isOnline && userId) {
       const fetchOfflineConsumptions = async () => {
@@ -59,7 +65,7 @@ export const useConsumptionsByDate = (userId: number | null) => {
 
       fetchOfflineConsumptions();
     }
-  }, [isOnline, userId]);
+  }, [isOnline, userId, refreshTrigger]);
 
   // Simple data source selection
   const data = isOnline ? serverQuery.data || [] : offlineConsumptions;
@@ -74,5 +80,6 @@ export const useConsumptionsByDate = (userId: number | null) => {
     data,
     isLoading,
     error,
+    refreshOfflineData,
   };
 };

@@ -55,7 +55,30 @@ export default function ProductForm({
   const isOnline = useOnlineStatus();
 
   const createProduct = trpc.product.create.useMutation({
-    onSuccess: () => {
+    onMutate: (variables) => {
+      console.log('🎯 onMutate called with:', variables);
+    },
+    onSuccess: async (newProduct) => {
+      console.log('🎯 onSuccess callback triggered!');
+      console.log('🔄 Product created successfully:', newProduct);
+      console.log('🔄 User ID for caching:', userId);
+      console.log('🔄 Is online for caching:', isOnline);
+
+      // Cache the newly created product to IndexedDB for offline use
+      if (userId) {
+        try {
+          console.log('🔄 Caching product to IndexedDB...');
+          console.log('🔄 Product data to cache:', newProduct);
+          await offlineDataService.cacheServerProducts([newProduct]);
+          console.log('✅ Product cached to IndexedDB for offline use:', newProduct.name);
+        } catch (error) {
+          console.error('❌ Failed to cache product to IndexedDB:', error);
+          console.error('❌ Error details:', error);
+        }
+      } else {
+        console.log('⚠️ No userId available for caching');
+      }
+
       utils.product.getAll.invalidate();
       setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
       setError('');
@@ -63,12 +86,25 @@ export default function ProductForm({
       onSuccess?.();
     },
     onError: (error) => {
+      console.log('🎯 onError callback triggered!');
+      console.error('❌ Product creation failed:', error);
       setError(error.message);
       setIsSubmitting(false);
+    },
+    onSettled: () => {
+      console.log('🎯 onSettled callback triggered!');
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🎯 handleSubmit called');
+    console.log('🎯 Form data:', formData);
+    console.log('🎯 Is online:', isOnline);
+    console.log('🎯 User ID:', userId);
+    console.log('🎯 Event type:', e.type);
+    console.log('🎯 Event target:', e.target);
+    console.log('🎯 Navigator online status:', navigator.onLine);
+
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
@@ -78,6 +114,8 @@ export default function ProductForm({
     const fatNum = parseFloat(formData.fat);
     const carbsNum = parseFloat(formData.carbs);
 
+    console.log('🎯 Parsed values:', { caloriesNum, proteinNum, fatNum, carbsNum });
+
     if (
       !formData.name ||
       isNaN(caloriesNum) ||
@@ -85,6 +123,7 @@ export default function ProductForm({
       isNaN(fatNum) ||
       isNaN(carbsNum)
     ) {
+      console.log('🎯 Validation failed');
       setError('Please fill all fields with valid numbers');
       setIsSubmitting(false);
       return;
@@ -98,21 +137,39 @@ export default function ProductForm({
       carbs: carbsNum,
     };
 
+    console.log('🎯 About to call createProduct.mutate with:', productData);
+
     if (isOnline) {
+      console.log('🌐 Online mode - calling tRPC mutation');
       createProduct.mutate(productData);
+      console.log('🌐 tRPC mutation called');
     } else {
+      console.log('📱 Offline mode - using IndexedDB');
+      console.log('📱 User ID for offline creation:', userId);
+      console.log('📱 Product data for offline creation:', productData);
+      
       try {
         if (!userId) {
           throw new Error('User ID is required for offline product creation');
         }
-        await offlineDataService.createProduct({ ...productData, userId });
+        
+        console.log('📱 Calling offlineDataService.createProduct...');
+        const createdProduct = await offlineDataService.createProduct({ ...productData, userId });
+        console.log('📱 Product created offline:', createdProduct);
 
+        console.log('📱 Invalidating product queries...');
         utils.product.getAll.invalidate();
+        
+        console.log('📱 Resetting form...');
         setFormData({ name: '', calories: '', protein: '', fat: '', carbs: '' });
         setError('');
         setIsSubmitting(false);
+        
+        console.log('📱 Calling onSuccess callback...');
         onSuccess?.();
+        console.log('📱 onSuccess callback completed');
       } catch (error) {
+        console.error('📱 Offline product creation failed:', error);
         setError(
           `Error creating product offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
@@ -126,7 +183,7 @@ export default function ProductForm({
   };
 
   return (
-    <Card>
+    <Card data-testid="product-form-card">
       <CardTitle className="mb-4" data-testid="product-form-title">
         Add New Product
       </CardTitle>
@@ -183,6 +240,7 @@ export default function ProductForm({
             disabled={isSubmitting || createProduct.isPending}
             className="w-full"
             data-testid="product-submit"
+            onClick={() => console.log('🎯 Submit button clicked')}
           >
             {isSubmitting || createProduct.isPending ? 'Adding...' : 'Add Product'}
           </Button>
