@@ -1,4 +1,5 @@
 import { unifiedOfflineDb } from './unified-offline-db';
+import { UnifiedProduct, UnifiedConsumption, UnifiedNutritionGoals } from './unified-data-service';
 
 export interface MemoryStats {
   totalItems: number;
@@ -41,7 +42,7 @@ export class MemoryManager {
 
     this.cleanupInterval = setInterval(
       () => {
-        this.performCleanup().catch((error) => {
+        this.performCleanup('1').catch((error) => {
           console.error('Auto cleanup failed:', error);
         });
       },
@@ -72,7 +73,10 @@ export class MemoryManager {
     const estimatedSize = this.estimateDataSize(stats);
 
     return {
-      ...stats,
+      totalItems: stats.total,
+      products: stats.products,
+      consumptions: stats.consumptions,
+      goals: stats.goals,
       estimatedSize,
       lastCleanup: null, // TODO: Track last cleanup time
     };
@@ -268,7 +272,9 @@ export class MemoryManager {
   /**
    * Estimate the size of items in bytes
    */
-  private estimateItemSize(items: any[]): number {
+  private estimateItemSize(
+    items: Array<UnifiedProduct | UnifiedConsumption | UnifiedNutritionGoals>,
+  ): number {
     if (items.length === 0) return 0;
 
     // Rough estimate based on JSON stringification
@@ -285,9 +291,9 @@ export class MemoryManager {
   async forceGarbageCollection(): Promise<void> {
     if ('gc' in globalThis) {
       try {
-        (globalThis as any).gc();
+        (globalThis as { gc?: () => void }).gc?.();
         console.log('Memory manager: Forced garbage collection');
-      } catch (error) {
+      } catch {
         console.warn('Memory manager: Garbage collection not available');
       }
     }

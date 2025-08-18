@@ -1,17 +1,17 @@
 import { UnifiedOfflineDatabase } from '../unified-offline-db';
-import { UnifiedProduct, UnifiedConsumption, UnifiedNutritionGoals } from '../unified-offline-db';
 
 describe('UnifiedOfflineDatabase Schema', () => {
   describe('Database Configuration', () => {
     it('should have correct database name', () => {
       // Test the database name configuration
-      expect(UnifiedOfflineDatabase.name).toBe('UnifiedOfflineDatabase');
+      const db = new UnifiedOfflineDatabase();
+      expect(db.name).toBe('GymFuelUnifiedDB_v2');
     });
 
     it('should have correct schema version', () => {
-      // Test that the schema version is set to 11
+      // Test that the schema version is set to 1
       const db = new UnifiedOfflineDatabase();
-      expect(db.verno).toBe(11);
+      expect(db.verno).toBe(1);
     });
   });
 
@@ -40,7 +40,7 @@ describe('UnifiedOfflineDatabase Schema', () => {
       const db = new UnifiedOfflineDatabase();
 
       // Check that sync fields are included in the schema definition
-      expect(db.verno).toBe(11); // Version 11 includes sync fields
+      expect(db.verno).toBe(1); // Version 1 includes sync fields
     });
   });
 

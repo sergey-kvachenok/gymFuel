@@ -33,8 +33,16 @@ const MockTrpc = trpc as jest.Mocked<typeof trpc>;
 
 describe('useProductManipulation', () => {
   let mockDataService: jest.Mocked<UnifiedDataService>;
-  let mockUpdateMutation: jest.Mocked<any>;
-  let mockDeleteMutation: jest.Mocked<any>;
+  let mockUpdateMutation: jest.Mocked<{
+    mutate: jest.MockedFunction<(data: unknown) => void>;
+    isPending: boolean;
+    error: Error | null;
+  }>;
+  let mockDeleteMutation: jest.Mocked<{
+    mutate: jest.MockedFunction<(data: unknown) => void>;
+    isPending: boolean;
+    error: Error | null;
+  }>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -62,10 +70,24 @@ describe('useProductManipulation', () => {
       const { result } = renderHook(() => useProductManipulation(1));
 
       await act(async () => {
-        await result.current.updateProduct({ id: 1, name: 'Updated Product' });
+        await result.current.updateProduct({
+          id: 1,
+          name: 'Updated Product',
+          calories: 100,
+          protein: 10,
+          fat: 5,
+          carbs: 20,
+        });
       });
 
-      expect(mockUpdateMutation.mutate).toHaveBeenCalledWith({ id: 1, name: 'Updated Product' });
+      expect(mockUpdateMutation.mutate).toHaveBeenCalledWith({
+        id: 1,
+        name: 'Updated Product',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+      });
     });
 
     it('should use tRPC mutation when online for delete', async () => {
@@ -85,17 +107,43 @@ describe('useProductManipulation', () => {
     });
 
     it('should use UnifiedDataService when offline for update', async () => {
-      mockDataService.updateProduct.mockResolvedValue({} as any);
+      mockDataService.updateProduct.mockResolvedValue({
+        id: 1,
+        name: 'Updated Product',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+        userId: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _synced: false,
+        _syncTimestamp: null,
+        _syncError: null,
+        _lastModified: new Date(),
+        _version: 1,
+      });
 
       const { result } = renderHook(() => useProductManipulation(1));
 
       await act(async () => {
-        await result.current.updateProduct({ id: 1, name: 'Updated Product' });
+        await result.current.updateProduct({
+          id: 1,
+          name: 'Updated Product',
+          calories: 100,
+          protein: 10,
+          fat: 5,
+          carbs: 20,
+        });
       });
 
       expect(mockDataService.updateProduct).toHaveBeenCalledWith(1, {
         id: 1,
         name: 'Updated Product',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
       });
     });
 
@@ -118,7 +166,14 @@ describe('useProductManipulation', () => {
       const { result } = renderHook(() => useProductManipulation(1));
 
       await act(async () => {
-        await result.current.updateProduct({ id: 1, name: 'Updated Product' });
+        await result.current.updateProduct({
+          id: 1,
+          name: 'Updated Product',
+          calories: 100,
+          protein: 10,
+          fat: 5,
+          carbs: 20,
+        });
       });
 
       expect(consoleSpy).toHaveBeenCalledWith('Error updating product offline: Update failed');
@@ -145,7 +200,14 @@ describe('useProductManipulation', () => {
       const { result } = renderHook(() => useProductManipulation(null));
 
       await act(async () => {
-        await result.current.updateProduct({ id: 1, name: 'Updated Product' });
+        await result.current.updateProduct({
+          id: 1,
+          name: 'Updated Product',
+          calories: 100,
+          protein: 10,
+          fat: 5,
+          carbs: 20,
+        });
       });
 
       expect(consoleSpy).toHaveBeenCalledWith('User not authenticated');

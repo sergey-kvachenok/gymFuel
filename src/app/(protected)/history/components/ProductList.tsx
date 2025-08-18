@@ -19,7 +19,7 @@ interface ProductListProps {
 }
 
 const ProductList: FC<ProductListProps> = ({ userId }) => {
-  const { setSearchQuery, products, isLoading, error } = useProductSearch(userId, {
+  const { setSearchQuery, products, isLoading, error, refreshProducts } = useProductSearch(userId, {
     orderBy: 'name',
     orderDirection: 'asc',
   });
@@ -59,18 +59,24 @@ const ProductList: FC<ProductListProps> = ({ userId }) => {
 
   const updateMutation = useMemo(
     () => ({
-      mutate: (data: Record<string, unknown>) => updateProduct(data as UpdateProductInput),
+      mutate: async (data: Record<string, unknown>) => {
+        await updateProduct(data as UpdateProductInput);
+        refreshProducts();
+      },
       isPending: isUpdating,
     }),
-    [updateProduct, isUpdating],
+    [updateProduct, isUpdating, refreshProducts],
   );
 
   const deleteMutation = useMemo(
     () => ({
-      mutate: (data: Record<string, unknown>) => deleteProduct({ id: data.id as number }),
+      mutate: async (data: Record<string, unknown>) => {
+        await deleteProduct({ id: data.id as number });
+        refreshProducts();
+      },
       isPending: isDeleting,
     }),
-    [deleteProduct, isDeleting],
+    [deleteProduct, isDeleting, refreshProducts],
   );
 
   const handleEdit = useCallback(

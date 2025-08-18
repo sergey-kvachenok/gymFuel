@@ -121,7 +121,14 @@ export class ConnectionMonitor {
     downlink?: number;
     rtt?: number;
   } {
-    const connection = typeof navigator !== 'undefined' ? (navigator as any).connection : undefined;
+    const connection =
+      typeof navigator !== 'undefined'
+        ? (
+            navigator as Navigator & {
+              connection?: { effectiveType?: string; downlink?: number; rtt?: number };
+            }
+          ).connection
+        : undefined;
 
     return {
       isOnline: this.isOnlineState,
@@ -151,7 +158,7 @@ export class ConnectionMonitor {
       });
 
       return response.ok;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

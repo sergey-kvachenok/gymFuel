@@ -4,10 +4,8 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ConsumptionForm } from './ConsumptionForm';
 import ProductForm from '../ProductForm';
-import { trpc } from '@/lib/trpc-client';
 import { ProductOption } from '@/app/(protected)/(dashboard)/components/Consumption/ProductCombobox';
 import { useProductSearch } from '@/hooks/use-product-search';
-import { useOnlineStatus } from '@/hooks/use-online-status';
 import { UnifiedDataService } from '@/lib/unified-data-service';
 import { useConsumptionsByDate } from '@/hooks/use-consumptions-by-date';
 
@@ -37,39 +35,14 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
 
-  const { allProducts: products } = useProductSearch(userId, {
+  const { allProducts: products, refreshProducts } = useProductSearch(userId, {
     orderBy: 'name',
     orderDirection: 'asc',
   });
-  const utils = trpc.useUtils();
-  const isOnline = useOnlineStatus();
   const { refreshOfflineData } = useConsumptionsByDate(userId);
-
-  const createConsumption = trpc.consumption.create.useMutation({
-    onSuccess: () => {
-      utils.consumption.getDailyStats.invalidate();
-      utils.consumption.getByDate.invalidate();
-
-      setSelectedProduct(null);
-      setAmount(undefined);
-      setError('');
-      setIsSubmitting(false);
-      setOpenModal(null);
-    },
-    onError: (error) => {
-      setError(error.message);
-      setIsSubmitting(false);
-    },
-  });
 
   const submitConsumption = useCallback(
     async (e: React.FormEvent) => {
-      console.log('🔄 submitConsumption function called');
-      console.log('📊 Online status:', isOnline);
-      console.log('📊 User ID:', userId);
-      console.log('📊 Selected product:', selectedProduct);
-      console.log('📊 Amount:', amount);
-
       e.preventDefault();
       setError('');
       setIsSubmitting(true);
@@ -77,83 +50,64 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
       const productId = selectedProduct?.id;
 
       if (!productId || !amount || amount <= 0) {
-        console.log('❌ Validation failed:', { productId, amount });
         setError('Please select a product and enter a valid amount');
         setIsSubmitting(false);
         return;
       }
 
-      console.log('✅ Validation passed, proceeding with consumption creation');
+      if (!userId) {
+        setError('User not authenticated');
+        setIsSubmitting(false);
+        return;
+      }
 
-      const consumptionData = {
-        productId,
-        amount,
-      };
+      try {
+        const unifiedDataService = UnifiedDataService.getInstance();
 
-      if (isOnline) {
-        console.log('🌐 Online mode - using tRPC');
-        createConsumption.mutate(consumptionData);
-      } else {
-        console.log('📱 Offline mode - using UnifiedDataService');
-        try {
-          if (!userId) {
-            console.log('❌ User not authenticated');
-            setError('User not authenticated');
-            setIsSubmitting(false);
-            return;
-          }
-
-          const unifiedDataService = UnifiedDataService.getInstance();
-
-          // Fetch the product to include in the consumption
-          const product = await unifiedDataService.getProduct(productId);
-          if (!product) {
-            throw new Error('Product not found');
-          }
-
-          const offlineConsumptionData = {
-            ...consumptionData,
-            userId,
-            date: new Date(),
-            product,
-          };
-          console.log('🔄 Creating offline consumption with data:', offlineConsumptionData);
-
-          setSyncStatus('syncing');
-          const createdConsumption =
-            await unifiedDataService.createConsumption(offlineConsumptionData);
-          console.log('📱 Consumption created offline:', createdConsumption);
-
-          setSyncStatus('synced');
-
-          // Refresh offline data to show the new consumption immediately
-          console.log('🔄 Refreshing offline data...');
-          refreshOfflineData();
-
-          // Invalidate server queries to ensure UI consistency
-          utils.consumption.getDailyStats.invalidate();
-          utils.consumption.getByDate.invalidate();
-
-          // Reset form state
-          setSelectedProduct(null);
-          setAmount(undefined);
-          setError('');
-          setIsSubmitting(false);
-          setOpenModal(null);
-
-          // Show success feedback to user
-          console.log('✅ Offline consumption created successfully');
-        } catch (error) {
-          console.error('❌ Offline consumption creation failed:', error);
-          setSyncStatus('error');
-          setError(
-            `Error creating consumption offline: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
-          );
-          setIsSubmitting(false);
+        // Fetch the product to include in the consumption
+        const product = await unifiedDataService.getProduct(productId);
+        if (!product) {
+          throw new Error('Product not found');
         }
+
+        const consumptionData = {
+          productId,
+          amount,
+          userId,
+          date: new Date(),
+          product,
+        };
+
+        setSyncStatus('syncing');
+        const createdConsumption = await unifiedDataService.createConsumption(consumptionData);
+        console.log('Consumption created successfully:', createdConsumption);
+
+        setSyncStatus('synced');
+
+        // Refresh offline data to show the new consumption immediately
+        console.log('🔄 Refreshing data after consumption creation...');
+        refreshOfflineData();
+        refreshProducts();
+
+        // Reset form state
+        setSelectedProduct(null);
+        setAmount(undefined);
+        setError('');
+        setOpenModal(null);
+
+        // Show success feedback to user
+        console.log('✅ Consumption created successfully and data refreshed');
+      } catch (error) {
+        console.error('Consumption creation failed:', error);
+        setSyncStatus('error');
+        setError(
+          `Error creating consumption: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
+        );
+      } finally {
+        setIsSubmitting(false);
       }
     },
-    [selectedProduct, amount, createConsumption, isOnline, utils, userId, refreshOfflineData],
+    [selectedProduct, amount, userId, refreshOfflineData, refreshProducts],
   );
 
   const onAmountChange = useCallback(
@@ -194,7 +148,7 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
                 setSelectedProduct={setSelectedProduct}
                 amount={amount}
                 error={error}
-                isPending={isSubmitting || createConsumption.isPending}
+                isPending={isSubmitting}
                 isProductsPresented={!!products && products.length > 0}
                 onAmountChange={onAmountChange}
                 userId={userId}
@@ -202,7 +156,13 @@ const ConsumptionManager: FC<{ userId: number | null }> = ({ userId }) => {
               />
             )}
             {button.modal === PopupTypes.Product && (
-              <ProductForm onSuccess={() => setOpenModal(null)} userId={userId} />
+              <ProductForm
+                onSuccess={() => {
+                  setOpenModal(null);
+                  refreshProducts();
+                }}
+                userId={userId}
+              />
             )}
           </DialogContent>
         </Dialog>

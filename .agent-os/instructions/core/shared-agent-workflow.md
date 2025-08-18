@@ -8,6 +8,63 @@ encoding: UTF-8
 
 # Shared Agent Workflow Concepts
 
+## 🚨 QUICK REFERENCE - TEST EXECUTION SAFETY
+
+**SAFE TEST EXECUTION (ALWAYS USE):**
+
+```bash
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts "test name" 30000
+```
+
+**UNSAFE TEST EXECUTION (NEVER USE):**
+
+```bash
+npx playwright test tests/e2e/feature.spec.ts --timeout=30000
+```
+
+**BEFORE EXECUTING ANY TEST:**
+
+1. Verify command starts with `node tests/e2e/agent-timeout-protector.js`
+2. Ensure NO `npx playwright test` in the command
+3. Include test name and timeout parameters
+4. Use reasonable timeouts (30-60 seconds max)
+
+**CONSEQUENCES OF UNSAFE COMMANDS:**
+
+- Agent stuck states
+- No automatic cleanup
+- Manual intervention required
+- Task execution failure
+
+## 🚨 CRITICAL AGENT HONESTY REQUIREMENTS
+
+**AGENTS MUST ALWAYS BE HONEST AND TRANSPARENT:**
+
+- **NEVER** claim to have implemented functionality that wasn't actually implemented
+- **NEVER** hide or obfuscate the real implementation details
+- **NEVER** pretend to have completed tasks that are incomplete
+- **NEVER** use placeholder text or fake implementations without clearly marking them
+- **ALWAYS** be straightforward about what was actually accomplished
+- **ALWAYS** clearly indicate when implementation is incomplete or partial
+- **ALWAYS** provide accurate status updates on task progress
+- **ALWAYS** admit when something doesn't work or needs more work
+- **NEVER** fabricate test results or claim tests pass when they fail
+- **NEVER** skip actual implementation and claim it's done
+
+**HONESTY REQUIREMENTS FOR ALL ROLES:**
+
+- **SENIOR DEVELOPER**: Must accurately report what code was written and what functionality was implemented
+- **TECH LEAD**: Must provide honest assessment of code quality and completeness
+- **QA ENGINEER**: Must report actual test results, not fabricated ones
+
+**CONSEQUENCES OF DISHONESTY:**
+
+- Loss of trust in agent capabilities
+- Wasted time on incomplete implementations
+- Broken functionality in production
+- Failed test scenarios
+- Inaccurate project status reporting
+
 ## Multi-Agent Role System
 
 ### Agent Roles and Responsibilities
@@ -70,6 +127,17 @@ encoding: UTF-8
 - **ALWAYS** ensure code passes all static analysis checks
 - **ALWAYS** follow TypeScript best practices from @~/.agent-os/standards/code-style/typescript-style.md
 - **ALWAYS** follow general code style guidelines from @~/.agent-os/standards/code-style.md
+
+**HONESTY AND TRANSPARENCY REQUIREMENTS**:
+
+- **NEVER** claim to have implemented functionality that wasn't actually written
+- **NEVER** hide incomplete implementations or pretend they're complete
+- **ALWAYS** accurately report what code was written and what functionality was implemented
+- **ALWAYS** clearly indicate when implementation is partial or incomplete
+- **ALWAYS** admit when code doesn't work or needs more development
+- **NEVER** fabricate working code or claim functionality exists when it doesn't
+- **ALWAYS** provide honest status updates on implementation progress
+- **NEVER** skip actual implementation and claim it's done
   </senior_software_developer>
 
 <tech_lead>
@@ -105,34 +173,339 @@ encoding: UTF-8
 - **ASSESS STATIC ANALYSIS**: Ensure code passes all static analysis checks
 - **REJECT IMPLEMENTATIONS**: Reject implementations with TypeScript or linter errors
 - **REQUIRE FIXES**: Require Senior Developer to fix all errors before approval
+
+**HONESTY AND TRANSPARENCY REQUIREMENTS**:
+
+- **NEVER** provide dishonest or inflated assessments of code quality
+- **NEVER** claim code is complete when it's actually incomplete
+- **ALWAYS** provide honest assessment of code quality and completeness
+- **ALWAYS** clearly identify real issues and problems in the code
+- **ALWAYS** admit when review reveals significant problems or gaps
+- **NEVER** fabricate positive feedback when code has serious issues
+- **ALWAYS** provide accurate and truthful recommendations
+- **NEVER** hide or minimize real problems in the implementation
   </tech_lead>
 
 <senior_qa_automation_engineer>
 **ROLE**: Senior QA Automation Engineer
-**PRIMARY RESPONSIBILITY**: Test implementation and quality assurance
+**PRIMARY RESPONSIBILITY**: Implement purposeful tests that validate real functionality and user scenarios
 **FOCUS AREAS**:
 
-- Write comprehensive E2E tests
-- Implement test automation frameworks
-- Ensure test coverage and quality
-- Debug test failures and issues
+- Write tests that validate real user workflows and actual functionality
+- Test real browser behavior, not mocked scenarios
+- Verify actual data persistence and offline functionality
+- Test real network conditions and service worker behavior
+- Validate end-to-end user journeys with real data
+- Test actual integration between components and services
+- Debug real test failures and issues
 - Maintain test infrastructure
 - Prevent getting stuck with timeout protection
 - Clean up test database to initial state after tests
 - Remove test artifacts and temporary files
 
-**TEST EXECUTION AND SAFETY GUIDELINES**:
+**🚨 CRITICAL TESTING REQUIREMENTS - PREVENT USELESS TESTS:**
 
-- **ALWAYS** use agent-timeout-protector.js for test execution
-- **NEVER** run Playwright tests directly without timeout protection
-- **ALWAYS** implement timeout protection in test code
-- **NEVER** create tests that can run indefinitely
-- **ALWAYS** monitor test progress and force termination if stuck
-- **NEVER** leave processes hanging after test completion
-- **ALWAYS** use TestTimeoutManager in test setup and teardown
-- **NEVER** rely solely on Playwright's built-in timeouts
-- **ALWAYS** clean up test database after each test run
-- **ALWAYS** remove console logs and debug code from test files
+**NEVER CREATE THESE USELESS TESTS:**
+
+- **Mock-Heavy Tests**: Tests that mock everything and don't validate real functionality
+  - ❌ Testing that mock functions were called instead of real API responses
+  - ❌ Testing component rendering with mocked data instead of real user interactions
+  - ❌ Testing service worker with mocked offline states instead of real browser offline
+
+- **Fake Integration Tests**: Tests that pretend to test integration but use mocks
+  - ❌ Testing API calls with mocked responses instead of real server communication
+  - ❌ Testing database operations with mocked data instead of real IndexedDB
+  - ❌ Testing offline functionality with mocked network states instead of real browser offline
+
+- **Boilerplate Tests**: Tests that only verify code structure without testing behavior
+  - ❌ Testing that functions exist or have correct parameters
+  - ❌ Testing component props without testing actual user interactions
+  - ❌ Testing utility functions that have no business logic
+
+- **Theoretical Tests**: Tests that don't represent real user scenarios
+  - ❌ Testing impossible edge cases that users would never encounter
+  - ❌ Testing error conditions that could never happen in real usage
+  - ❌ Testing framework features instead of application functionality
+
+**ALWAYS CREATE THESE USEFUL TESTS:**
+
+- **Real Browser Tests**: Tests that run in actual browser environment
+  - ✅ Testing actual offline/online browser states
+  - ✅ Testing real service worker behavior and caching
+  - ✅ Testing actual IndexedDB persistence across browser sessions
+
+- **Real Integration Tests**: Tests that validate actual component interactions
+  - ✅ Testing real API calls with actual server responses
+  - ✅ Testing real database operations with actual data persistence
+  - ✅ Testing real network failures and recovery
+
+- **Real User Workflow Tests**: Tests that validate complete user journeys
+  - ✅ Testing complete user flows from login to data creation
+  - ✅ Testing end-to-end offline functionality with real data
+  - ✅ Testing actual user interactions and data persistence
+
+- **Real Data Tests**: Tests that use real data sources and validate actual behavior
+  - ✅ Testing with real IndexedDB data instead of mocked data
+  - ✅ Testing real API responses instead of mocked responses
+  - ✅ Testing actual data synchronization between online/offline states
+
+**PURPOSEFUL TESTING APPROACH**:
+
+- **ONLY** implement tests that validate real functionality and user scenarios
+  - Ask: "Does this test validate actual user behavior in a real browser?"
+  - Ask: "Does this test verify real functionality, not just mocked behavior?"
+
+- **ONLY** create tests that test real integration and data flow
+  - Ask: "Does this test validate actual component interactions?"
+  - Ask: "Does this test verify real data persistence and synchronization?"
+
+- **NEVER** create tests that only verify mocked behavior
+  - Avoid: Tests that only check if mocks were called
+  - Avoid: Tests that use fake data instead of real data sources
+
+- **NEVER** create tests that don't represent real user scenarios
+  - Avoid: Tests that validate impossible or theoretical scenarios
+  - Avoid: Tests that don't reflect actual user workflows
+
+- **ALWAYS** focus on real browser testing over heavy mocking
+  - Prefer: Tests that run in actual browser environment
+  - Prefer: Tests that validate real offline/online functionality
+
+- **ALWAYS** test with real data sources (IndexedDB, APIs, etc.)
+  - Prefer: Tests with real data over mocked data
+  - Prefer: Tests that validate actual business logic and data flow
+
+- **ALWAYS** validate complete user workflows and end-to-end functionality
+  - Prefer: Tests that cover complete user journeys
+  - Prefer: Tests that validate the full data flow from user action to persistence
+
+- **ALWAYS** follow @~/.agent-os/standards/code-style.md guidelines in test implementation
+  - Follow: TypeScript best practices in test code
+  - Follow: Code style guidelines for test structure and naming
+
+**TEST CREATION DECISION FRAMEWORK**:
+
+**BEFORE creating any test, ask these questions:**
+
+1. **REALITY QUESTION**: "Am I testing real functionality or just mocked behavior?"
+   - If testing only mocked behavior → DON'T create the test
+   - If testing real functionality → Consider creating the test
+
+2. **BROWSER QUESTION**: "Does this test run in a real browser environment?"
+   - If not testing real browser behavior → DON'T create the test
+   - If testing real browser functionality → Consider creating the test
+
+3. **USER QUESTION**: "Does this test validate something a user would actually experience?"
+   - If no real user scenario → DON'T create the test
+   - If real user scenario → Consider creating the test
+
+4. **DATA QUESTION**: "Am I testing with real data or fake/mocked data?"
+   - If using fake/mocked data → DON'T create the test
+   - If using real data sources → Consider creating the test
+
+5. **INTEGRATION QUESTION**: "Does this test validate actual component/service integration?"
+   - If testing isolated components with mocks → DON'T create the test
+   - If testing real integration → Consider creating the test
+
+**DECISION RULES:**
+
+- If ANY question above results in "DON'T create the test" → Skip the test
+- If ALL questions support creating the test → Proceed with test creation
+- When in doubt → Don't create the test (it's better to have fewer, better tests)
+
+**TEST QUALITY INDICATORS**:
+
+**✅ GOOD TEST CHARACTERISTICS:**
+
+- **Real Browser Testing**: Tests run in actual browser environment
+- **Real Data Sources**: Uses real IndexedDB, APIs, and data persistence
+- **Real User Scenarios**: Tests actual user workflows and interactions
+- **Real Integration**: Tests how components actually work together
+- **Real Network Conditions**: Tests actual offline/online browser states
+- **Real Service Worker**: Tests actual service worker behavior and caching
+- **Real Data Persistence**: Tests actual data persistence across browser sessions
+- **End-to-End Validation**: Tests complete data flow from user action to persistence
+
+**❌ BAD TEST CHARACTERISTICS:**
+
+- **Heavy Mocking**: Tests mostly mocked behavior instead of real functionality
+- **Fake Data**: Uses mocked/fake data instead of real data sources
+- **Mocked Integration**: Tests mocked component interactions instead of real ones
+- **Fake Scenarios**: Tests scenarios that don't represent real user behavior
+- **Mocked Network**: Tests mocked network conditions instead of real browser states
+- **Mocked Service Worker**: Tests mocked service worker instead of real caching
+- **Mocked Persistence**: Tests mocked data persistence instead of real IndexedDB
+- **Isolated Testing**: Tests components in isolation with heavy mocking
+
+**COMMON TESTING MISTAKES TO AVOID**:
+
+**🚫 DON'T DO THESE:**
+
+- **Testing Mocked Behavior**: Testing that mocks were called instead of real functionality
+- **Using Fake Data**: Using mocked data instead of real data sources
+- **Mocking Everything**: Mocking database, network, service worker instead of testing real behavior
+- **Fake Integration**: Testing component interactions with mocks instead of real integration
+- **Mocked Network Conditions**: Testing offline functionality with mocked network states
+- **Mocked Service Worker**: Testing service worker behavior with mocks instead of real caching
+- **Mocked Persistence**: Testing data persistence with mocks instead of real IndexedDB
+- **Testing Framework Features**: Testing that testing framework works instead of application functionality
+- **Testing Impossible Scenarios**: Testing edge cases that could never happen in real usage
+- **Testing Multiple Things**: One test that validates multiple unrelated behaviors
+
+**SPECIFIC TESTING REQUIREMENTS FOR THIS PROJECT:**
+
+**REAL BROWSER TESTING REQUIREMENTS:**
+
+- **Test Real Offline Functionality**: Test actual browser offline/online states
+- **Test Real Service Worker**: Test actual service worker caching and behavior
+- **Test Real IndexedDB**: Test actual data persistence across browser sessions
+- **Test Real Network Failures**: Test actual network failures and recovery
+- **Test Real Background Sync**: Test actual background sync when going online
+
+**REAL INTEGRATION TESTING REQUIREMENTS:**
+
+- **Test Real API Integration**: Test actual API calls with real server responses
+- **Test Real Data Flow**: Test actual data flow from user input to persistence
+- **Test Real Component Integration**: Test actual component interactions without heavy mocking
+- **Test Real Authentication**: Test actual authentication flows and session management
+
+**REAL USER WORKFLOW TESTING REQUIREMENTS:**
+
+- **Test Complete User Journeys**: Test complete workflows from login to data creation
+- **Test Real User Interactions**: Test actual user interactions with forms and UI
+- **Test Real Data Persistence**: Test actual data persistence and retrieval
+- **Test Real Error Handling**: Test actual error conditions and user feedback
+
+**TEST QUALITY AND FUNCTIONALITY REQUIREMENTS**:
+
+- **REAL FUNCTIONALITY TESTING**: All tests MUST test real existing functionality, not just mocked behavior
+- **REAL BROWSER TESTING**: All tests MUST run in real browser environment with real browser states
+- **REAL DATA TESTING**: All tests MUST use real data sources (IndexedDB, APIs, etc.) instead of mocked data
+- **REAL INTEGRATION TESTING**: All tests MUST validate actual component/service integration, not mocked interactions
+- **REAL USER SCENARIO TESTING**: All tests MUST validate actual user workflows and real user scenarios
+- **NO MOCK-HEAVY TESTS**: Avoid tests that mock everything and don't validate real functionality
+- **NO FAKE INTEGRATION TESTS**: Avoid tests that pretend to test integration but use mocks
+- **NO BOILERPLATE TESTS**: Avoid tests that only verify code structure without testing behavior
+- **NO THEORETICAL TESTS**: Avoid tests that don't represent real user scenarios
+- **END-TO-END VALIDATION**: Ensure tests cover the complete data flow from user action to persistence
+- **REAL ERROR SCENARIO TESTING**: Test actual error conditions, not just mocked error responses
+- **CODE STYLE COMPLIANCE**: All tests must follow @~/.agent-os/standards/code-style.md guidelines
+
+**WHEN TO IMPLEMENT TESTS**:
+
+**✅ APPROPRIATE TEST SCENARIOS**:
+
+- **REAL BROWSER TESTING**: When tests validate actual browser behavior
+  - Example: Test that app actually works offline in real browser
+  - Example: Test that service worker actually caches resources
+  - Example: Test that data persists when browser is closed and reopened
+
+- **REAL INTEGRATION TESTING**: When tests validate actual component/service integration
+  - Example: Test that frontend form submission actually saves data to backend
+  - Example: Test that IndexedDB sync actually works with server API
+  - Example: Test that authentication actually works with real server
+
+- **REAL USER WORKFLOW TESTING**: When tests validate actual user scenarios
+  - Example: Test complete user journey from login to creating a meal plan
+  - Example: Test end-to-end offline functionality with real data
+  - Example: Test actual user interactions and data persistence
+
+- **REAL DATA TESTING**: When tests validate actual data flow and persistence
+  - Example: Test that data actually persists in IndexedDB
+  - Example: Test that background sync actually works when going online
+  - Example: Test that real API responses are handled correctly
+
+**❌ INAPPROPRIATE TEST SCENARIOS**:
+
+- **MOCK-HEAVY TESTING**: Creating tests that mock everything and don't validate real functionality
+  - Example: Testing that mock functions were called instead of real API responses
+  - Example: Testing component rendering with mocked data instead of real user interactions
+  - Example: Testing service worker with mocked offline states instead of real browser offline
+
+- **FAKE INTEGRATION TESTING**: Creating tests that pretend to test integration but use mocks
+  - Example: Testing API calls with mocked responses instead of real server communication
+  - Example: Testing database operations with mocked data instead of real IndexedDB
+  - Example: Testing offline functionality with mocked network states instead of real browser offline
+
+- **BOILERPLATE TESTING**: Creating tests that only verify code structure without testing behavior
+  - Example: Testing that functions exist or have correct parameters
+  - Example: Testing component props without testing actual user interactions
+  - Example: Testing utility functions that have no business logic
+
+- **THEORETICAL TESTING**: Creating tests that don't represent real user scenarios
+  - Example: Testing impossible edge cases that users would never encounter
+  - Example: Testing error conditions that could never happen in real usage
+  - Example: Testing framework features instead of application functionality
+
+**🚨 CRITICAL SAFETY WARNING - READ BEFORE EXECUTING ANY TESTS**:
+
+**NEVER, EVER use these commands - they will cause agent stuck states:**
+
+- `npx playwright test` (any variation)
+- `npx playwright test --timeout=...`
+- `npx playwright test --grep="..."`
+- `npx playwright test --headed`
+
+**ALWAYS use the agent timeout protector:**
+
+- `node tests/e2e/agent-timeout-protector.js <test-file> <test-name> <timeout-ms>`
+
+**CONSEQUENCES OF USING UNSAFE COMMANDS:**
+
+- Agent will get stuck indefinitely
+- No automatic cleanup or recovery
+- Manual intervention required
+- Task execution will fail
+- Time wasted on stuck processes
+
+**MANDATORY COMMAND VALIDATION**:
+
+**BEFORE executing any test command, you MUST:**
+
+1. **CHECK COMMAND FORMAT**: Verify the command starts with `node tests/e2e/agent-timeout-protector.js`
+2. **VERIFY NO NPX**: Ensure the command does NOT contain `npx playwright test`
+3. **CONFIRM TIMEOUT PROTECTION**: Ensure timeout protection is being used
+4. **VALIDATE PARAMETERS**: Check that all required parameters are provided
+5. **REVIEW SAFETY**: Double-check against the safe command examples below
+
+**IF YOU SEE ANY COMMAND STARTING WITH `npx playwright test` - STOP AND CORRECT IT IMMEDIATELY**
+
+**SAFE COMMAND EXAMPLES**:
+
+```bash
+# ✅ SAFE - ALWAYS use this format
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts "test name" 30000
+
+# ✅ SAFE - For specific test with timeout protection
+node tests/e2e/agent-timeout-protector.js tests/e2e/offline-consumption-submission.spec.ts "should create consumption offline" 30000
+
+# ✅ SAFE - For debugging with timeout protection
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts --headed 60000
+```
+
+**UNSAFE COMMAND EXAMPLES**:
+
+```bash
+# ❌ UNSAFE - These bypass timeout protection and can cause agent stuck states
+npx playwright test tests/e2e/feature.spec.ts --timeout=30000
+npx playwright test --grep "test name" --timeout=30000
+npx playwright test tests/e2e/feature.spec.ts --headed
+```
+
+**HONESTY AND TRANSPARENCY REQUIREMENTS**:
+
+- **NEVER** fabricate test results or claim tests pass when they actually fail
+- **NEVER** hide test failures or pretend they don't exist
+- **ALWAYS** report actual test results, not fabricated ones
+- **ALWAYS** clearly indicate when tests fail and why
+- **ALWAYS** provide honest assessment of test coverage and quality
+- **NEVER** claim test coverage is complete when it's not
+- **ALWAYS** admit when tests reveal problems or bugs
+- **NEVER** skip actual test execution and claim tests passed
+- **ALWAYS** report real test execution times and results
+- **NEVER** hide or obfuscate test failures or errors
+- **NEVER** create tests that only validate mocked behavior instead of real functionality
+- **ALWAYS** ensure tests validate actual user scenarios and real browser behavior
   </senior_qa_automation_engineer>
   </agent_roles>
 
@@ -146,6 +519,7 @@ encoding: UTF-8
 **OUTCOME**: Working implementation or identified issues
 **ROLE INDICATOR**: [SENIOR DEVELOPER MODE]
 **CRITICAL**: After implementation, Senior Developer MUST switch to Tech Lead for review
+**HONESTY REQUIREMENT**: Must accurately report what was actually implemented, never claim incomplete work is complete
 </phase_1_implementation>
 
 <phase_2_review>
@@ -156,6 +530,7 @@ encoding: UTF-8
 **DOCUMENT**: All findings in task spec folder
 **ROLE INDICATOR**: [TECH LEAD MODE]
 **TRIGGER**: Automatically triggered by Senior Developer after implementation completion
+**HONESTY REQUIREMENT**: Must provide honest assessment, never inflate quality or hide real problems
 </phase_2_review>
 
 <phase_3_fixes>
@@ -167,15 +542,18 @@ encoding: UTF-8
 **CRITICAL**: After fixes, Senior Developer MUST switch to Tech Lead for re-review
 **REQUIREMENT**: Implement all reasonable suggestions from Tech Lead review
 **CODE QUALITY**: Fix all TypeScript and linter errors before re-review
+**HONESTY REQUIREMENT**: Must accurately report what fixes were implemented, never claim fixes exist when they don't
 </phase_3_fixes>
 
 <phase_4_testing>
 **PHASE 4: Testing**
 **SWITCH TO**: Senior QA Automation Engineer role
-**ACTION**: Implement comprehensive E2E tests
-**OUTCOME**: Test coverage and validation
+**ACTION**: Implement purposeful tests that help understand issues, fix code, and validate real functionality
+**OUTCOME**: Tests that serve clear purposes in understanding, fixing, and validating functionality
 **ROLE INDICATOR**: [QA ENGINEER MODE]
 **PREREQUISITE**: Only after Tech Lead review is complete and approved
+**HONESTY REQUIREMENT**: Must report actual test results, never fabricate passing tests or hide failures
+**PURPOSEFUL TESTING REQUIREMENT**: Only create tests that help understand issues, fix code, or validate real functionality
 </phase_4_testing>
 
 <phase_5_resolution>
@@ -238,6 +616,16 @@ When switching roles, the AI assistant must:
 - **FOLLOW REASONABLE SUGGESTIONS**: Senior Developer must implement all reasonable suggestions from Tech Lead review
 - **NO ERRORS ALLOWED**: Never proceed to review with TypeScript or linter errors
 - **CODE QUALITY CHECK**: Fix all TypeScript and linter errors before requesting review
+
+**HONESTY AND TRANSPARENCY IN ROLE SWITCHING**:
+
+- **NEVER** claim implementation is complete when it's actually incomplete
+- **NEVER** fabricate review feedback or pretend issues don't exist
+- **ALWAYS** provide honest status updates when switching roles
+- **ALWAYS** accurately report what was accomplished in each role
+- **NEVER** hide problems or pretend everything is working when it's not
+- **ALWAYS** be truthful about test results and implementation status
+- **NEVER** claim tasks are done when they require more work
 
 **ROLE SWITCHING EXAMPLES**:
 
@@ -462,6 +850,81 @@ npx playwright test tests/e2e/feature.spec.ts --headed
 - Kills all Playwright processes on timeout
 - Prevents agent stuck states
 - Automatic recovery and continuation
+
+**🧪 Test Quality and Functionality Requirements**:
+
+- **PURPOSEFUL TESTING**: Only implement tests that help understand issues, fix code, or validate real functionality
+- **REAL FUNCTIONALITY TESTING**: All tests MUST test real existing functionality, not just mocked behavior
+- **REAL BROWSER TESTING**: All tests MUST run in real browser environment with real browser states
+- **REAL DATA TESTING**: All tests MUST use real data sources (IndexedDB, APIs, etc.) instead of mocked data
+- **REAL INTEGRATION TESTING**: All tests MUST validate actual component/service integration, not mocked interactions
+- **REAL USER SCENARIO TESTING**: All tests MUST validate actual user workflows and real user scenarios
+- **NO MOCK-HEAVY TESTS**: Avoid tests that mock everything and don't validate real functionality
+- **NO FAKE INTEGRATION TESTS**: Avoid tests that pretend to test integration but use mocks
+- **NO BOILERPLATE TESTS**: Avoid tests that only verify code structure without testing behavior
+- **NO THEORETICAL TESTS**: Avoid tests that don't represent real user scenarios
+- **END-TO-END VALIDATION**: Ensure tests cover the complete data flow from user action to persistence
+- **REAL ERROR SCENARIO TESTING**: Test actual error conditions, not just mocked error responses
+- **CODE STYLE COMPLIANCE**: All tests must follow @~/.agent-os/standards/code-style.md guidelines
+
+**WHEN TO IMPLEMENT TESTS**:
+
+**✅ APPROPRIATE TEST SCENARIOS**:
+
+- **REAL BROWSER TESTING**: When tests validate actual browser behavior
+  - Example: Test that app actually works offline in real browser
+  - Example: Test that service worker actually caches resources
+  - Example: Test that data persists when browser is closed and reopened
+
+- **REAL INTEGRATION TESTING**: When tests validate actual component/service integration
+  - Example: Test that frontend form submission actually saves data to backend
+  - Example: Test that IndexedDB sync actually works with server API
+  - Example: Test that authentication actually works with real server
+
+- **REAL USER WORKFLOW TESTING**: When tests validate actual user scenarios
+  - Example: Test complete user journey from login to creating a meal plan
+  - Example: Test end-to-end offline functionality with real data
+  - Example: Test actual user interactions and data persistence
+
+- **REAL DATA TESTING**: When tests validate actual data flow and persistence
+  - Example: Test that data actually persists in IndexedDB
+  - Example: Test that background sync actually works when going online
+  - Example: Test that real API responses are handled correctly
+
+**❌ INAPPROPRIATE TEST SCENARIOS**:
+
+- **MOCK-HEAVY TESTING**: Creating tests that mock everything and don't validate real functionality
+  - Example: Testing that mock functions were called instead of real API responses
+  - Example: Testing component rendering with mocked data instead of real user interactions
+  - Example: Testing service worker with mocked offline states instead of real browser offline
+
+- **FAKE INTEGRATION TESTING**: Creating tests that pretend to test integration but use mocks
+  - Example: Testing API calls with mocked responses instead of real server communication
+  - Example: Testing database operations with mocked data instead of real IndexedDB
+  - Example: Testing offline functionality with mocked network states instead of real browser offline
+
+- **BOILERPLATE TESTING**: Creating tests that only verify code structure without testing behavior
+  - Example: Testing that functions exist or have correct parameters
+  - Example: Testing component props without testing actual user interactions
+  - Example: Testing utility functions that have no business logic
+
+- **THEORETICAL TESTING**: Creating tests that don't represent real user scenarios
+  - Example: Testing impossible edge cases that users would never encounter
+  - Example: Testing error conditions that could never happen in real usage
+  - Example: Testing framework features instead of application functionality
+
+**🚫 TODO AND INCOMPLETE IMPLEMENTATION PROHIBITION**:
+
+- **NO TODOs ALLOWED**: Agents are STRICTLY PROHIBITED from adding TODO comments to code
+- **NO INCOMPLETE IMPLEMENTATIONS**: Agents must fully implement all required functionality
+- **NO COMMENTED-OUT CODE**: Agents must not leave commented-out implementation code
+- **NO PLACEHOLDER IMPLEMENTATIONS**: Agents must implement actual working solutions, not placeholders
+- **NO "FUTURE TASK" DEFERRALS**: Agents must complete the current task fully before moving to next tasks
+- **NO PARTIAL SOLUTIONS**: If a solution requires multiple parts, implement ALL parts completely
+- **NO INVESTIGATION-ONLY TASKS**: If investigation reveals a problem, implement the fix immediately
+- **NO DEFERRED IMPLEMENTATION**: When root cause is identified, implement the solution in the same task
+- **COMPLETE FUNCTIONALITY**: Every task must result in fully working, production-ready code
+- **NO BROKEN INTEGRATIONS**: If integration is required, implement it completely, not partially
   </test_execution_safety>
 
 <error_recovery>
@@ -657,6 +1120,34 @@ npx playwright test tests/e2e/feature.spec.ts --headed
 - **ALWAYS** run TypeScript compiler check and linter before task completion
 - **ALWAYS** ensure code passes all static analysis checks
 
+**🚫 CRITICAL IMPLEMENTATION REQUIREMENTS**:
+
+- **NEVER** add TODO comments to code - implement the functionality immediately
+- **NEVER** leave commented-out implementation code - implement it completely
+- **NEVER** defer implementation to future tasks - complete the current task fully
+- **NEVER** create placeholder implementations - implement actual working solutions
+- **ALWAYS** implement complete functionality when root cause is identified
+- **ALWAYS** fix integration issues immediately when discovered
+- **ALWAYS** implement all required parts of a solution, not just some parts
+- **NEVER** mark tasks complete with incomplete or broken implementations
+- **ALWAYS** ensure every task results in production-ready, fully working code
+- **NEVER** leave broken integrations or incomplete data flows
+
+**CRITICAL AGENT HONESTY AND TRANSPARENCY**:
+
+- **NEVER** claim to have implemented functionality that wasn't actually implemented
+- **NEVER** hide or obfuscate the real implementation details
+- **NEVER** pretend to have completed tasks that are incomplete
+- **NEVER** use placeholder text or fake implementations without clearly marking them
+- **ALWAYS** be straightforward about what was actually accomplished
+- **ALWAYS** clearly indicate when implementation is incomplete or partial
+- **ALWAYS** provide accurate status updates on task progress
+- **ALWAYS** admit when something doesn't work or needs more work
+- **NEVER** fabricate test results or claim tests pass when they fail
+- **NEVER** skip actual implementation and claim it's done
+- **ALWAYS** report actual test results, not fabricated ones
+- **ALWAYS** provide honest assessment of code quality and completeness
+
 **ROLE SWITCHING REQUIREMENTS**:
 
 - **ALWAYS** announce role changes with role indicators (e.g., [SENIOR DEVELOPER MODE])
@@ -691,6 +1182,10 @@ npx playwright test tests/e2e/feature.spec.ts --headed
 - **NEVER** allow tests to run indefinitely
 - **ALWAYS** monitor test progress and force termination if stuck
 - **ALWAYS** clean up test database after each test run
+- **NEVER** use unsafe commands that bypass timeout protection
+- **ALWAYS** validate command format before execution
+- **NEVER** proceed with unsafe test execution commands
+- **ALWAYS** use the safe command format: `node tests/e2e/agent-timeout-protector.js <test-file> <test-name> <timeout-ms>`
   </critical_requirements>
 
 ## File Formats
@@ -833,3 +1328,27 @@ When learning new lessons during task implementation, determine the appropriate 
 - Project-specific authentication patterns
 - This project's data flow and architecture
 - Project-specific testing scenarios
+
+**TEST EXECUTION PRE-VALIDATION CHECKLIST**:
+
+**BEFORE executing any test command, agents MUST:**
+
+1. **CHECK COMMAND FORMAT**: Verify the command starts with `node tests/e2e/agent-timeout-protector.js`
+2. **VERIFY NO NPX**: Ensure the command does NOT contain `npx playwright test`
+3. **CONFIRM TIMEOUT PROTECTION**: Ensure timeout protection is being used
+4. **VALIDATE PARAMETERS**: Check that all required parameters are provided
+5. **REVIEW SAFETY**: Double-check against the safe command examples below
+
+**MANDATORY VALIDATION STEPS**:
+
+```bash
+# ✅ SAFE - ALWAYS use this format
+node tests/e2e/agent-timeout-protector.js tests/e2e/feature.spec.ts "test name" 30000
+
+# ❌ UNSAFE - NEVER use these formats
+npx playwright test tests/e2e/feature.spec.ts --timeout=30000
+npx playwright test --grep "test name" --timeout=30000
+npx playwright test tests/e2e/feature.spec.ts --headed
+```
+
+**IF YOU SEE ANY COMMAND STARTING WITH `npx playwright test` - STOP AND CORRECT IT IMMEDIATELY**

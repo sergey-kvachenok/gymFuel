@@ -7,8 +7,8 @@
  * It provides automatic timeout management and force termination capabilities.
  */
 
-const { spawn, exec } = require('child_process');
-const { promisify } = require('util');
+import { spawn, exec, type ChildProcess } from 'child_process';
+import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
@@ -39,7 +39,7 @@ export class AgentTimeoutProtector {
   private startTime: number;
   private lastProgressTime: number;
   private timeouts: NodeJS.Timeout[] = [];
-  private processes: any[] = [];
+  private processes: ChildProcess[] = [];
 
   constructor(config: Partial<TimeoutConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -81,7 +81,7 @@ export class AgentTimeoutProtector {
   /**
    * Register a process for monitoring
    */
-  registerProcess(process: any): void {
+  registerProcess(process: ChildProcess): void {
     this.processes.push(process);
   }
 

@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginWithTestUser } from '../test-utils';
 import { createUniqueTestData } from '../test-data-utils';
-import { DASHBOARD_SELECTORS, UI_SELECTORS } from '../selectors';
 import { DashboardPage } from '../page-objects/DashboardPage';
-import { TEST_CONFIG } from '../test-config';
 import { TestTimeoutManager } from '../test-timeout-manager';
 
 test.describe('Performance Tests - Unified Offline Architecture', () => {
@@ -35,16 +33,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
 
     console.log('🧪 Testing IndexedDB write performance...');
 
-    const startTime = Date.now();
     const productCount = 100;
-
-    // Create large dataset
-    const testData = createUniqueTestData('performance-write-test', {
-      includeUsers: true,
-      includeProducts: false,
-      includeConsumptions: false,
-      includeGoals: false,
-    });
 
     // Generate 100 products
     const products = Array.from({ length: productCount }, (_, i) => ({
@@ -89,7 +78,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
     console.log('🧪 Testing IndexedDB read performance...');
 
     // First, create some test data
-    const testData = createUniqueTestData('performance-read-test', {
+    createUniqueTestData('performance-read-test', {
       includeUsers: true,
       includeProducts: true,
       includeConsumptions: true,
@@ -114,7 +103,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
       await dashboardPage.clickAddConsumption();
       await dashboardPage.fillConsumptionForm({
         productName: `Read Test Product ${i % 50}`,
-        amount: 100 + i,
+        amount: (100 + i).toString(),
       });
       await dashboardPage.submitConsumptionForm();
     }
@@ -174,7 +163,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
       await dashboardPage.clickAddConsumption();
       await dashboardPage.fillConsumptionForm({
         productName: `Sync Test Product ${i % productCount}`,
-        amount: 100 + i,
+        amount: (100 + i).toString(),
       });
       await dashboardPage.submitConsumptionForm();
     }
@@ -212,7 +201,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
     // Get initial memory usage
     const initialMemory = await page.evaluate(() => {
       if ('memory' in performance) {
-        return (performance as any).memory.usedJSHeapSize;
+        return (performance as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
       }
       return null;
     });
@@ -244,7 +233,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
     // Get final memory usage
     const finalMemory = await page.evaluate(() => {
       if ('memory' in performance) {
-        return (performance as any).memory.usedJSHeapSize;
+        return (performance as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
       }
       return null;
     });
@@ -265,7 +254,7 @@ test.describe('Performance Tests - Unified Offline Architecture', () => {
     console.log('✅ Memory usage test passed');
   });
 
-  test('should measure UI responsiveness during heavy operations', async ({ page }) => {
+  test('should measure UI responsiveness during heavy operations', async () => {
     timeoutManager.startTest('UI responsiveness test');
 
     console.log('🧪 Testing UI responsiveness...');

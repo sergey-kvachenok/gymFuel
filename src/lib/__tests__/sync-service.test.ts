@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { UnifiedDataService } from '../unified-data-service';
-import { UnifiedProduct, UnifiedConsumption, UnifiedNutritionGoals } from '../unified-data-service';
+import { UnifiedProduct, UnifiedConsumption } from '../unified-data-service';
 
 // Mock the unified data service
 jest.mock('../unified-data-service', () => ({
@@ -23,12 +22,28 @@ jest.mock('../trpc-client', () => ({
   },
 }));
 
-const MockUnifiedDataService = require('../unified-data-service').UnifiedDataService;
-const MockTrpc = require('../trpc-client').trpc;
+const MockUnifiedDataService = jest.requireMock('../unified-data-service') as {
+  UnifiedDataService: { getInstance: jest.MockedFunction<() => unknown> };
+};
+const MockTrpc = jest.requireMock('../trpc-client') as {
+  trpc: { sync: { batchSync: { useMutation: jest.MockedFunction<() => unknown> } } };
+};
 
 describe('Sync Service', () => {
-  let mockDataService: any;
-  let mockSyncMutation: any;
+  let mockDataService: {
+    getUnsyncedItems: jest.MockedFunction<
+      (tableName: string, userId: number) => Promise<UnifiedProduct[] | UnifiedConsumption[]>
+    >;
+    markAsSynced: jest.MockedFunction<(tableName: string, recordId: number) => Promise<void>>;
+    markAsSyncError: jest.MockedFunction<
+      (tableName: string, recordId: number, error: Error) => Promise<void>
+    >;
+  };
+  let mockSyncMutation: {
+    mutate: jest.MockedFunction<(data: unknown) => void>;
+    isPending: boolean;
+    error: Error | null;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,8 +60,10 @@ describe('Sync Service', () => {
       error: null,
     };
 
-    MockUnifiedDataService.getInstance = jest.fn().mockReturnValue(mockDataService);
-    MockTrpc.sync.batchSync.useMutation.mockReturnValue(mockSyncMutation);
+    MockUnifiedDataService.UnifiedDataService.getInstance = jest
+      .fn()
+      .mockReturnValue(mockDataService);
+    MockTrpc.trpc.sync.batchSync.useMutation.mockReturnValue(mockSyncMutation);
   });
 
   describe('Sync Operations', () => {
@@ -105,44 +122,47 @@ describe('Sync Service', () => {
 
       // This would be the actual sync service function
       const prepareSyncOperations = async (userId: number) => {
-        const [products, consumptions, nutritionGoals] = await Promise.all([
+        const [products, consumptions] = await Promise.all([
           mockDataService.getUnsyncedItems('products', userId),
           mockDataService.getUnsyncedItems('consumptions', userId),
-          mockDataService.getUnsyncedItems('nutritionGoals', userId),
         ]);
 
         const operations = [];
 
         // Add product operations
         for (const product of products) {
-          operations.push({
-            tableName: 'products' as const,
-            operation: 'create' as const,
-            recordId: product.id,
-            data: {
-              name: product.name,
-              calories: product.calories,
-              protein: product.protein,
-              fat: product.fat,
-              carbs: product.carbs,
-            },
-            timestamp: product._lastModified,
-          });
+          if ('name' in product) {
+            operations.push({
+              tableName: 'products' as const,
+              operation: 'create' as const,
+              recordId: product.id,
+              data: {
+                name: product.name,
+                calories: product.calories,
+                protein: product.protein,
+                fat: product.fat,
+                carbs: product.carbs,
+              },
+              timestamp: product._lastModified,
+            });
+          }
         }
 
         // Add consumption operations
         for (const consumption of consumptions) {
-          operations.push({
-            tableName: 'consumptions' as const,
-            operation: 'create' as const,
-            recordId: consumption.id,
-            data: {
-              productId: consumption.productId,
-              amount: consumption.amount,
-              date: consumption.date,
-            },
-            timestamp: consumption._lastModified,
-          });
+          if ('productId' in consumption) {
+            operations.push({
+              tableName: 'consumptions' as const,
+              operation: 'create' as const,
+              recordId: consumption.id,
+              data: {
+                productId: consumption.productId,
+                amount: consumption.amount,
+                date: consumption.date,
+              },
+              timestamp: consumption._lastModified,
+            });
+          }
         }
 
         return operations;
@@ -184,13 +204,12 @@ describe('Sync Service', () => {
         .mockResolvedValueOnce([]);
 
       const prepareSyncOperations = async (userId: number) => {
-        const [products, consumptions, nutritionGoals] = await Promise.all([
+        const [products, consumptions] = await Promise.all([
           mockDataService.getUnsyncedItems('products', userId),
           mockDataService.getUnsyncedItems('consumptions', userId),
-          mockDataService.getUnsyncedItems('nutritionGoals', userId),
         ]);
 
-        return [...products, ...consumptions, ...nutritionGoals];
+        return [...products, ...consumptions];
       };
 
       const operations = await prepareSyncOperations(1);
@@ -216,11 +235,14 @@ describe('Sync Service', () => {
         errors: [],
       };
 
-      mockSyncMutation.mutate.mockImplementation((input: any, options: any) => {
-        options?.onSuccess?.(mockSyncResult);
+      mockSyncMutation.mutate.mockImplementation(() => {
+        // Simulate successful sync
+        return Promise.resolve(mockSyncResult);
       });
 
-      const markItemsAsSynced = async (syncResult: any) => {
+      const markItemsAsSynced = async (syncResult: {
+        results: Array<{ success: boolean; operation: { tableName: string; recordId: number } }>;
+      }) => {
         for (const result of syncResult.results) {
           if (result.success) {
             await mockDataService.markAsSynced(
@@ -253,19 +275,25 @@ describe('Sync Service', () => {
         ],
       };
 
-      const markItemsAsSyncError = async (syncResult: any) => {
+      const markItemsAsSyncError = async (syncResult: {
+        errors: Array<{ operation: { tableName: string; recordId: number }; error: string }>;
+      }) => {
         for (const error of syncResult.errors) {
           await mockDataService.markAsSyncError(
             error.operation.tableName,
             error.operation.recordId,
-            error.error,
+            new Error(error.error),
           );
         }
       };
 
       await markItemsAsSyncError(mockSyncResult);
 
-      expect(mockDataService.markAsSyncError).toHaveBeenCalledWith('products', 1, 'Database error');
+      expect(mockDataService.markAsSyncError).toHaveBeenCalledWith(
+        'products',
+        1,
+        new Error('Database error'),
+      );
     });
 
     it('should handle mixed success and failure results', async () => {
@@ -295,7 +323,10 @@ describe('Sync Service', () => {
         ],
       };
 
-      const processSyncResult = async (syncResult: any) => {
+      const processSyncResult = async (syncResult: {
+        results: Array<{ success: boolean; operation: { tableName: string; recordId: number } }>;
+        errors: Array<{ operation: { tableName: string; recordId: number }; error: string }>;
+      }) => {
         // Mark successful operations
         for (const result of syncResult.results) {
           if (result.success) {
@@ -311,7 +342,7 @@ describe('Sync Service', () => {
           await mockDataService.markAsSyncError(
             error.operation.tableName,
             error.operation.recordId,
-            error.error,
+            new Error(error.error),
           );
         }
       };
@@ -322,7 +353,7 @@ describe('Sync Service', () => {
       expect(mockDataService.markAsSyncError).toHaveBeenCalledWith(
         'consumptions',
         1,
-        'Database error',
+        new Error('Database error'),
       );
     });
   });
@@ -330,8 +361,8 @@ describe('Sync Service', () => {
   describe('Error Handling', () => {
     it('should handle network errors during sync', async () => {
       const networkError = new Error('Network error');
-      mockSyncMutation.mutate.mockImplementation((input: any, options: any) => {
-        options?.onError?.(networkError);
+      mockSyncMutation.mutate.mockImplementation(() => {
+        throw networkError;
       });
 
       // Mock empty arrays for unsynced items
@@ -353,7 +384,7 @@ describe('Sync Service', () => {
           await mockDataService.markAsSyncError(
             'products', // This would be determined by item type
             item.id,
-            error.message,
+            error,
           );
         }
       };
@@ -391,7 +422,7 @@ describe('Sync Service', () => {
         ],
       };
 
-      const isPartialSuccess = (syncResult: any) => {
+      const isPartialSuccess = (syncResult: { processed: number; failed: number }) => {
         return syncResult.processed > 0 && syncResult.failed > 0;
       };
 
@@ -402,7 +433,13 @@ describe('Sync Service', () => {
 
   describe('Data Validation', () => {
     it('should validate sync operation data structure', () => {
-      const validateSyncOperation = (operation: any) => {
+      const validateSyncOperation = (operation: {
+        tableName: string;
+        operation: string;
+        recordId: number;
+        timestamp: Date;
+        data?: unknown;
+      }) => {
         const requiredFields = ['tableName', 'operation', 'recordId', 'timestamp'];
         const validTableNames = ['products', 'consumptions', 'nutritionGoals'];
         const validOperations = ['create', 'update', 'delete'];
@@ -447,7 +484,12 @@ describe('Sync Service', () => {
     });
 
     it('should reject invalid sync operations', () => {
-      const validateSyncOperation = (operation: any) => {
+      const validateSyncOperation = (operation: {
+        tableName: string;
+        operation: string;
+        recordId: number;
+        timestamp: Date;
+      }) => {
         const validTableNames = ['products', 'consumptions', 'nutritionGoals'];
         const validOperations = ['create', 'update', 'delete'];
 

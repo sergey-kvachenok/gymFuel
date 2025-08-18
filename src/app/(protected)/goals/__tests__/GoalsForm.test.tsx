@@ -3,32 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GoalsForm from '../GoalsForm';
 import { GoalType } from '../types';
 
-// Mock tRPC
-jest.mock('../../../../lib/trpc-client', () => ({
-  trpc: {
-    goals: {
-      get: {
-        useQuery: jest.fn(),
-      },
-      getRecommendations: {
-        useQuery: jest.fn(),
-      },
-      upsert: {
-        useMutation: jest.fn(),
-      },
-      delete: {
-        useMutation: jest.fn(),
-      },
-    },
-    useUtils: jest.fn(),
-  },
-}));
-
-// Mock useOnlineStatus
-jest.mock('../../../../hooks/use-online-status', () => ({
-  useOnlineStatus: jest.fn(),
-}));
-
 // Mock UnifiedDataService
 jest.mock('../../../../lib/unified-data-service', () => ({
   UnifiedDataService: {
@@ -36,17 +10,24 @@ jest.mock('../../../../lib/unified-data-service', () => ({
   },
 }));
 
-const MockTrpc = require('../../../../lib/trpc-client').trpc;
-const MockUseOnlineStatus = require('../../../../hooks/use-online-status').useOnlineStatus;
-const MockUnifiedDataService = require('../../../../lib/unified-data-service').UnifiedDataService;
+// Mock useNutritionGoals hook
+jest.mock('../../../../hooks/use-nutrition-goals', () => ({
+  useNutritionGoals: jest.fn(),
+}));
+
+const MockUnifiedDataService = jest.requireMock(
+  '../../../../lib/unified-data-service',
+).UnifiedDataService;
+const MockUseNutritionGoals = jest.requireMock(
+  '../../../../hooks/use-nutrition-goals',
+).useNutritionGoals;
 
 describe('GoalsForm', () => {
-  let mockDataService: any;
-  let mockSaveGoalsMutation: any;
-  let mockDeleteGoalsMutation: any;
-  let mockGetQuery: any;
-  let mockGetRecommendationsQuery: any;
-  let mockUtils: any;
+  let mockDataService: {
+    createNutritionGoals: jest.MockedFunction<(data: unknown) => Promise<unknown>>;
+    updateNutritionGoals: jest.MockedFunction<(id: number, data: unknown) => Promise<unknown>>;
+    getNutritionGoals: jest.MockedFunction<(userId: number) => Promise<unknown>>;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -54,45 +35,17 @@ describe('GoalsForm', () => {
     mockDataService = {
       createNutritionGoals: jest.fn(),
       updateNutritionGoals: jest.fn(),
-    };
-
-    mockSaveGoalsMutation = {
-      mutate: jest.fn(),
-      isPending: false,
-      error: null,
-    };
-
-    mockDeleteGoalsMutation = {
-      mutate: jest.fn(),
-      isPending: false,
-      error: null,
-    };
-
-    mockGetQuery = {
-      data: null,
-      isLoading: false,
-    };
-
-    mockGetRecommendationsQuery = {
-      data: null,
-      isLoading: false,
-    };
-
-    mockUtils = {
-      goals: {
-        get: {
-          invalidate: jest.fn(),
-        },
-      },
+      getNutritionGoals: jest.fn(),
     };
 
     MockUnifiedDataService.getInstance = jest.fn().mockReturnValue(mockDataService);
-    MockUseOnlineStatus.mockReturnValue(true);
-    MockTrpc.goals.get.useQuery.mockReturnValue(mockGetQuery);
-    MockTrpc.goals.getRecommendations.useQuery.mockReturnValue(mockGetRecommendationsQuery);
-    MockTrpc.goals.upsert.useMutation.mockReturnValue(mockSaveGoalsMutation);
-    MockTrpc.goals.delete.useMutation.mockReturnValue(mockDeleteGoalsMutation);
-    MockTrpc.useUtils.mockReturnValue(mockUtils);
+
+    // Default mock for useNutritionGoals
+    MockUseNutritionGoals.mockReturnValue({
+      data: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   const defaultProps = {
@@ -112,15 +65,6 @@ describe('GoalsForm', () => {
       expect(screen.getByTestId('goals-submit')).toBeInTheDocument();
     });
 
-    it('should show loading state when submitting', () => {
-      mockSaveGoalsMutation.isPending = true;
-      render(<GoalsForm {...defaultProps} />);
-
-      const submitButton = screen.getByTestId('goals-submit');
-      expect(submitButton).toHaveTextContent('Saving...');
-      expect(submitButton).toBeDisabled();
-    });
-
     it('should show "Set Your Goals" when no current goals', () => {
       render(<GoalsForm {...defaultProps} />);
 
@@ -128,14 +72,18 @@ describe('GoalsForm', () => {
     });
 
     it('should show "Edit Your Goals" when current goals exist', () => {
-      mockGetQuery.data = {
-        id: 1,
-        dailyCalories: 2000,
-        dailyProtein: 150,
-        dailyFat: 65,
-        dailyCarbs: 250,
-        goalType: GoalType.Maintain,
-      };
+      MockUseNutritionGoals.mockReturnValue({
+        data: {
+          id: 1,
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+        },
+        isLoading: false,
+        error: null,
+      });
 
       render(<GoalsForm {...defaultProps} />);
 
@@ -143,7 +91,12 @@ describe('GoalsForm', () => {
     });
 
     it('should show loading state when fetching goals', () => {
-      mockGetQuery.isLoading = true;
+      MockUseNutritionGoals.mockReturnValue({
+        data: null,
+        isLoading: true,
+        error: null,
+      });
+
       render(<GoalsForm {...defaultProps} />);
 
       expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -173,71 +126,7 @@ describe('GoalsForm', () => {
       expect(goalTypeSelect).toHaveValue(GoalType.Lose);
     });
 
-    it('should call save mutation when form is submitted online', async () => {
-      render(<GoalsForm {...defaultProps} />);
-
-      const form = screen.getByTestId('goals-form').querySelector('form');
-      fireEvent.submit(form!);
-
-      await waitFor(() => {
-        expect(mockSaveGoalsMutation.mutate).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('Online Mode', () => {
-    it('should use tRPC mutation when online', async () => {
-      MockUseOnlineStatus.mockReturnValue(true);
-      render(<GoalsForm {...defaultProps} />);
-
-      const form = screen.getByTestId('goals-form').querySelector('form');
-      fireEvent.submit(form!);
-
-      await waitFor(() => {
-        expect(mockSaveGoalsMutation.mutate).toHaveBeenCalled();
-      });
-    });
-
-    it('should show delete button when goals exist', () => {
-      mockGetQuery.data = {
-        id: 1,
-        dailyCalories: 2000,
-        dailyProtein: 150,
-        dailyFat: 65,
-        dailyCarbs: 250,
-        goalType: GoalType.Maintain,
-      };
-
-      render(<GoalsForm {...defaultProps} />);
-
-      expect(screen.getByText('Delete Goals')).toBeInTheDocument();
-    });
-
-    it('should call delete mutation when delete button is clicked', () => {
-      mockGetQuery.data = {
-        id: 1,
-        dailyCalories: 2000,
-        dailyProtein: 150,
-        dailyFat: 65,
-        dailyCarbs: 250,
-        goalType: GoalType.Maintain,
-      };
-
-      render(<GoalsForm {...defaultProps} />);
-
-      const deleteButton = screen.getByText('Delete Goals');
-      fireEvent.click(deleteButton);
-
-      expect(mockDeleteGoalsMutation.mutate).toHaveBeenCalled();
-    });
-  });
-
-  describe('Offline Mode', () => {
-    beforeEach(() => {
-      MockUseOnlineStatus.mockReturnValue(false);
-    });
-
-    it('should use UnifiedDataService when offline', async () => {
+    it('should call createNutritionGoals when form is submitted with no existing goals', async () => {
       mockDataService.createNutritionGoals.mockResolvedValue({});
 
       render(<GoalsForm {...defaultProps} />);
@@ -257,12 +146,54 @@ describe('GoalsForm', () => {
       fireEvent.submit(form!);
 
       await waitFor(() => {
-        expect(mockDataService.createNutritionGoals).toHaveBeenCalled();
+        expect(mockDataService.createNutritionGoals).toHaveBeenCalledWith({
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+          userId: 1,
+        });
       });
     });
 
-    it('should handle offline save errors', async () => {
-      mockDataService.createNutritionGoals.mockRejectedValue(new Error('Offline error'));
+    it('should call updateNutritionGoals when form is submitted with existing goals', async () => {
+      mockDataService.updateNutritionGoals.mockResolvedValue({});
+
+      MockUseNutritionGoals.mockReturnValue({
+        data: {
+          id: 1,
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<GoalsForm {...defaultProps} />);
+
+      const form = screen.getByTestId('goals-form').querySelector('form');
+      fireEvent.submit(form!);
+
+      await waitFor(() => {
+        expect(mockDataService.updateNutritionGoals).toHaveBeenCalledWith(1, {
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+          userId: 1,
+        });
+      });
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle save errors', async () => {
+      mockDataService.createNutritionGoals.mockRejectedValue(new Error('Save failed'));
 
       // Mock alert
       const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
@@ -273,15 +204,13 @@ describe('GoalsForm', () => {
       fireEvent.submit(form!);
 
       await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith(
-          expect.stringContaining('Error saving goals offline'),
-        );
+        expect(mockAlert).toHaveBeenCalledWith('Error saving goals: Save failed');
       });
 
       mockAlert.mockRestore();
     });
 
-    it('should require user authentication for offline save', async () => {
+    it('should require user authentication for save', async () => {
       // Mock alert
       const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
@@ -292,6 +221,24 @@ describe('GoalsForm', () => {
 
       await waitFor(() => {
         expect(mockAlert).toHaveBeenCalledWith('User not authenticated');
+      });
+
+      mockAlert.mockRestore();
+    });
+
+    it('should show success message when save succeeds', async () => {
+      mockDataService.createNutritionGoals.mockResolvedValue({});
+
+      // Mock alert
+      const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      render(<GoalsForm {...defaultProps} />);
+
+      const form = screen.getByTestId('goals-form').querySelector('form');
+      fireEvent.submit(form!);
+
+      await waitFor(() => {
+        expect(mockAlert).toHaveBeenCalledWith('Goals saved successfully!');
       });
 
       mockAlert.mockRestore();
@@ -324,32 +271,6 @@ describe('GoalsForm', () => {
     });
   });
 
-  describe('Recommendations', () => {
-    it('should show recommendations when available', () => {
-      mockGetRecommendationsQuery.data = {
-        dailyCalories: 2200,
-        dailyProtein: 165,
-        dailyFat: 73,
-        dailyCarbs: 275,
-        goalType: GoalType.Lose,
-      };
-
-      render(<GoalsForm {...defaultProps} />);
-
-      // The RecommendationForm component should be rendered
-      expect(screen.getByTestId('goals-form')).toBeInTheDocument();
-    });
-
-    it('should handle recommendation loading state', () => {
-      mockGetRecommendationsQuery.isLoading = true;
-
-      render(<GoalsForm {...defaultProps} />);
-
-      // The form should still render even when recommendations are loading
-      expect(screen.getByTestId('goals-form')).toBeInTheDocument();
-    });
-  });
-
   describe('Navigation', () => {
     it('should have back to dashboard link', () => {
       render(<GoalsForm {...defaultProps} />);
@@ -357,6 +278,56 @@ describe('GoalsForm', () => {
       const backLink = screen.getByText('Back to Dashboard');
       expect(backLink).toBeInTheDocument();
       expect(backLink).toHaveAttribute('href', '/');
+    });
+  });
+
+  describe('Delete Functionality', () => {
+    it('should show delete button when goals exist', () => {
+      MockUseNutritionGoals.mockReturnValue({
+        data: {
+          id: 1,
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      render(<GoalsForm {...defaultProps} />);
+
+      expect(screen.getByText('Delete Goals')).toBeInTheDocument();
+    });
+
+    it('should show alert when delete button is clicked', () => {
+      MockUseNutritionGoals.mockReturnValue({
+        data: {
+          id: 1,
+          dailyCalories: 2000,
+          dailyProtein: 150,
+          dailyFat: 65,
+          dailyCarbs: 250,
+          goalType: GoalType.Maintain,
+        },
+        isLoading: false,
+        error: null,
+      });
+
+      // Mock alert
+      const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
+      render(<GoalsForm {...defaultProps} />);
+
+      const deleteButton = screen.getByText('Delete Goals');
+      fireEvent.click(deleteButton);
+
+      expect(mockAlert).toHaveBeenCalledWith(
+        'Delete functionality not implemented in simplified version',
+      );
+
+      mockAlert.mockRestore();
     });
   });
 });

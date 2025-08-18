@@ -4,6 +4,7 @@ import Providers from './providers';
 import EnvironmentBanner from '../components/EnvironmentBanner';
 import OfflineBanner from '../components/OfflineBanner';
 import ClientOnly from '../components/ClientOnly';
+import { ErrorFeedbackDisplay } from '../components/ErrorFeedbackDisplay';
 
 // const geistSans = Geist({
 //   variable: '--font-geist-sans',
@@ -41,6 +42,7 @@ export default async function RootLayout({
         <Providers>
           <ClientOnly>
             <OfflineBanner />
+            <ErrorFeedbackDisplay position="top-right" maxVisible={3} />
           </ClientOnly>
           <EnvironmentBanner />
           <main className="max-w-[800px] w-full flex-1">{children}</main>

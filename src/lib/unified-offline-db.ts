@@ -16,16 +16,16 @@ export class UnifiedOfflineDatabase extends Dexie {
   nutritionGoals!: Table<UnifiedNutritionGoals>;
 
   constructor() {
-    super('GymFuelUnifiedDB');
+    super('GymFuelUnifiedDB_v2');
 
-    // Define schema version 12 with enhanced performance indexes
-    this.version(12).stores({
+    // Define schema version 1 with proper ID handling
+    this.version(1).stores({
       products:
-        '&id, userId, name, createdAt, updatedAt, _synced, _lastModified, _version, [userId+name], [userId+_synced]',
+        '++id, userId, name, createdAt, updatedAt, _synced, _lastModified, _version, [userId+name], [userId+_synced]',
       consumptions:
-        '&id, userId, productId, date, createdAt, updatedAt, _synced, _lastModified, _version, [userId+date], [userId+productId], [userId+_synced]',
+        '++id, userId, productId, date, createdAt, updatedAt, _synced, _lastModified, _version, [userId+date], [userId+productId], [userId+_synced]',
       nutritionGoals:
-        '&id, userId, createdAt, updatedAt, _synced, _lastModified, _version, [userId+_synced]',
+        '++id, userId, createdAt, updatedAt, _synced, _lastModified, _version, [userId+_synced]',
     });
 
     // Add hooks for automatic timestamping and sync field management

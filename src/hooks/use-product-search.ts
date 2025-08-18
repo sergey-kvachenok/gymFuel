@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { trpc } from '../lib/trpc-client';
-import { useOnlineStatus } from './use-online-status';
 import { UnifiedDataService } from '../lib/unified-data-service';
 import { UnifiedProduct } from '../lib/unified-offline-db';
 
@@ -20,94 +18,70 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
   } = options;
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [offlineProducts, setOfflineProducts] = useState<UnifiedProduct[]>([]);
-  const [isOfflineLoading, setIsOfflineLoading] = useState(false);
-  const [offlineError, setOfflineError] = useState<Error | null>(null);
+  const [products, setProducts] = useState<UnifiedProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const isOnline = useOnlineStatus();
   // Use a singleton instance of UnifiedDataService
   const unifiedDataService = UnifiedDataService.getInstance();
 
-  // Always use tRPC when online
-  const serverQuery = trpc.product.getAll.useQuery(
-    {
-      query: searchQuery,
-      limit,
-      orderBy,
-      orderDirection,
-    },
-    {
-      enabled: isOnline,
-      refetchOnWindowFocus: false,
-    },
-  );
+  // Function to manually refresh products
+  const refreshProducts = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
-  // Cache server data to IndexedDB when online
   useEffect(() => {
-    if (isOnline && serverQuery.data) {
-      // TODO: Implement server data caching to UnifiedDataService
-      // unifiedDataService.batchCreateProducts(serverQuery.data).catch(console.error);
-    }
-  }, [isOnline, serverQuery.data]);
+    const fetchProducts = async () => {
+      if (!userId) {
+        setProducts([]);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
 
-  // Fetch offline data when going offline
-  useEffect(() => {
-    if (!isOnline && userId && typeof userId === 'number') {
-      const fetchOfflineProducts = async () => {
-        try {
-          setIsOfflineLoading(true);
-          setOfflineError(null);
+      try {
+        setIsLoading(true);
+        setError(null);
 
-          const offlineData = await unifiedDataService.getProducts(userId);
+        const allProducts = await unifiedDataService.getProducts(userId);
 
-          // Apply search filter if query is provided
-          let filteredProducts = offlineData;
-          if (searchQuery.trim()) {
-            filteredProducts = offlineData.filter((product: UnifiedProduct) =>
-              product.name.toLowerCase().includes(searchQuery.toLowerCase()),
-            );
-          }
-
-          // Apply sorting
-          filteredProducts.sort((a: UnifiedProduct, b: UnifiedProduct) => {
-            if (orderBy === 'name') {
-              return orderDirection === 'asc'
-                ? a.name.localeCompare(b.name)
-                : b.name.localeCompare(a.name);
-            } else {
-              return orderDirection === 'asc'
-                ? a.createdAt.getTime() - b.createdAt.getTime()
-                : b.createdAt.getTime() - a.createdAt.getTime();
-            }
-          });
-
-          // Apply limit
-          if (limit) {
-            filteredProducts = filteredProducts.slice(0, limit);
-          }
-
-          setOfflineProducts(filteredProducts);
-        } catch (err) {
-          setOfflineError(
-            err instanceof Error ? err : new Error('Failed to fetch offline products'),
+        // Apply search filter if query is provided
+        let filteredProducts = allProducts;
+        if (searchQuery.trim()) {
+          filteredProducts = allProducts.filter((product: UnifiedProduct) =>
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()),
           );
-        } finally {
-          setIsOfflineLoading(false);
         }
-      };
 
-      fetchOfflineProducts();
-    }
-  }, [isOnline, userId, searchQuery, orderBy, orderDirection, limit, unifiedDataService]); // Include all dependencies
+        // Apply sorting
+        filteredProducts.sort((a: UnifiedProduct, b: UnifiedProduct) => {
+          if (orderBy === 'name') {
+            return orderDirection === 'asc'
+              ? a.name.localeCompare(b.name)
+              : b.name.localeCompare(a.name);
+          } else {
+            return orderDirection === 'asc'
+              ? a.createdAt.getTime() - b.createdAt.getTime()
+              : b.createdAt.getTime() - a.createdAt.getTime();
+          }
+        });
 
-  // Simple data source selection
-  const products = isOnline ? serverQuery.data || [] : offlineProducts;
-  const isLoading = isOnline ? serverQuery.isLoading : isOfflineLoading;
-  const error = isOnline
-    ? serverQuery.error
-      ? new Error(serverQuery.error.message)
-      : null
-    : offlineError;
+        // Apply limit
+        if (limit) {
+          filteredProducts = filteredProducts.slice(0, limit);
+        }
+
+        setProducts(filteredProducts);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch products'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [userId, searchQuery, orderBy, orderDirection, limit, unifiedDataService, refreshTrigger]);
 
   return {
     searchQuery,
@@ -116,5 +90,6 @@ export const useProductSearch = (userId: number | null, options: ProductSearchOp
     allProducts: products,
     isLoading,
     error,
+    refreshProducts,
   };
 };

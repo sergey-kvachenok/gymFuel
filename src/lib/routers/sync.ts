@@ -6,7 +6,7 @@ import { prisma } from '../prisma';
  * User type with id property
  */
 interface AuthenticatedUser {
-  id: number;
+  id: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
@@ -62,10 +62,10 @@ export const syncRouter = router({
    */
   batchSync: protectedProcedure.input(BatchSyncInputSchema).mutation(async ({ ctx, input }) => {
     const { session } = ctx;
-    const userId = (session?.user as AuthenticatedUser)?.id;
+    const userId = parseInt((session?.user as AuthenticatedUser)?.id);
 
-    if (!userId) {
-      throw new Error('User not authenticated');
+    if (!userId || isNaN(userId)) {
+      throw new Error('User not authenticated or invalid user ID');
     }
 
     console.log(
@@ -106,10 +106,10 @@ export const syncRouter = router({
    */
   getStatus: protectedProcedure.query(async ({ ctx }) => {
     const { session } = ctx;
-    const userId = (session?.user as AuthenticatedUser)?.id;
+    const userId = parseInt((session?.user as AuthenticatedUser)?.id);
 
-    if (!userId) {
-      throw new Error('User not authenticated');
+    if (!userId || isNaN(userId)) {
+      throw new Error('User not authenticated or invalid user ID');
     }
 
     // Get counts of each entity type for verification
@@ -183,7 +183,6 @@ const processProductOperation = async (
         data: {
           ...data,
           userId,
-          id: recordId,
         },
       });
 
@@ -223,7 +222,6 @@ const processConsumptionOperation = async (
         data: {
           ...data,
           userId,
-          id: recordId,
         },
       });
 
@@ -263,7 +261,6 @@ const processNutritionGoalsOperation = async (
         data: {
           ...data,
           userId,
-          id: recordId,
         },
       });
 

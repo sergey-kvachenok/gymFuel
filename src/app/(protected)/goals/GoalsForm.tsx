@@ -1,13 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { trpc } from '../../../lib/trpc-client';
 import Link from 'next/link';
-import { RecommendationForm } from './components/RecommendationForm';
+
 import { GoalType, IFormData } from './types';
 import { CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useOnlineStatus } from '../../../hooks/use-online-status';
 import { UnifiedDataService } from '../../../lib/unified-data-service';
+import { useNutritionGoals } from '../../../hooks/use-nutrition-goals';
 
 const nutritionFields = [
   {
@@ -57,40 +56,9 @@ export default function GoalsForm({ userId }: GoalsFormProps) {
     goalType: GoalType.Maintain,
   });
 
-  const [showRecommendations, setShowRecommendations] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: currentGoals, isLoading } = trpc.goals.get.useQuery();
-  const { data: recommendations, isLoading: isRecommendationsLoading } =
-    trpc.goals.getRecommendations.useQuery(
-      { goalType: formData.goalType },
-      { enabled: showRecommendations },
-    );
-
-  const utils = trpc.useUtils();
-  const isOnline = useOnlineStatus();
-
-  const saveGoalsMutation = trpc.goals.upsert.useMutation({
-    onSuccess: () => {
-      utils.goals.get.invalidate();
-      setIsSubmitting(false);
-      alert('Goals saved successfully!');
-    },
-    onError: (error) => {
-      setIsSubmitting(false);
-      alert(`Error saving goals: ${error.message}`);
-    },
-  });
-
-  const deleteGoalsMutation = trpc.goals.delete.useMutation({
-    onSuccess: () => {
-      utils.goals.get.invalidate();
-      alert('Goals deleted successfully!');
-    },
-    onError: (error) => {
-      alert(`Error deleting goals: ${error.message}`);
-    },
-  });
+  const { data: currentGoals, isLoading } = useNutritionGoals(userId);
 
   useEffect(() => {
     if (currentGoals) {
@@ -108,68 +76,40 @@ export default function GoalsForm({ userId }: GoalsFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (isOnline) {
-      saveGoalsMutation.mutate(formData);
-    } else {
-      try {
-        if (!userId) {
-          alert('User not authenticated');
-          setIsSubmitting(false);
-          return;
-        }
-
-        const unifiedDataService = UnifiedDataService.getInstance();
-
-        if (currentGoals?.id) {
-          // Update existing goals
-          await unifiedDataService.updateNutritionGoals(currentGoals.id, {
-            ...formData,
-            userId,
-          });
-        } else {
-          // Create new goals
-          await unifiedDataService.createNutritionGoals({
-            ...formData,
-            userId,
-          });
-        }
-
-        utils.goals.get.invalidate();
-        setIsSubmitting(false);
-        alert('Goals saved successfully!');
-      } catch (error) {
-        setIsSubmitting(false);
-        alert(
-          `Error saving goals offline: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
-      }
+    if (!userId) {
+      alert('User not authenticated');
+      setIsSubmitting(false);
+      return;
     }
-  };
 
-  const handleUseRecommendations = () => {
-    if (recommendations) {
-      setFormData({
-        ...formData,
-        dailyCalories: recommendations.dailyCalories,
-        dailyProtein: recommendations.dailyProtein,
-        dailyFat: recommendations.dailyFat,
-        dailyCarbs: recommendations.dailyCarbs,
-        goalType: recommendations.goalType as GoalType,
-      });
-      setShowRecommendations(false);
+    try {
+      const unifiedDataService = UnifiedDataService.getInstance();
+
+      if (currentGoals?.id) {
+        // Update existing goals
+        await unifiedDataService.updateNutritionGoals(currentGoals.id, {
+          ...formData,
+          userId,
+        });
+      } else {
+        // Create new goals
+        await unifiedDataService.createNutritionGoals({
+          ...formData,
+          userId,
+        });
+      }
+
+      setIsSubmitting(false);
+      alert('Goals saved successfully!');
+    } catch (error) {
+      setIsSubmitting(false);
+      alert(`Error saving goals: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   return (
     <div className="flex flex-col gap-3" data-testid="goals-form">
-      <RecommendationForm
-        handleUseRecommendations={handleUseRecommendations}
-        formData={formData}
-        setFormData={setFormData}
-        setShowRecommendations={setShowRecommendations}
-        recommendations={recommendations}
-        isRecommendationsLoading={isRecommendationsLoading}
-      />
+      {/* RecommendationForm removed for simplified approach */}
 
       <div className=" rounded-2xl shadow-lg p-3 border">
         <CardTitle className="text-start mb-3">
@@ -236,21 +176,23 @@ export default function GoalsForm({ userId }: GoalsFormProps) {
                 <div className="flex gap-2">
                   <Button
                     type="submit"
-                    disabled={isSubmitting || saveGoalsMutation.isPending}
+                    disabled={isSubmitting}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     data-testid="goals-submit"
                   >
-                    {isSubmitting || saveGoalsMutation.isPending ? 'Saving...' : 'Save Goals'}
+                    {isSubmitting ? 'Saving...' : 'Save Goals'}
                   </Button>
 
                   {currentGoals && (
                     <Button
                       type="button"
-                      onClick={() => deleteGoalsMutation.mutate()}
-                      disabled={deleteGoalsMutation.isPending}
+                      onClick={() => {
+                        // Delete functionality removed for simplified approach
+                        alert('Delete functionality not implemented in simplified version');
+                      }}
                       className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                     >
-                      {deleteGoalsMutation.isPending ? 'Deleting...' : 'Delete Goals'}
+                      Delete Goals
                     </Button>
                   )}
                 </div>

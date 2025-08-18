@@ -197,7 +197,7 @@ describe('ConnectionMonitor', () => {
     it('should handle missing connection API gracefully', () => {
       // Mock navigator without connection API
       const originalConnection = mockNavigator.connection;
-      delete mockNavigator.connection;
+      delete (mockNavigator as { connection?: unknown }).connection;
 
       const info = connectionMonitor.getConnectionInfo();
 
@@ -346,20 +346,20 @@ describe('ConnectionMonitor', () => {
   describe('Error Handling', () => {
     it('should handle missing navigator gracefully', () => {
       const originalNavigator = global.navigator;
-      delete (global as any).navigator;
+      delete (global as { navigator?: typeof navigator }).navigator;
 
       expect(() => new ConnectionMonitor()).not.toThrow();
 
-      (global as any).navigator = originalNavigator;
+      (global as { navigator?: typeof navigator }).navigator = originalNavigator;
     });
 
     it('should handle missing window gracefully', () => {
       const originalWindow = global.window;
-      delete (global as any).window;
+      delete (global as { window?: typeof window }).window;
 
       expect(() => new ConnectionMonitor()).not.toThrow();
 
-      (global as any).window = originalWindow;
+      (global as { window?: typeof window }).window = originalWindow;
     });
   });
 

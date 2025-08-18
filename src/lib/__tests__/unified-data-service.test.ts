@@ -1,4 +1,4 @@
-import { UnifiedDataService } from '../unified-data-service';
+import { UnifiedDataService, UnifiedProduct } from '../unified-data-service';
 import { Product, Consumption, NutritionGoals } from '../../types/api';
 
 // Mock the offline database
@@ -38,12 +38,57 @@ jest.mock('../unified-offline-db', () => ({
 
 describe('UnifiedDataService', () => {
   let service: UnifiedDataService;
-  let mockDb: any;
+  let mockDb: jest.Mocked<{
+    products: {
+      add: jest.MockedFunction<(data: unknown) => Promise<number>>;
+      get: jest.MockedFunction<(id: number) => Promise<unknown>>;
+      where: jest.MockedFunction<
+        (field: string) => {
+          equals: jest.MockedFunction<
+            (value: unknown) => { toArray: jest.MockedFunction<() => Promise<unknown[]>> }
+          >;
+        }
+      >;
+      update: jest.MockedFunction<(id: number, data: unknown) => Promise<void>>;
+      delete: jest.MockedFunction<(id: number) => Promise<void>>;
+      bulkAdd: jest.MockedFunction<(data: unknown[]) => Promise<number[]>>;
+      bulkGet: jest.MockedFunction<(ids: number[]) => Promise<unknown[]>>;
+    };
+    consumptions: {
+      add: jest.MockedFunction<(data: unknown) => Promise<number>>;
+      get: jest.MockedFunction<(id: number) => Promise<unknown>>;
+      where: jest.MockedFunction<
+        (field: string) => {
+          equals: jest.MockedFunction<
+            (value: unknown) => { toArray: jest.MockedFunction<() => Promise<unknown[]>> }
+          >;
+        }
+      >;
+      update: jest.MockedFunction<(id: number, data: unknown) => Promise<void>>;
+      delete: jest.MockedFunction<(id: number) => Promise<void>>;
+      bulkAdd: jest.MockedFunction<(data: unknown[]) => Promise<number[]>>;
+      bulkGet: jest.MockedFunction<(ids: number[]) => Promise<unknown[]>>;
+    };
+    nutritionGoals: {
+      add: jest.MockedFunction<(data: unknown) => Promise<number>>;
+      get: jest.MockedFunction<(id: number) => Promise<unknown>>;
+      where: jest.MockedFunction<
+        (field: string) => {
+          equals: jest.MockedFunction<
+            (value: unknown) => { toArray: jest.MockedFunction<() => Promise<unknown[]>> }
+          >;
+        }
+      >;
+      update: jest.MockedFunction<(id: number, data: unknown) => Promise<void>>;
+      delete: jest.MockedFunction<(id: number) => Promise<void>>;
+      first: jest.MockedFunction<() => Promise<unknown>>;
+    };
+  }>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = new UnifiedDataService();
-    mockDb = require('../unified-offline-db').unifiedOfflineDb;
+    mockDb = jest.requireMock('../unified-offline-db').unifiedOfflineDb;
   });
 
   describe('Product Operations', () => {
@@ -151,8 +196,19 @@ describe('UnifiedDataService', () => {
     const mockConsumption: Omit<Consumption, 'id' | 'createdAt' | 'updatedAt'> = {
       userId: 1,
       productId: 1,
-      quantity: 100,
+      amount: 100,
       date: new Date(),
+      product: {
+        id: 1,
+        name: 'Test Product',
+        calories: 100,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+        userId: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     };
 
     it('should create a consumption successfully', async () => {
@@ -186,14 +242,12 @@ describe('UnifiedDataService', () => {
         { ...mockConsumption, id: 1, createdAt: new Date(), updatedAt: new Date() },
       ];
 
-      const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
+      const startDate = new Date('2025-08-16T00:00:00.000Z');
+      const endDate = new Date('2025-08-16T23:59:59.999Z');
 
       mockDb.consumptions.where.mockReturnValue({
         equals: jest.fn().mockReturnValue({
-          filter: jest.fn().mockReturnValue({
-            toArray: jest.fn().mockResolvedValue(consumptions),
-          }),
+          toArray: jest.fn().mockResolvedValue(consumptions),
         }),
       });
 
@@ -207,10 +261,11 @@ describe('UnifiedDataService', () => {
   describe('Nutrition Goals Operations', () => {
     const mockGoals: Omit<NutritionGoals, 'id' | 'createdAt' | 'updatedAt'> = {
       userId: 1,
-      calories: 2000,
-      protein: 150,
-      carbs: 200,
-      fat: 70,
+      dailyCalories: 2000,
+      dailyProtein: 150,
+      dailyCarbs: 200,
+      dailyFat: 70,
+      goalType: 'weight_loss',
     };
 
     it('should create nutrition goals successfully', async () => {
@@ -262,7 +317,7 @@ describe('UnifiedDataService', () => {
 
   describe('Sync Status Management', () => {
     it('should mark item as synced', async () => {
-      const product: Product = {
+      const product: UnifiedProduct = {
         id: 1,
         name: 'Test Product',
         calories: 100,
@@ -304,7 +359,7 @@ describe('UnifiedDataService', () => {
     });
 
     it('should get unsynced items', async () => {
-      const unsyncedProducts: Product[] = [
+      const unsyncedProducts: UnifiedProduct[] = [
         {
           id: 1,
           name: 'Test Product',

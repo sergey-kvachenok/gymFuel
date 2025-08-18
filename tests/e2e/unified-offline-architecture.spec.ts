@@ -76,6 +76,15 @@ test.describe('Unified Offline Architecture - Comprehensive Testing', () => {
       // Wait for product to be created and cached
       await page.waitForTimeout(3000);
 
+      // Navigate to history page to verify product appears in the list
+      await page.goto('/history');
+      await page.waitForTimeout(2000);
+
+      // Open the products side panel
+      const productsButton = page.locator('button:has-text("Products List")');
+      await productsButton.click();
+      await page.waitForTimeout(1000);
+
       // Verify product appears in the list
       const productList = page.locator(`[data-testid="${PRODUCT_SELECTORS.LIST}"]`);
       await expect(productList).toContainText(testData.products[0].name);
@@ -133,6 +142,19 @@ test.describe('Unified Offline Architecture - Comprehensive Testing', () => {
       // Wait for offline creation
       await page.waitForTimeout(2000);
 
+      // Force refresh the page to ensure the product data is loaded
+      await page.reload();
+      await page.waitForTimeout(2000);
+
+      // Navigate to history page to verify product appears in the list (offline)
+      await page.goto('/history');
+      await page.waitForTimeout(2000);
+
+      // Open the products side panel
+      const productsButton = page.locator('button:has-text("Products List")');
+      await productsButton.click();
+      await page.waitForTimeout(1000);
+
       // Verify product appears in the list (offline)
       const productList = page.locator(`[data-testid="${PRODUCT_SELECTORS.LIST}"]`);
       await expect(productList).toContainText(testData.products[0].name);
@@ -184,6 +206,10 @@ test.describe('Unified Offline Architecture - Comprehensive Testing', () => {
       await dashboardPage.submitConsumptionForm();
 
       // Wait for offline creation
+      await page.waitForTimeout(2000);
+
+      // Navigate back to dashboard to verify consumption appears in meals list
+      await page.goto('/dashboard');
       await page.waitForTimeout(2000);
 
       // Verify consumption appears in meals list
@@ -239,7 +265,7 @@ test.describe('Unified Offline Architecture - Comprehensive Testing', () => {
       await page.waitForTimeout(1000);
 
       // Verify items are created offline
-      const productList = page.locator(`[data-testid="${DASHBOARD_SELECTORS.PRODUCT_LIST}"]`);
+      const productList = page.locator(`[data-testid="${PRODUCT_SELECTORS.LIST}"]`);
       const mealsList = page.locator(`[data-testid="${DASHBOARD_SELECTORS.MEALS_LIST}"]`);
 
       await expect(productList).toContainText(testData.products[0].name);
@@ -327,7 +353,7 @@ test.describe('Unified Offline Architecture - Comprehensive Testing', () => {
       }
 
       // Verify all products are created
-      const productList = page.locator(`[data-testid="${DASHBOARD_SELECTORS.PRODUCT_LIST}"]`);
+      const productList = page.locator(`[data-testid="${PRODUCT_SELECTORS.LIST}"]`);
       for (const product of products) {
         await expect(productList).toContainText(product.name);
       }

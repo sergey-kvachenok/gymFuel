@@ -1,5 +1,8 @@
 import { unifiedOfflineDb } from './unified-offline-db';
 import { Product, Consumption, NutritionGoals } from '../types/api';
+import { logger } from './logger';
+import { errorRecoveryManager } from './error-recovery';
+import { errorFeedbackManager } from './error-feedback';
 
 export interface SyncableItem {
   _synced: boolean;
@@ -32,33 +35,209 @@ export class UnifiedDataService {
   async createProduct(
     productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<UnifiedProduct> {
-    const now = new Date();
-    const unifiedProduct: Omit<UnifiedProduct, 'id'> = {
-      ...productData,
-      createdAt: now,
-      updatedAt: now,
-      _synced: false,
-      _syncTimestamp: null,
-      _syncError: null,
-      _lastModified: now,
-      _version: 1,
-    };
+    const operationId = logger.startOperation('createProduct', 'products', productData.userId);
+    const startTime = Date.now();
 
-    const id = await unifiedOfflineDb.products.add(unifiedProduct as UnifiedProduct);
-    const product = await unifiedOfflineDb.products.get(id);
+    try {
+      logger.logDbOperation(
+        'createProduct',
+        'products',
+        'Starting product creation',
+        productData,
+        productData.userId,
+      );
 
-    if (!product) {
-      throw new Error('Failed to create product');
+      const now = new Date();
+      const unifiedProduct: Omit<UnifiedProduct, 'id'> = {
+        ...productData,
+        createdAt: now,
+        updatedAt: now,
+        _synced: false,
+        _syncTimestamp: null,
+        _syncError: null,
+        _lastModified: now,
+        _version: 1,
+      };
+
+      logger.debug(
+        'DATABASE',
+        'createProduct',
+        'Adding product to database',
+        unifiedProduct,
+        productData.userId,
+        'products',
+      );
+
+      const id = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.add(unifiedProduct as UnifiedProduct),
+        'database',
+        {
+          operation: 'createProduct',
+          tableName: 'products',
+          userId: productData.userId,
+          data: unifiedProduct,
+        },
+      );
+
+      logger.logDbOperation(
+        'createProduct',
+        'products',
+        'Product added successfully',
+        { id },
+        productData.userId,
+        id,
+      );
+
+      const product = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.get(id),
+        'database',
+        {
+          operation: 'createProduct',
+          tableName: 'products',
+          userId: productData.userId,
+          recordId: id,
+        },
+      );
+
+      if (!product) {
+        const error = new Error('Failed to create product');
+        logger.logErrorOperation(
+          'createProduct',
+          'Failed to retrieve created product',
+          error,
+          { id },
+          productData.userId,
+          'products',
+          id,
+        );
+        throw error;
+      }
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(
+        operationId,
+        'createProduct',
+        duration,
+        'products',
+        productData.userId,
+        1,
+      );
+      logger.logDbOperation(
+        'createProduct',
+        'products',
+        'Product created successfully',
+        { id, product },
+        productData.userId,
+        id,
+        duration,
+      );
+
+      // Add success feedback
+      errorFeedbackManager.addSuccessFeedback(
+        'Product Created',
+        `Successfully created "${product.name}"`,
+        {
+          autoDismiss: 3000,
+        },
+      );
+
+      return product;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'createProduct', duration, 'products', productData.userId);
+      logger.logErrorOperation(
+        'createProduct',
+        'Product creation failed',
+        error as Error,
+        productData,
+        productData.userId,
+        'products',
+      );
+
+      // Add user feedback for the error
+      errorFeedbackManager.addErrorFeedback(
+        {
+          operation: 'createProduct',
+          tableName: 'products',
+          userId: productData.userId,
+          data: productData,
+          error: error as Error,
+        },
+        {
+          autoDismiss: 8000, // Auto-dismiss after 8 seconds
+          action: {
+            label: 'Try Again',
+            onClick: () => {
+              // This would typically trigger a retry mechanism
+              console.log('Retry createProduct operation');
+            },
+          },
+        },
+      );
+
+      throw error;
     }
-
-    return product;
   }
 
   /**
    * Get all products for a user
    */
   async getProducts(userId: number): Promise<UnifiedProduct[]> {
-    return await unifiedOfflineDb.products.where('userId').equals(userId).toArray();
+    const operationId = logger.startOperation('getProducts', 'products', userId);
+    const startTime = Date.now();
+
+    try {
+      logger.logDbOperation(
+        'getProducts',
+        'products',
+        'Starting products retrieval',
+        { userId },
+        userId,
+      );
+
+      const products = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.where('userId').equals(userId).toArray(),
+        'database',
+        {
+          operation: 'getProducts',
+          tableName: 'products',
+          userId,
+        },
+      );
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(
+        operationId,
+        'getProducts',
+        duration,
+        'products',
+        userId,
+        products.length,
+      );
+      logger.logDbOperation(
+        'getProducts',
+        'products',
+        'Products retrieved successfully',
+        { count: products.length },
+        userId,
+        undefined,
+        duration,
+      );
+
+      return products;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'getProducts', duration, 'products', userId);
+      logger.logErrorOperation(
+        'getProducts',
+        'Products retrieval failed',
+        error as Error,
+        { userId },
+        userId,
+        'products',
+      );
+      throw error;
+    }
   }
 
   /**
@@ -120,36 +299,277 @@ export class UnifiedDataService {
    * Update a product
    */
   async updateProduct(id: number, updates: Partial<Product>): Promise<UnifiedProduct | undefined> {
-    const existingProduct = await unifiedOfflineDb.products.get(id);
-    if (!existingProduct) {
-      throw new Error(`Product with id ${id} not found`);
+    const operationId = logger.startOperation('updateProduct', 'products');
+    const startTime = Date.now();
+
+    try {
+      logger.logDbOperation(
+        'updateProduct',
+        'products',
+        'Starting product update',
+        { id, updates },
+        undefined,
+        id,
+      );
+
+      const existingProduct = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.get(id),
+        'database',
+        {
+          operation: 'updateProduct',
+          tableName: 'products',
+          recordId: id,
+        },
+      );
+      if (!existingProduct) {
+        const error = new Error(`Product with id ${id} not found`);
+        logger.logErrorOperation(
+          'updateProduct',
+          'Product not found for update',
+          error,
+          { id },
+          undefined,
+          'products',
+          id,
+        );
+        throw error;
+      }
+
+      const now = new Date();
+      const updateData: Partial<UnifiedProduct> = {
+        ...updates,
+        updatedAt: now,
+        _synced: false,
+        _syncTimestamp: null,
+        _syncError: null,
+        _lastModified: now,
+        _version: existingProduct._version + 1,
+      };
+
+      logger.debug(
+        'DATABASE',
+        'updateProduct',
+        'Updating product in database',
+        updateData,
+        existingProduct.userId,
+        'products',
+        id,
+      );
+
+      await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.update(id, updateData),
+        'database',
+        {
+          operation: 'updateProduct',
+          tableName: 'products',
+          userId: existingProduct.userId,
+          recordId: id,
+          data: updateData,
+        },
+      );
+
+      logger.logDbOperation(
+        'updateProduct',
+        'products',
+        'Product updated successfully',
+        { id },
+        existingProduct.userId,
+        id,
+      );
+
+      const updatedProduct = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.get(id),
+        'database',
+        {
+          operation: 'updateProduct',
+          tableName: 'products',
+          userId: existingProduct.userId,
+          recordId: id,
+        },
+      );
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(
+        operationId,
+        'updateProduct',
+        duration,
+        'products',
+        existingProduct.userId,
+        1,
+      );
+      logger.logDbOperation(
+        'updateProduct',
+        'products',
+        'Product update completed',
+        { id, updatedProduct },
+        existingProduct.userId,
+        id,
+        duration,
+      );
+
+      // Add success feedback
+      errorFeedbackManager.addSuccessFeedback(
+        'Product Updated',
+        `Successfully updated "${updatedProduct?.name || 'product'}"`,
+        {
+          autoDismiss: 3000,
+        },
+      );
+
+      return updatedProduct;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'updateProduct', duration, 'products');
+      logger.logErrorOperation(
+        'updateProduct',
+        'Product update failed',
+        error as Error,
+        { id, updates },
+        undefined,
+        'products',
+        id,
+      );
+
+      // Add user feedback for the error
+      errorFeedbackManager.addErrorFeedback(
+        {
+          operation: 'updateProduct',
+          tableName: 'products',
+          recordId: id,
+          data: { id, updates },
+          error: error as Error,
+        },
+        {
+          autoDismiss: 8000,
+          action: {
+            label: 'Try Again',
+            onClick: () => {
+              console.log('Retry updateProduct operation');
+            },
+          },
+        },
+      );
+
+      throw error;
     }
-
-    const now = new Date();
-    const updateData: Partial<UnifiedProduct> = {
-      ...updates,
-      updatedAt: now,
-      _synced: false,
-      _syncTimestamp: null,
-      _syncError: null,
-      _lastModified: now,
-      _version: existingProduct._version + 1,
-    };
-
-    await unifiedOfflineDb.products.update(id, updateData);
-    return await unifiedOfflineDb.products.get(id);
   }
 
   /**
    * Delete a product
    */
   async deleteProduct(id: number): Promise<void> {
-    const product = await unifiedOfflineDb.products.get(id);
-    if (!product) {
-      throw new Error(`Product with id ${id} not found`);
-    }
+    const operationId = logger.startOperation('deleteProduct', 'products');
+    const startTime = Date.now();
 
-    await unifiedOfflineDb.products.delete(id);
+    try {
+      logger.logDbOperation(
+        'deleteProduct',
+        'products',
+        'Starting product deletion',
+        { id },
+        undefined,
+        id,
+      );
+
+      const product = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.get(id),
+        'database',
+        {
+          operation: 'deleteProduct',
+          tableName: 'products',
+          recordId: id,
+        },
+      );
+      if (!product) {
+        const error = new Error(`Product with id ${id} not found`);
+        logger.logErrorOperation(
+          'deleteProduct',
+          'Product not found for deletion',
+          error,
+          { id },
+          undefined,
+          'products',
+          id,
+        );
+        throw error;
+      }
+
+      logger.debug(
+        'DATABASE',
+        'deleteProduct',
+        'Deleting product from database',
+        { id },
+        product.userId,
+        'products',
+        id,
+      );
+
+      await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.products.delete(id),
+        'database',
+        {
+          operation: 'deleteProduct',
+          tableName: 'products',
+          userId: product.userId,
+          recordId: id,
+        },
+      );
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'deleteProduct', duration, 'products', product.userId, 1);
+      logger.logDbOperation(
+        'deleteProduct',
+        'products',
+        'Product deleted successfully',
+        { id },
+        product.userId,
+        id,
+        duration,
+      );
+
+      // Add success feedback
+      errorFeedbackManager.addSuccessFeedback(
+        'Product Deleted',
+        `Successfully deleted "${product.name}"`,
+        {
+          autoDismiss: 3000,
+        },
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'deleteProduct', duration, 'products');
+      logger.logErrorOperation(
+        'deleteProduct',
+        'Product deletion failed',
+        error as Error,
+        { id },
+        undefined,
+        'products',
+        id,
+      );
+
+      // Add user feedback for the error
+      errorFeedbackManager.addErrorFeedback(
+        {
+          operation: 'deleteProduct',
+          tableName: 'products',
+          recordId: id,
+          data: { id },
+          error: error as Error,
+        },
+        {
+          autoDismiss: 8000,
+          action: {
+            label: 'Try Again',
+            onClick: () => {
+              console.log('Retry deleteProduct operation');
+            },
+          },
+        },
+      );
+
+      throw error;
+    }
   }
 
   /**
@@ -158,26 +578,157 @@ export class UnifiedDataService {
   async createConsumption(
     consumptionData: Omit<Consumption, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<UnifiedConsumption> {
-    const now = new Date();
-    const unifiedConsumption: Omit<UnifiedConsumption, 'id'> = {
-      ...consumptionData,
-      createdAt: now,
-      updatedAt: now,
-      _synced: false,
-      _syncTimestamp: null,
-      _syncError: null,
-      _lastModified: now,
-      _version: 1,
-    };
+    const operationId = logger.startOperation(
+      'createConsumption',
+      'consumptions',
+      consumptionData.userId,
+    );
+    const startTime = Date.now();
 
-    const id = await unifiedOfflineDb.consumptions.add(unifiedConsumption as UnifiedConsumption);
-    const consumption = await unifiedOfflineDb.consumptions.get(id);
+    try {
+      logger.logDbOperation(
+        'createConsumption',
+        'consumptions',
+        'Starting consumption creation',
+        consumptionData,
+        consumptionData.userId,
+      );
 
-    if (!consumption) {
-      throw new Error('Failed to create consumption');
+      const now = new Date();
+      const unifiedConsumption: Omit<UnifiedConsumption, 'id'> = {
+        ...consumptionData,
+        createdAt: now,
+        updatedAt: now,
+        _synced: false,
+        _syncTimestamp: null,
+        _syncError: null,
+        _lastModified: now,
+        _version: 1,
+      };
+
+      logger.debug(
+        'DATABASE',
+        'createConsumption',
+        'Adding consumption to database',
+        unifiedConsumption,
+        consumptionData.userId,
+        'consumptions',
+      );
+
+      const id = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.consumptions.add(unifiedConsumption as UnifiedConsumption),
+        'database',
+        {
+          operation: 'createConsumption',
+          tableName: 'consumptions',
+          userId: consumptionData.userId,
+          data: unifiedConsumption,
+        },
+      );
+
+      logger.logDbOperation(
+        'createConsumption',
+        'consumptions',
+        'Consumption added successfully',
+        { id },
+        consumptionData.userId,
+        id,
+      );
+
+      const consumption = await errorRecoveryManager.executeWithRecovery(
+        () => unifiedOfflineDb.consumptions.get(id),
+        'database',
+        {
+          operation: 'createConsumption',
+          tableName: 'consumptions',
+          userId: consumptionData.userId,
+          recordId: id,
+        },
+      );
+
+      if (!consumption) {
+        const error = new Error('Failed to create consumption');
+        logger.logErrorOperation(
+          'createConsumption',
+          'Failed to retrieve created consumption',
+          error,
+          { id },
+          consumptionData.userId,
+          'consumptions',
+          id,
+        );
+        throw error;
+      }
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(
+        operationId,
+        'createConsumption',
+        duration,
+        'consumptions',
+        consumptionData.userId,
+        1,
+      );
+      logger.logDbOperation(
+        'createConsumption',
+        'consumptions',
+        'Consumption created successfully',
+        { id, consumption },
+        consumptionData.userId,
+        id,
+        duration,
+      );
+
+      // Add success feedback
+      errorFeedbackManager.addSuccessFeedback(
+        'Consumption Added',
+        `Successfully added consumption for ${consumptionData.amount} servings`,
+        {
+          autoDismiss: 3000,
+        },
+      );
+
+      return consumption;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(
+        operationId,
+        'createConsumption',
+        duration,
+        'consumptions',
+        consumptionData.userId,
+      );
+      logger.logErrorOperation(
+        'createConsumption',
+        'Consumption creation failed',
+        error as Error,
+        consumptionData,
+        consumptionData.userId,
+        'consumptions',
+      );
+
+      // Add user feedback for the error
+      errorFeedbackManager.addErrorFeedback(
+        {
+          operation: 'createConsumption',
+          tableName: 'consumptions',
+          userId: consumptionData.userId,
+          data: consumptionData,
+          error: error as Error,
+        },
+        {
+          autoDismiss: 8000,
+          action: {
+            label: 'Try Again',
+            onClick: () => {
+              console.log('Retry createConsumption operation');
+            },
+          },
+        },
+      );
+
+      throw error;
     }
-
-    return consumption;
   }
 
   /**
@@ -188,14 +739,34 @@ export class UnifiedDataService {
     startDate: Date,
     endDate: Date,
   ): Promise<UnifiedConsumption[]> {
-    return await unifiedOfflineDb.consumptions
+    console.log('🔍 getConsumptionsByDateRange called with:', {
+      userId,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
+    const allConsumptions = await unifiedOfflineDb.consumptions
       .where('userId')
       .equals(userId)
-      .filter((consumption) => {
-        const consumptionDate = new Date(consumption.date);
-        return consumptionDate >= startDate && consumptionDate <= endDate;
-      })
       .toArray();
+
+    console.log('📊 All consumptions for user:', allConsumptions.length);
+
+    const filteredConsumptions = allConsumptions.filter((consumption) => {
+      const consumptionDate = new Date(consumption.date);
+      const isInRange = consumptionDate >= startDate && consumptionDate <= endDate;
+
+      console.log('📅 Consumption date check:', {
+        consumptionId: consumption.id,
+        consumptionDate: consumptionDate.toISOString(),
+        isInRange,
+      });
+
+      return isInRange;
+    });
+
+    console.log('✅ Filtered consumptions:', filteredConsumptions.length);
+    return filteredConsumptions;
   }
 
   /**
@@ -330,63 +901,510 @@ export class UnifiedDataService {
    * Mark an item as successfully synced
    */
   async markAsSynced(tableName: string, id: number): Promise<void> {
-    const table = this.getTable(tableName);
-    if (!table) {
-      throw new Error(`Unknown table: ${tableName}`);
-    }
+    const operationId = logger.startOperation('markAsSynced', tableName);
+    const startTime = Date.now();
 
-    await table.update(id, {
-      _synced: true,
-      _syncTimestamp: new Date(),
-      _syncError: null,
-    });
+    try {
+      logger.logSyncOperation(
+        'markAsSynced',
+        'Starting sync mark operation',
+        { tableName, id },
+        undefined,
+        tableName,
+        id,
+      );
+
+      const table = this.getTable(tableName);
+      if (!table) {
+        const error = new Error(`Unknown table: ${tableName}`);
+        logger.logErrorOperation(
+          'markAsSynced',
+          'Unknown table for sync mark',
+          error,
+          { tableName, id },
+          undefined,
+          tableName,
+          id,
+        );
+        throw error;
+      }
+
+      logger.debug(
+        'SYNC',
+        'markAsSynced',
+        'Marking item as synced',
+        { tableName, id },
+        undefined,
+        tableName,
+        id,
+      );
+
+      if (tableName === 'products') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.products).update(id, {
+              _synced: true,
+              _syncTimestamp: new Date(),
+              _syncError: null,
+            }),
+          'sync',
+          {
+            operation: 'markAsSynced',
+            tableName,
+            recordId: id,
+          },
+        );
+      } else if (tableName === 'consumptions') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.consumptions).update(id, {
+              _synced: true,
+              _syncTimestamp: new Date(),
+              _syncError: null,
+            }),
+          'sync',
+          {
+            operation: 'markAsSynced',
+            tableName,
+            recordId: id,
+          },
+        );
+      } else if (tableName === 'nutritionGoals') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.nutritionGoals).update(id, {
+              _synced: true,
+              _syncTimestamp: new Date(),
+              _syncError: null,
+            }),
+          'sync',
+          {
+            operation: 'markAsSynced',
+            tableName,
+            recordId: id,
+          },
+        );
+      }
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'markAsSynced', duration, tableName);
+      logger.logSyncOperation(
+        'markAsSynced',
+        'Item marked as synced successfully',
+        { tableName, id, duration },
+        undefined,
+        tableName,
+        id,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'markAsSynced', duration, tableName);
+      logger.logErrorOperation(
+        'markAsSynced',
+        'Failed to mark item as synced',
+        error as Error,
+        { tableName, id },
+        undefined,
+        tableName,
+        id,
+      );
+      throw error;
+    }
   }
 
   /**
    * Mark an item as having a sync error
    */
   async markAsSyncError(tableName: string, id: number, error: Error): Promise<void> {
-    const table = this.getTable(tableName);
-    if (!table) {
-      throw new Error(`Unknown table: ${tableName}`);
-    }
+    const operationId = logger.startOperation('markAsSyncError', tableName);
+    const startTime = Date.now();
 
-    await table.update(id, {
-      _synced: false,
-      _syncError: error.message,
-    });
+    try {
+      logger.logSyncOperation(
+        'markAsSyncError',
+        'Starting sync error mark operation',
+        { tableName, id, error: error.message },
+        undefined,
+        tableName,
+        id,
+      );
+
+      const table = this.getTable(tableName);
+      if (!table) {
+        const tableError = new Error(`Unknown table: ${tableName}`);
+        logger.logErrorOperation(
+          'markAsSyncError',
+          'Unknown table for sync error mark',
+          tableError,
+          { tableName, id },
+          undefined,
+          tableName,
+          id,
+        );
+        throw tableError;
+      }
+
+      logger.debug(
+        'SYNC',
+        'markAsSyncError',
+        'Marking item as sync error',
+        { tableName, id, error: error.message },
+        undefined,
+        tableName,
+        id,
+      );
+
+      if (tableName === 'products') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.products).update(id, {
+              _synced: false,
+              _syncError: error.message,
+            }),
+          'sync',
+          {
+            operation: 'markAsSyncError',
+            tableName,
+            recordId: id,
+            data: { error: error.message },
+          },
+        );
+      } else if (tableName === 'consumptions') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.consumptions).update(id, {
+              _synced: false,
+              _syncError: error.message,
+            }),
+          'sync',
+          {
+            operation: 'markAsSyncError',
+            tableName,
+            recordId: id,
+            data: { error: error.message },
+          },
+        );
+      } else if (tableName === 'nutritionGoals') {
+        await errorRecoveryManager.executeWithRecovery(
+          () =>
+            (table as typeof unifiedOfflineDb.nutritionGoals).update(id, {
+              _synced: false,
+              _syncError: error.message,
+            }),
+          'sync',
+          {
+            operation: 'markAsSyncError',
+            tableName,
+            recordId: id,
+            data: { error: error.message },
+          },
+        );
+      }
+
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'markAsSyncError', duration, tableName);
+      logger.logSyncOperation(
+        'markAsSyncError',
+        'Item marked as sync error successfully',
+        { tableName, id, error: error.message },
+        undefined,
+        tableName,
+        id,
+      );
+    } catch (tableError) {
+      const duration = Date.now() - startTime;
+      logger.endOperation(operationId, 'markAsSyncError', duration, tableName);
+      logger.logErrorOperation(
+        'markAsSyncError',
+        'Failed to mark item as sync error',
+        tableError as Error,
+        { tableName, id, originalError: error.message },
+        undefined,
+        tableName,
+        id,
+      );
+      throw tableError;
+    }
   }
 
   /**
    * Get all unsynced items for a user
    */
   async getUnsyncedItems(tableName: string, userId: number): Promise<SyncableItem[]> {
-    const table = this.getTable(tableName);
-    if (!table) {
-      throw new Error(`Unknown table: ${tableName}`);
+    if (tableName === 'products') {
+      return await unifiedOfflineDb.products
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedProduct) => !item._synced)
+        .toArray();
+    } else if (tableName === 'consumptions') {
+      return await unifiedOfflineDb.consumptions
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedConsumption) => !item._synced)
+        .toArray();
+    } else if (tableName === 'nutritionGoals') {
+      return await unifiedOfflineDb.nutritionGoals
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedNutritionGoals) => !item._synced)
+        .toArray();
+    }
+    throw new Error(`Unknown table: ${tableName}`);
+  }
+
+  /**
+   * Validate data integrity for a product
+   */
+  private validateProductIntegrity(product: UnifiedProduct): boolean {
+    return (
+      !!product.name &&
+      product.name.trim().length > 0 &&
+      product.calories >= 0 &&
+      product.protein >= 0 &&
+      product.carbs >= 0 &&
+      product.fat >= 0 &&
+      product.userId > 0 &&
+      product._version > 0
+    );
+  }
+
+  /**
+   * Repair product data integrity
+   */
+  private repairProductIntegrity(product: UnifiedProduct): UnifiedProduct {
+    const repaired = { ...product };
+
+    // Fix missing or invalid name
+    if (!repaired.name || repaired.name.trim().length === 0) {
+      repaired.name = 'Unknown Product';
     }
 
-    return await table
-      .where('userId')
-      .equals(userId)
-      .filter((item) => !item._synced)
-      .toArray();
+    // Fix negative values
+    repaired.calories = Math.max(0, repaired.calories || 0);
+    repaired.protein = Math.max(0, repaired.protein || 0);
+    repaired.carbs = Math.max(0, repaired.carbs || 0);
+    repaired.fat = Math.max(0, repaired.fat || 0);
+
+    // Fix invalid userId
+    if (!repaired.userId || repaired.userId <= 0) {
+      repaired.userId = 1; // Default user ID
+    }
+
+    // Fix invalid version
+    if (!repaired._version || repaired._version <= 0) {
+      repaired._version = 1;
+    }
+
+    // Ensure timestamps exist
+    if (!repaired.createdAt) {
+      repaired.createdAt = new Date();
+    }
+    if (!repaired.updatedAt) {
+      repaired.updatedAt = new Date();
+    }
+    if (!repaired._lastModified) {
+      repaired._lastModified = new Date();
+    }
+
+    return repaired;
+  }
+
+  /**
+   * Validate data integrity for a consumption record
+   */
+  private validateConsumptionIntegrity(consumption: UnifiedConsumption): boolean {
+    return (
+      consumption.productId > 0 &&
+      consumption.amount > 0 &&
+      consumption.userId > 0 &&
+      consumption._version > 0 &&
+      consumption.date instanceof Date &&
+      !isNaN(consumption.date.getTime())
+    );
+  }
+
+  /**
+   * Repair consumption data integrity
+   */
+  private repairConsumptionIntegrity(consumption: UnifiedConsumption): UnifiedConsumption {
+    const repaired = { ...consumption };
+
+    // Fix invalid productId
+    if (!repaired.productId || repaired.productId <= 0) {
+      repaired.productId = 1; // Default product ID
+    }
+
+    // Fix invalid amount
+    if (!repaired.amount || repaired.amount <= 0) {
+      repaired.amount = 1;
+    }
+
+    // Fix invalid userId
+    if (!repaired.userId || repaired.userId <= 0) {
+      repaired.userId = 1; // Default user ID
+    }
+
+    // Fix invalid version
+    if (!repaired._version || repaired._version <= 0) {
+      repaired._version = 1;
+    }
+
+    // Fix invalid date
+    if (!repaired.date || !(repaired.date instanceof Date) || isNaN(repaired.date.getTime())) {
+      repaired.date = new Date();
+    }
+
+    // Ensure timestamps exist
+    if (!repaired.createdAt) {
+      repaired.createdAt = new Date();
+    }
+    if (!repaired.updatedAt) {
+      repaired.updatedAt = new Date();
+    }
+    if (!repaired._lastModified) {
+      repaired._lastModified = new Date();
+    }
+
+    return repaired;
+  }
+
+  /**
+   * Validate and repair data integrity for all records
+   */
+  async validateAndRepairDataIntegrity(): Promise<{
+    products: { validated: number; repaired: number; errors: number };
+    consumptions: { validated: number; repaired: number; errors: number };
+  }> {
+    const stats = {
+      products: { validated: 0, repaired: 0, errors: 0 },
+      consumptions: { validated: 0, repaired: 0, errors: 0 },
+    };
+
+    try {
+      // Validate and repair products
+      const allProducts = await unifiedOfflineDb.products.toArray();
+      for (const product of allProducts) {
+        stats.products.validated++;
+
+        if (!this.validateProductIntegrity(product)) {
+          try {
+            const repairedProduct = this.repairProductIntegrity(product);
+            await errorRecoveryManager.executeWithRecovery(
+              () => unifiedOfflineDb.products.update(product.id, repairedProduct),
+              'database',
+              {
+                operation: 'repairProductIntegrity',
+                tableName: 'products',
+                userId: product.userId,
+                recordId: product.id,
+                data: repairedProduct,
+              },
+            );
+            stats.products.repaired++;
+
+            logger.info(
+              'RECOVERY',
+              'validateAndRepairDataIntegrity',
+              'Product data integrity repaired',
+              { productId: product.id, userId: product.userId },
+            );
+          } catch (error) {
+            stats.products.errors++;
+            logger.error(
+              'RECOVERY',
+              'validateAndRepairDataIntegrity',
+              'Failed to repair product data integrity',
+              error as Error,
+              { productId: product.id, userId: product.userId },
+            );
+          }
+        }
+      }
+
+      // Validate and repair consumptions
+      const allConsumptions = await unifiedOfflineDb.consumptions.toArray();
+      for (const consumption of allConsumptions) {
+        stats.consumptions.validated++;
+
+        if (!this.validateConsumptionIntegrity(consumption)) {
+          try {
+            const repairedConsumption = this.repairConsumptionIntegrity(consumption);
+            await errorRecoveryManager.executeWithRecovery(
+              () => unifiedOfflineDb.consumptions.update(consumption.id, repairedConsumption),
+              'database',
+              {
+                operation: 'repairConsumptionIntegrity',
+                tableName: 'consumptions',
+                userId: consumption.userId,
+                recordId: consumption.id,
+                data: repairedConsumption,
+              },
+            );
+            stats.consumptions.repaired++;
+
+            logger.info(
+              'RECOVERY',
+              'validateAndRepairDataIntegrity',
+              'Consumption data integrity repaired',
+              { consumptionId: consumption.id, userId: consumption.userId },
+            );
+          } catch (error) {
+            stats.consumptions.errors++;
+            logger.error(
+              'RECOVERY',
+              'validateAndRepairDataIntegrity',
+              'Failed to repair consumption data integrity',
+              error as Error,
+              { consumptionId: consumption.id, userId: consumption.userId },
+            );
+          }
+        }
+      }
+
+      logger.info(
+        'RECOVERY',
+        'validateAndRepairDataIntegrity',
+        'Data integrity validation and repair completed',
+        stats,
+      );
+
+      return stats;
+    } catch (error) {
+      logger.error(
+        'RECOVERY',
+        'validateAndRepairDataIntegrity',
+        'Data integrity validation and repair failed',
+        error as Error,
+      );
+      throw error;
+    }
   }
 
   /**
    * Get all items with sync errors for a user
    */
   async getItemsWithSyncErrors(tableName: string, userId: number): Promise<SyncableItem[]> {
-    const table = this.getTable(tableName);
-    if (!table) {
-      throw new Error(`Unknown table: ${tableName}`);
+    if (tableName === 'products') {
+      return await unifiedOfflineDb.products
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedProduct) => item._syncError !== null)
+        .toArray();
+    } else if (tableName === 'consumptions') {
+      return await unifiedOfflineDb.consumptions
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedConsumption) => item._syncError !== null)
+        .toArray();
+    } else if (tableName === 'nutritionGoals') {
+      return await unifiedOfflineDb.nutritionGoals
+        .where('userId')
+        .equals(userId)
+        .filter((item: UnifiedNutritionGoals) => item._syncError !== null)
+        .toArray();
     }
-
-    return await table
-      .where('userId')
-      .equals(userId)
-      .filter((item) => item._syncError !== null)
-      .toArray();
+    throw new Error(`Unknown table: ${tableName}`);
   }
 
   /**
@@ -398,9 +1416,19 @@ export class UnifiedDataService {
       throw new Error(`Unknown table: ${tableName}`);
     }
 
-    await table.update(id, {
-      _syncError: null,
-    });
+    if (tableName === 'products') {
+      await (table as typeof unifiedOfflineDb.products).update(id, {
+        _syncError: null,
+      });
+    } else if (tableName === 'consumptions') {
+      await (table as typeof unifiedOfflineDb.consumptions).update(id, {
+        _syncError: null,
+      });
+    } else if (tableName === 'nutritionGoals') {
+      await (table as typeof unifiedOfflineDb.nutritionGoals).update(id, {
+        _syncError: null,
+      });
+    }
   }
 
   // === CONFLICT RESOLUTION ===
@@ -437,7 +1465,8 @@ export class UnifiedDataService {
     }));
 
     const ids = await unifiedOfflineDb.products.bulkAdd(unifiedProducts as UnifiedProduct[]);
-    return await unifiedOfflineDb.products.bulkGet(ids);
+    const results = await unifiedOfflineDb.products.bulkGet(ids);
+    return results.filter((item): item is UnifiedProduct => item !== undefined);
   }
 
   /**
@@ -467,7 +1496,8 @@ export class UnifiedDataService {
       return await unifiedOfflineDb.products.get(id);
     });
 
-    return await Promise.all(updatePromises);
+    const results = await Promise.all(updatePromises);
+    return results.filter((item): item is UnifiedProduct => item !== undefined);
   }
 
   /**
@@ -490,8 +1520,11 @@ export class UnifiedDataService {
       }),
     );
 
-    const ids = await unifiedOfflineDb.consumptions.bulkPut(unifiedConsumptions);
-    return await unifiedOfflineDb.consumptions.bulkGet(ids);
+    const ids = await unifiedOfflineDb.consumptions.bulkAdd(
+      unifiedConsumptions as UnifiedConsumption[],
+    );
+    const results = await unifiedOfflineDb.consumptions.bulkGet(ids);
+    return results.filter((item): item is UnifiedConsumption => item !== undefined);
   }
 
   /**
