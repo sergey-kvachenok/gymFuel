@@ -12,7 +12,7 @@ Global code style rules for Agent OS projects.
 - Always discuss all details, requirements, and implementation approach first
 - Ask clarifying questions to understand the full scope and requirements
 - Present the proposed solution and get confirmation before proceeding
-- **Review `@lessons.md`** to check for relevant lessons before planning similar tasks
+- **Review `@lessons-generic.md` and `@lessons-project-specific.md`** to check for relevant lessons before planning similar tasks
 
 ### Implementation Confirmation
 
@@ -25,8 +25,96 @@ Global code style rules for Agent OS projects.
 - Only write code after explicit confirmation to implement
 - Follow all style guidelines below when implementing
 - Break down complex implementations into smaller, manageable tasks
-- **Check `@lessons.md` file** before starting any task to avoid repeating previous mistakes
+- **Check `@lessons-generic.md` and `@lessons-project-specific.md` files** before starting any task to avoid repeating previous mistakes
 - **Refer to `@remember-lesson.md`** for guidance on learning from feedback and avoiding repeated errors
+
+### Lead Senior Software Developer Review Phase
+
+After completing a task and its subtasks, the agent should switch to the role of a **Lead Senior Software Developer** and perform a critical code review:
+
+#### Review Process
+
+1. **Act as Lead Senior Software Developer**:
+   - Review all code changes made during the task
+   - Apply senior-level software engineering principles
+   - Consider code quality, maintainability, and best practices
+
+2. **Review Against Standards**:
+   - Check compliance with `@code-style.md` guidelines
+   - Verify adherence to lessons learned in `@lessons-generic.md` and `@lessons-project-specific.md`
+   - Assess architectural decisions and patterns used
+   - Evaluate error handling and edge cases
+   - Review test coverage and quality
+
+3. **Document Review Findings**:
+   - Create `review.md` in the spec folder if it doesn't exist
+   - Document all findings, suggestions, and potential improvements
+   - Include severity levels (Critical, High, Medium, Low)
+   - Provide specific recommendations for fixes
+
+4. **Implementation Agent Response**:
+   - The previous implementation agent should review the findings
+   - Address all relevant suggestions and fix issues
+   - Update code based on senior developer feedback
+   - Document what was fixed and what was rejected (with rationale)
+
+5. **Comprehensive E2E Testing**:
+   - Write detailed e2e tests covering the entire flow
+   - Test all user scenarios and edge cases
+   - Ensure tests are robust and reliable
+   - Fix any test failures before proceeding
+
+#### Review Documentation Format
+
+```markdown
+# Code Review - [Task Name]
+
+**Reviewer**: Lead Senior Software Developer  
+**Date**: [YYYY-MM-DD]  
+**Task**: [Task Description]
+
+## Critical Issues
+
+- [ ] **Critical**: [Description of critical issue]
+
+## High Priority Issues
+
+- [ ] **High**: [Description of high priority issue]
+
+## Medium Priority Issues
+
+- [ ] **Medium**: [Description of medium priority issue]
+
+## Low Priority Issues
+
+- [ ] **Low**: [Description of low priority issue]
+
+## Positive Findings
+
+- [x] [Positive aspect of the implementation]
+
+## Recommendations
+
+1. [Specific recommendation with rationale]
+2. [Specific recommendation with rationale]
+
+## Test Coverage Assessment
+
+- [ ] Unit tests cover all new functionality
+- [ ] E2E tests cover complete user flows
+- [ ] Error scenarios are properly tested
+- [ ] Edge cases are handled and tested
+```
+
+#### Role Switching Guidelines
+
+- **Clear Role Separation**: When switching to Lead Senior Developer role, explicitly state the role change
+- **Objective Perspective**: Review code as if it was written by another developer
+- **Constructive Feedback**: Provide actionable, specific feedback
+- **Knowledge Integration**: Apply both `@code-style.md` and lessons insights
+- **Quality Focus**: Prioritize code quality, maintainability, and user experience
+
+This review process ensures that all code meets senior-level standards and incorporates lessons learned from previous development cycles.
 
 <conditional-block context-check="general-formatting">
 IF this General Formatting section already read in current context:
@@ -282,4 +370,40 @@ IF current task involves writing or updating Zod validation code:
     </context_fetcher_strategy>
 ELSE:
   SKIP: Zod style guide not relevant to current task
+</conditional-block>
+
+<conditional-block task-condition="playwright" context-check="playwright-style">
+IF current task involves writing or updating Playwright e2e tests:
+  IF playwright-style.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using Playwright style guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get Playwright style rules from code-style/playwright-style.md"
+        PROCESS: Returned style rules
+      ELSE:
+        READ: @~/.agent-os/standards/code-style/playwright-style.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: Playwright style guide not relevant to current task
+</conditional-block>
+
+<conditional-block task-condition="playwright-junior" context-check="playwright-junior-guide">
+IF current task involves teaching or onboarding junior QA engineers to Playwright:
+  IF PLAYWRIGHT_JUNIOR_QA_GUIDE.md already in context:
+    SKIP: Re-reading this file
+    NOTE: "Using Playwright junior QA guide already in context"
+  ELSE:
+    <context_fetcher_strategy>
+      IF current agent is Claude Code AND context-fetcher agent exists:
+        USE: @agent:context-fetcher
+        REQUEST: "Get Playwright junior QA guide from docs/PLAYWRIGHT_JUNIOR_QA_GUIDE.md"
+        PROCESS: Returned guide content
+      ELSE:
+        READ: @~/docs/PLAYWRIGHT_JUNIOR_QA_GUIDE.md
+    </context_fetcher_strategy>
+ELSE:
+  SKIP: Playwright junior QA guide not relevant to current task
 </conditional-block>
