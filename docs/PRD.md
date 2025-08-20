@@ -68,7 +68,6 @@ Create a web application that helps users track protein, fat, carbohydrate (macr
   🧠 Data Storage
 - Database: PostgreSQL (via Supabase / Neon / PlanetScale)
 - ORM: Prisma or Drizzle
-- Offline storage: IndexedDB for data caching
   🛠️ Hosting and Deployment
 - Platform: Vercel
 - Edge/Server Functions: Server Actions + tRPC handlers
@@ -105,22 +104,15 @@ Main Pages
 📱 PWA (Progressive Web App) Requirements
 
 - Application manifest (manifest.json)
-- Service Worker for offline functionality
-- Static resource caching
-- Offline access to core functions
-- Data synchronization when connection is restored
+- Service Worker for static resource caching
 - Home screen installation
 - Push notifications (future development)
 
 🔄 Offline Functionality
 
-- Product caching in IndexedDB
-- Offline product consumption addition
-- Offline product creation and editing
-- Synchronization when connection is restored
-- User data caching (userId)
+- Cache GET requests data for offline viewing
+- Offline banner indication when network is unavailable
 - Graceful degradation when network is absent
-- Offline status indication
 
 📈 Success Metrics (MVP)
 
@@ -128,7 +120,6 @@ Main Pages
 - ✅ Adding custom products
 - ✅ Nutrition history storage
 - ✅ Setting and tracking nutrition goals
-- ✅ Offline functionality with IndexedDB
 - ✅ PWA with installation capability
 - ✅ Minimal DevOps (deployment without server setup)
 
