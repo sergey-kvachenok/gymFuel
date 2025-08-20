@@ -1,0 +1,28 @@
+
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#3b82f6"/>
+  
+  <!-- Content in safe zone -->
+  <g transform="translate(19.200000000000003, 19.200000000000003)">
+    <!-- Inner circle -->
+    <circle cx="76.8" cy="76.8" r="76.8" fill="#ffffff"/>
+    
+    <!-- Dumbbell bar -->
+    <rect x="30.72" y="69.12" width="92.16" height="15.36" fill="#3b82f6" rx="7.68"/>
+    
+    <!-- Left weight -->
+    <circle cx="38.4" cy="76.8" r="23.04" fill="#1e40af"/>
+    
+    <!-- Right weight -->
+    <circle cx="115.19999999999999" cy="76.8" r="23.04" fill="#1e40af"/>
+    
+    <!-- Center plate -->
+    <circle cx="76.8" cy="76.8" r="12.288" fill="#3b82f6"/>
+    
+    <!-- GF text for larger sizes -->
+    
+    <text x="76.8" y="107.52" text-anchor="middle" font-family="Arial, sans-serif" font-size="18.432" font-weight="bold" fill="#3b82f6">GF</text>
+    
+  </g>
+</svg>
