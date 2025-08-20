@@ -7,6 +7,7 @@ This document describes the PWA icon generation process for GymFuel, which was i
 ## Generated Icons
 
 ### Icon Design
+
 - **Theme**: Fitness and nutrition tracking
 - **Primary Symbol**: Dumbbell shape representing fitness
 - **Secondary Element**: Center plate representing nutrition/macro tracking
@@ -14,10 +15,12 @@ This document describes the PWA icon generation process for GymFuel, which was i
 - **Text**: "GF" for GymFuel on larger sizes (96px+)
 
 ### Icon Sizes Generated
+
 - **Regular Icons**: 16x16, 32x32, 48x48, 72x72, 96x96, 128x128, 144x144, 152x152, 192x192, 384x384, 512x512
 - **Maskable Icons**: 192x192, 512x512 (for adaptive icons)
 
 ### File Locations
+
 - **Icons**: `public/icons/`
 - **Generation Script**: `scripts/generate-icons.js`
 - **Manifest**: `public/manifest.json`
@@ -28,6 +31,7 @@ This document describes the PWA icon generation process for GymFuel, which was i
 If you need to regenerate the icons in the future:
 
 1. **Run the generation script**:
+
    ```bash
    node scripts/generate-icons.js
    ```
@@ -45,12 +49,14 @@ If you need to regenerate the icons in the future:
 ## Icon Design Details
 
 ### SVG Structure
+
 - **Background**: Blue circle with white inner circle
 - **Dumbbell**: Horizontal bar with weights on each end
 - **Center Plate**: Small circle representing nutrition tracking
 - **Text**: "GF" text for brand identification (96px+ sizes)
 
 ### Maskable Icons
+
 - **Safe Zone**: 10% padding around content
 - **Background**: Full blue background
 - **Content**: Scaled to fit within safe zone
@@ -58,18 +64,21 @@ If you need to regenerate the icons in the future:
 ## Technical Implementation
 
 ### Dependencies
+
 - **None**: Pure Node.js implementation
 - **No external libraries**: Uses built-in fs and path modules
 
 ### File Formats
+
 - **Format**: SVG (scalable vector graphics)
-- **Advantages**: 
+- **Advantages**:
   - Crisp at all sizes
   - Small file sizes
   - Perfect for PWA icons
   - No quality loss when scaled
 
 ### Manifest Integration
+
 - **Icons Array**: Updated with all generated icon references
 - **Purposes**: Both "any" and "maskable" supported
 - **MIME Types**: image/svg+xml
@@ -78,12 +87,14 @@ If you need to regenerate the icons in the future:
 ## Testing
 
 ### Local Testing
+
 1. Start development server: `npm run dev`
 2. Access manifest: `http://localhost:3000/manifest.json`
 3. Test icon access: `http://localhost:3000/icons/icon-192x192.svg`
 4. Use browser dev tools to test PWA installation
 
 ### PWA Installation Test
+
 1. Open browser dev tools
 2. Go to Application tab
 3. Check Manifest section
@@ -93,12 +104,14 @@ If you need to regenerate the icons in the future:
 ## Maintenance
 
 ### When to Regenerate
+
 - Brand colors change
 - Icon design needs updates
 - New icon sizes required
 - Manifest structure changes
 
 ### Backup Strategy
+
 - Original manifest.json backed up as `manifest.json.backup`
 - Generated icons committed to version control
 - Generation script can be recreated if needed

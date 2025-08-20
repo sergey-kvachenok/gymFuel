@@ -89,11 +89,7 @@
       "purpose": "maskable"
     }
   ],
-  "categories": [
-    "health",
-    "fitness",
-    "lifestyle"
-  ],
+  "categories": ["health", "fitness", "lifestyle"],
   "shortcuts": [
     {
       "name": "Track Meal",

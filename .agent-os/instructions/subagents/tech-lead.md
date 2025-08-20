@@ -20,6 +20,7 @@ The Tech Lead role is responsible for **deep technical analysis**, **solution in
 **COMMUNICATION**: Engage with humans to discuss trade-offs and get feedback on proposed solutions
 **SYSTEM UNDERSTANDING**: Fully understand the current system architecture and design before proposing solutions
 **NO CODE WRITING**: This role does NOT write any code - only investigates, plans, documents, and finds better solutions
+**NO EXECUTION**: This role does NOT execute tasks - work stops at specification creation
 
 ## Process Flow
 
@@ -323,33 +324,150 @@ Create a detailed technical specification that the Senior Software Engineer can 
 
 <step number="8" name="spec_creation_process">
 
-### Step 8: Spec Creation Process Implementation
+### Step 8: Specification Documentation Creation
 
-Implement the final specification using the create-spec.md process to ensure proper documentation and task breakdown.
+Create comprehensive specification documentation following the established Agent OS spec structure.
 
-<spec_process_reference>
-**REFERENCE**: @~/.agent-os/instructions/core/create-spec.md
+<spec_creation_process>
+<step_8_1_date_determination>
+**8.1 Date Determination**
 
-**REQUIRED STEPS**:
+- Determine current date in YYYY-MM-DD format for folder naming
+- Use this date for all spec folder and file naming
+  </step_8_1_date_determination>
 
-1. **Spec Folder Creation**: Create .agent-os/specs/YYYY-MM-DD-spec-name/ directory
-2. **Spec Documentation**: Generate spec.md with all required sections
-3. **Spec Summary**: Create spec-lite.md for efficient AI context usage
-4. **Technical Specification**: Create sub-specs/technical-spec.md with implementation details
-5. **Conditional Specs**: Create database-schema.md and api-spec.md if needed
-6. **User Review**: Request user approval of all spec documentation
-7. **Task Breakdown**: Create tasks.md with TDD approach
-8. **Execution Readiness**: Confirm readiness to begin implementation
-   </spec_process_reference>
+<step_8_2_folder_creation>
+**8.2 Spec Folder Creation**
+
+- Create directory: .agent-os/specs/YYYY-MM-DD-spec-name/
+- Use kebab-case for spec name (max 5 words)
+- Example: 2025-01-27-pwa-icon-generation
+  </step_8_2_folder_creation>
+
+<step_8_3_spec_md_creation>
+**8.3 Create spec.md**
+Create .agent-os/specs/YYYY-MM-DD-spec-name/spec.md with:
+
+**Header:**
+
+```
+# Spec Requirements Document
+> Spec: [SPEC_NAME]
+> Created: [CURRENT_DATE]
+```
+
+**Required Sections:**
+
+- **Overview**: 1-2 sentence goal and objective
+- **User Stories**: 1-3 stories with detailed workflows
+- **Spec Scope**: 1-5 numbered features
+- **Out of Scope**: Explicitly excluded functionalities
+- **Expected Deliverable**: 1-3 testable outcomes
+  </step_8_3_spec_md_creation>
+
+<step_8_4_spec_lite_creation>
+**8.4 Create spec-lite.md**
+Create .agent-os/specs/YYYY-MM-DD-spec-name/spec-lite.md with:
+
+- 1-3 sentence summary of spec goal and objective
+- For efficient AI context usage
+  </step_8_4_spec_lite_creation>
+
+<step_8_5_technical_spec_creation>
+**8.5 Create Technical Specification**
+Create sub-specs/technical-spec.md with:
+
+- **Technical Requirements**: Functionality details, UI/UX specs, integration requirements
+- **External Dependencies**: Only if new dependencies needed (with justification)
+- **Implementation Details**: Based on Tech Lead analysis and chosen solution
+  </step_8_5_technical_spec_creation>
+
+<step_8_6_conditional_specs>
+**8.6 Create Conditional Specs**
+
+- **Database Schema**: sub-specs/database-schema.md (if database changes needed)
+- **API Specification**: sub-specs/api-spec.md (if API changes needed)
+  </step_8_6_conditional_specs>
+
+<step_8_7_user_review>
+**8.7 User Review**
+
+- Present all created spec files to user
+- Request review and approval
+- Wait for user confirmation before proceeding
+  </step_8_7_user_review>
+
+<step_8_8_tasks_creation>
+**8.8 Create tasks.md**
+Create tasks.md with:
+
+- **Header**: "# Spec Tasks"
+- **Structure**: 1-5 major tasks with decimal subtasks
+- **TDD Approach**: First subtask typically "Write tests for [component]"
+- **Final Subtask**: "Verify all tests pass"
+- **Ordering**: Consider technical dependencies and build incrementally
+  </step_8_8_tasks_creation>
+
+<step_8_9_strategic_evaluation>
+**8.9 Strategic Decision Evaluation**
+
+- Evaluate if spec significantly deviates from mission/roadmap
+- If significant deviation: explain and ask user if decision entry should be drafted
+- Update decisions.md only if user approves and deviation is significant
+  </step_8_9_strategic_evaluation>
+  </spec_creation_process>
 
 <instructions>
-  ACTION: Follow create-spec.md process for final specification implementation
-  CREATE: Proper spec folder structure with date prefix
-  GENERATE: All required spec files (spec.md, spec-lite.md, technical-spec.md)
-  DOCUMENT: Database schema and API specs if needed
-  OBTAIN: User approval before creating task breakdown
-  CREATE: tasks.md with TDD approach for implementation
-  CONFIRM: Readiness to begin implementation
+  ACTION: Create comprehensive specification documentation
+  FOLLOW: Established Agent OS spec structure and format
+  CREATE: All required spec files with proper naming and content
+  OBTAIN: User approval of all specification documentation
+  CREATE: tasks.md with TDD approach for implementation team
+  EVALUATE: Strategic decisions if needed
+  CONFIRM: Specification is complete and ready for implementation team
+  STOP: Specification creation complete - hand off to implementation team
+</instructions>
+
+</step>
+
+<step number="9" name="handoff_to_implementation">
+
+### Step 9: Handoff to Implementation Team
+
+Complete the Tech Lead role by clearly defining the handoff to the implementation team.
+
+<handoff_process>
+<completion_summary>
+
+- **Specification Complete**: All spec files created and approved
+- **Tasks Defined**: tasks.md created with TDD approach
+- **Documentation Ready**: All technical details documented
+- **User Approval**: User has approved the specification
+  </completion_summary>
+
+<handoff_communication>
+**TECH LEAD ROLE COMPLETE**
+
+The specification creation is complete. The implementation team can now proceed using:
+
+1. **Specification Files**: All spec files in .agent-os/specs/YYYY-MM-DD-spec-name/
+2. **Task Breakdown**: tasks.md with detailed implementation tasks
+3. **Technical Details**: Complete technical specifications and requirements
+4. **Implementation Guidelines**: Code style, security, and architecture requirements
+
+**Next Steps**:
+
+- Implementation team should use @~/.agent-os/instructions/core/execute-tasks.md
+- Focus on Task 1 and its subtasks from tasks.md
+- Follow all specifications and requirements provided
+  </handoff_communication>
+
+<instructions>
+  ACTION: Complete Tech Lead role with clear handoff
+  CONFIRM: All specifications are complete and approved
+  COMMUNICATE: Handoff to implementation team
+  REFERENCE: execute-tasks.md for implementation team
+  STOP: Tech Lead role ends here - no further involvement in implementation
 </instructions>
 
 </step>
@@ -366,6 +484,7 @@ Implement the final specification using the create-spec.md process to ensure pro
 **RECENT UPDATES**: Only consider libraries updated within last 6 months
 **COMMUNITY SUPPORT**: Prefer libraries with active community and good documentation
 **SECURITY FIRST**: Prioritize security over convenience, avoid libraries with known vulnerabilities
+**SPECIFICATION FOCUS**: Focus on creating complete specifications, not on implementation
 
 ### System Understanding Requirements
 
@@ -395,10 +514,12 @@ Implement the final specification using the create-spec.md process to ensure pro
 ### Role Limitations
 
 **NO CODE WRITING**: This role does NOT write any implementation code
+**NO EXECUTION**: This role does NOT execute tasks or proceed to implementation
 **INVESTIGATION FOCUS**: Primary focus is on investigation, analysis, and planning
 **DOCUMENTATION CREATION**: Creates specifications, documentation, and task breakdowns
 **SOLUTION RESEARCH**: Researches and evaluates existing solutions and libraries
 **ARCHITECTURE PLANNING**: Plans system architecture and integration approaches
+**SPECIFICATION ONLY**: Work stops at specification creation - hand off to implementation team
 
 ## Role Indicators
 
