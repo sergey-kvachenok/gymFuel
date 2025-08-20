@@ -10,7 +10,24 @@ encoding: UTF-8
 
 ## Overview
 
-Initiate execution of one or more tasks for a given spec.
+Initiate execution of one or more tasks for a given spec using a **single-agent role-switching workflow** with three distinct roles that switch until all tasks are correctly implemented.
+
+## Shared Agent Workflow Concepts
+
+**REFERENCE**: @~/.agent-os/instructions/core/shared-agent-workflow.md
+
+**IMPORTANT**: Before executing any tasks, you MUST investigate and understand the shared agent workflow concepts from the referenced file. This file contains essential information including:
+
+- Multi-Agent Role System (roles, responsibilities, problem-solving guidelines)
+- Role-Switching Workflow (6-phase process with role indicators)
+- Role-Switching Instructions (how to switch, context preservation, stuck situation handling)
+- Agent Communication and Documentation (documentation requirements, context management)
+- Critical Requirements (completion validation, role switching, test execution safety)
+- File Formats (technical implementation template)
+
+**INSTRUCTION**: Read and follow all rules and guidelines from the shared workflow file during task execution. Apply the role-switching system, critical requirements, and safety protocols as specified in that file.
+
+## Multi-Task Execution Process
 
 <pre_flight_check>
 EXECUTE: @~/.agent-os/instructions/meta/pre-flight.md
@@ -116,52 +133,105 @@ Use the git-workflow subagent to manage git branches to ensure proper isolation 
 
 </step>
 
-<step number="5" name="task_execution_loop">
+<step number="5" name="pre_execution_review">
 
-### Step 5: Task Execution Loop
+### Step 5: Pre-Execution Review
 
-Execute all assigned parent tasks and their subtasks using @~/.agent-os/instructions/core/execute-task.md instructions, continuing until all tasks are complete.
+Review lessons learned and code style guidelines before beginning task execution to avoid repeating known mistakes and ensure compliance with established patterns.
+
+<review_checklist>
+<lessons_check>
+IF lessons-generic.md AND lessons-project-specific.md NOT already in context:
+READ @~/.agent-os/product/lessons-generic.md
+READ @~/.agent-os/product/lessons-project-specific.md
+REVIEW: Lessons relevant to current task type and technology stack
+APPLY: Documented best practices and avoid known mistakes
+ELSE:
+SKIP loading (use existing context)
+</lessons_check>
+
+<code_style_check>
+IF code-style.md NOT already in context:
+READ @~/.agent-os/standards/code-style.md
+FOLLOW: Conditional blocks for technologies being used in tasks
+APPLY: Relevant style guides for implementation
+ELSE:
+SKIP loading (use existing context)
+</code_style_check>
+</review_checklist>
+
+<instructions>
+  ACTION: Review relevant lessons and style guides
+  FOCUS: Current task types and technology stack
+  PREPARE: Implementation approach following established patterns
+  VERIFY: Understanding of common pitfalls to avoid
+</instructions>
+
+</step>
+
+<step number="6" name="task_execution_loop">
+
+### Step 6: Multi-Agent Task Execution Loop
+
+Execute all assigned parent tasks and their subtasks using the multi-agent role system defined in @~/.agent-os/instructions/core/execute-task.md, continuing until all tasks are complete with proper review, testing, and quality assurance.
 
 <execution_flow>
 LOAD @~/.agent-os/instructions/core/execute-task.md ONCE
 
 FOR each parent_task assigned in Step 1:
-EXECUTE instructions from execute-task.md with: - parent_task_number - all associated subtasks
-WAIT for task completion
+EXECUTE multi-agent workflow from execute-task.md with: - parent_task_number - all associated subtasks - Senior Software Developer implementation - Tech Lead review and feedback - Senior QA Automation Engineer testing
+WAIT for task completion with all tests passing
 UPDATE tasks.md status
 END FOR
 </execution_flow>
 
 <loop_logic>
-<continue_conditions> - More unfinished parent tasks exist - User has not requested stop
+<continue_conditions> - More unfinished parent tasks exist - User has not requested stop - Agent workflow cycles continue until completion
 </continue_conditions>
-<exit_conditions> - All assigned tasks marked complete - User requests early termination - Blocking issue prevents continuation
+<exit_conditions> - All assigned tasks marked complete with tests passing - User requests early termination - Blocking issue prevents continuation - Agent timeout protection triggers
 </exit_conditions>
 </loop_logic>
 
 <task_status_check>
 AFTER each task execution:
 CHECK tasks.md for remaining tasks
-IF all assigned tasks complete:
+VERIFY all tests are passing for completed tasks
+IF all assigned tasks complete with tests passing:
 PROCEED to next step
 ELSE:
-CONTINUE with next task
+CONTINUE with next task using multi-agent workflow
 </task_status_check>
 
 <instructions>
   ACTION: Load execute-task.md instructions once at start
-  REUSE: Same instructions for each parent task iteration
-  LOOP: Through all assigned parent tasks
-  UPDATE: Task status after each completion
-  VERIFY: All tasks complete before proceeding
-  HANDLE: Blocking issues appropriately
+  REUSE: Same multi-agent workflow for each parent task iteration
+  LOOP: Through all assigned parent tasks with agent role switching
+  UPDATE: Task status after each completion with test verification
+  VERIFY: All tasks complete with tests passing before proceeding
+  HANDLE: Blocking issues and agent timeout protection appropriately
+  DOCUMENT: All agent decisions and reviews in task spec folder
+  
+  **CONTEXT MANAGEMENT**:
+  - **MONITOR**: Continuously check context fill level during task execution
+  - **THRESHOLD**: When context >90% filled, trigger memory preservation
+  - **PRESERVE**: Write current progress to memory.md in task spec folder
+  - **CLEAR**: Free context space after memory preservation
+  - **RESTORE**: Review specs and memory.md to restore working context
+  - **CONTINUE**: Resume work with full context awareness
+  
+  **CRITICAL TEST EXECUTION SAFETY**:
+  - **ALWAYS** use agent-timeout-protector.js for test execution
+  - **NEVER** run `npx playwright test` directly without timeout protection
+  - **ALWAYS** set reasonable timeouts (30-60 seconds maximum)
+  - **NEVER** allow tests to run indefinitely
+  - **ALWAYS** monitor test progress and force termination if stuck
 </instructions>
 
 </step>
 
-<step number="6" subagent="test-runner" name="test_suite_verification">
+<step number="7" subagent="test-runner" name="test_suite_verification">
 
-### Step 6: Run All Tests
+### Step 7: Run All Tests
 
 Use the test-runner subagent to run the entire test suite to ensure no regressions and fix any failures until all tests pass.
 
@@ -186,9 +256,9 @@ Use the test-runner subagent to run the entire test suite to ensure no regressio
 
 </step>
 
-<step number="7" subagent="git-workflow" name="git_workflow">
+<step number="8" subagent="git-workflow" name="git_workflow">
 
-### Step 7: Git Workflow
+### Step 8: Git Workflow
 
 Use the git-workflow subagent to create git commit, push to GitHub, and create pull request for the implemented features.
 
@@ -213,6 +283,7 @@ Use the git-workflow subagent to create git commit, push to GitHub, and create p
 <remote>origin</remote>
 </push>
 <pull_request>
+
 <title>descriptive PR title</title>
 <description>functionality recap</description>
 </pull_request>
@@ -220,9 +291,9 @@ Use the git-workflow subagent to create git commit, push to GitHub, and create p
 
 </step>
 
-<step number="8" name="roadmap_progress_check">
+<step number="9" name="roadmap_progress_check">
 
-### Step 8: Roadmap Progress Check (Conditional)
+### Step 9: Roadmap Progress Check (Conditional)
 
 Check @.agent-os/product/roadmap.md (if not in context) and update roadmap progress only if the executed tasks may have completed a roadmap item and the spec completes that item.
 
@@ -262,9 +333,9 @@ SKIP loading (use existing context)
 
 </step>
 
-<step number="9" name="completion_notification">
+<step number="10" name="completion_notification">
 
-### Step 9: Task Completion Notification
+### Step 10: Task Completion Notification
 
 Play a system sound to alert the user that tasks are complete.
 
@@ -279,9 +350,9 @@ afplay /System/Library/Sounds/Glass.aiff
 
 </step>
 
-<step number="10" name="completion_summary">
+<step number="11" name="completion_summary">
 
-### Step 10: Completion Summary
+### Step 11: Completion Summary
 
 Create a structured summary message with emojis showing what was done, any issues, testing instructions, and PR link.
 
@@ -333,10 +404,14 @@ View PR: [GITHUB_PR_URL]
 <error_protocols>
 <blocking_issues> - document in tasks.md - mark with ⚠️ emoji - include in summary
 </blocking_issues>
-<test_failures> - fix before proceeding - never commit broken tests
+<test_failures> - fix before proceeding - never commit broken tests - use appropriate agent for resolution
 </test_failures>
 <technical_roadblocks> - attempt 3 approaches - document if unresolved - seek user input
 </technical_roadblocks>
+<agent_timeout> - use timeout protection mechanisms - force termination after 30 seconds - document stuck states
+</agent_timeout>
+<agent_communication> - preserve all agent conversations - document review findings - track implementation changes
+</agent_communication>
 </error_protocols>
 
 <final_checklist>
