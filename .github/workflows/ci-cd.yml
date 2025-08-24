@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [aws-stg]
   pull_request:
-    branches: [main]
+    branches: [aws-stg]
     types: [opened, synchronize, reopened]
 
 concurrency:

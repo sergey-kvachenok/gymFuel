@@ -1,145 +1,220 @@
-name: Deploy to Environments
+name: Deploy to AWS Elastic Beanstalk
 
 on:
-  workflow_run:
-    workflows: ['CI Pipeline']
-    types:
-      - completed
-    branches: [main]
-  workflow_dispatch:
+  push:
+    branches:
+      - aws-stg # Staging deployment (automatic)
+  pull_request:
+    branches:
+      - aws-prod
+      - aws-stg
+  workflow_dispatch: # Manual trigger
     inputs:
       environment:
         description: 'Environment to deploy to'
         required: true
+        default: 'production'
         type: choice
         options:
-          - staging
           - production
+          - staging
+
+env:
+  AWS_REGION: us-east-1
 
 jobs:
-  # Check if staging contains safe code for production deployment
-  check-staging-safety:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+  # Job 1: Code Quality Checks
+  quality-checks:
     runs-on: ubuntu-latest
-    outputs:
-      staging-is-safe: ${{ steps.check-staging.outputs.is-safe }}
-      staging-commit: ${{ steps.check-staging.outputs.commit }}
     steps:
-      - name: Check if staging contains safe code
-        id: check-staging
-        uses: actions/github-script@v7
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          script: |
-            console.log('🔍 Checking if staging contains safe code...');
+          node-version: '20'
+          cache: 'npm'
 
-            // Get recent deploy workflow runs
-            const { data: deployRuns } = await github.rest.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy.yml',
-              branch: 'main',
-              status: 'completed',
-              per_page: 100
-            });
+      - name: Install dependencies
+        run: npm ci
 
-            console.log(`Found ${deployRuns.workflow_runs.length} deploy runs`);
+      - name: Run linting
+        run: npm run lint
 
-            // Find the last successful staging deployment
-            let lastStagingDeploy = null;
+      - name: Run tests
+        run: npm test
 
-            // Check successful runs to find the most recent staging deployment
-            for (const run of deployRuns.workflow_runs) {
-              if (run.conclusion !== 'success') continue;
-              
-              try {
-                // Get jobs for this workflow run
-                const { data: jobsData } = await github.rest.actions.listJobsForWorkflowRun({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: run.id
-                });
-                
-                // Check if this run contains a staging deployment job
-                const hasStagingJob = jobsData.jobs.some(job => 
-                  job.name?.includes('deploy-staging')
-                );
-                
-                if (hasStagingJob) {
-                  lastStagingDeploy = run;
-                  break; // Found the most recent staging deployment, stop searching
-                }
-              } catch (error) {
-                console.log(`⚠️ Could not fetch jobs for run ${run.id}: ${error.message}`);
-                continue;
-              }
-              
-            }
+      - name: Build application
+        run: npm run build
 
-            if (!lastStagingDeploy) {
-              core.setFailed('❌ No successful staging deployments found');
-              return;
-            }
-
-            console.log(`📅 Last staging deploy: ${new Date(lastStagingDeploy.created_at).toLocaleString()}`);
-            console.log(`🔗 Deploy run: ${lastStagingDeploy.html_url}`);
-
-            // Check if it was triggered by workflow_run (automatic = safe)
-            const isAutomatic = lastStagingDeploy.event === 'workflow_run';
-            const commit = lastStagingDeploy.head_sha;
-
-            if (isAutomatic) {
-              console.log('✅ Last staging deploy was AUTOMATIC (after successful CI)');
-              console.log(`🛡️  Staging contains safe code from commit: ${commit}`);
-              console.log('🚀 Production deployment allowed with the same commit');
-              
-              core.setOutput('is-safe', 'true');
-              core.setOutput('commit', commit);
-            } else {
-              console.log('❌ Last staging deploy was MANUAL');
-              console.log('⚠️  Staging may contain untested code');
-              core.setFailed('❌ Cannot deploy to production: staging contains manually deployed (potentially unsafe) code. Push new changes to trigger automatic staging deployment first.');
-            }
-
-  # Auto-deploy to staging on main branch push (only if CI passed)
+  # Job 2: Deploy to Staging (Automatic)
   deploy-staging:
-    if: github.event.workflow_run.conclusion == 'success'
-    uses: ./.github/workflows/deploy-reusable.yml
-    with:
-      environment: staging
-      is_production: false
-      vercel_production: true
-    secrets:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+    needs: quality-checks
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/aws-stg'
+    environment: staging
 
-  # Manual deploy to production (ONLY if staging contains safe code)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Generate deployment package
+        run: |
+          mkdir -p .ebextensions
+          cp -r .next .ebextensions/
+          cp -r public .ebextensions/
+          cp package*.json .ebextensions/
+          cp next.config.ts .ebextensions/
+          cd .ebextensions
+          zip -r ../deployment.zip .
+          cd ..
+
+      - name: Deploy to Staging
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name gymFuel \
+            --version-label "staging-v${{ github.run_number }}-${{ github.sha }}" \
+            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/staging-deployment.zip"
+
+          aws elasticbeanstalk update-environment \
+            --environment-name staging-gymFuel \
+            --version-label "staging-v${{ github.run_number }}-${{ github.sha }}"
+
+      - name: Wait for deployment
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names staging-gymFuel
+
+      - name: Health check staging
+        run: |
+          sleep 60
+          curl -f https://staging-vibe.elasticbeanstalk.com/health || exit 1
+
+  # Job 3: Check Staging Health (Required for Production)
+  check-staging-health:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    outputs:
+      staging-healthy: ${{ steps.health-check.outputs.healthy }}
+
+    steps:
+      - name: Check staging health
+        id: health-check
+        run: |
+          # Check if staging environment is healthy
+          STAGING_STATUS=$(aws elasticbeanstalk describe-environments \
+            --environment-names staging-gymFuel \
+            --query 'Environments[0].Health' \
+            --output text)
+
+          if [ "$STAGING_STATUS" = "Green" ]; then
+            echo "healthy=true" >> $GITHUB_OUTPUT
+            echo "✅ Staging environment is healthy"
+          else
+            echo "healthy=false" >> $GITHUB_OUTPUT
+            echo "❌ Staging environment is not healthy (Status: $STAGING_STATUS)"
+            exit 1
+          fi
+
+      - name: Test staging application
+        run: |
+          # Additional health check via HTTP
+          curl -f https://staging-vibe.elasticbeanstalk.com/health || exit 1
+          echo "✅ Staging application is responding"
+
+  # Job 4: Manual Production Deployment (Only if staging is healthy)
   deploy-production:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && needs.check-staging-safety.outputs['staging-is-safe'] == 'true'
-    needs: check-staging-safety
-    concurrency:
-      group: production
-      cancel-in-progress: true
-    uses: ./.github/workflows/deploy-reusable.yml
-    with:
-      environment: production
-      is_production: true
-      vercel_production: true
-      commit-sha: ${{ needs.check-staging-safety.outputs['staging-commit'] }}
-    secrets:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PRODUCTION }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+    needs: [quality-checks, check-staging-health]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      github.event.inputs.environment == 'production' &&
+      needs.check-staging-health.outputs.staging-healthy == 'true'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
 
-  # Manual deploy to staging (no CI check needed)
-  deploy-staging-manual:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
-    uses: ./.github/workflows/deploy-reusable.yml
-    with:
-      environment: staging
-      is_production: false
-      vercel_production: true
-    secrets:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_STAGING }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Generate deployment package
+        run: |
+          mkdir -p .ebextensions
+          cp -r .next .ebextensions/
+          cp -r public .ebextensions/
+          cp package*.json .ebextensions/
+          cp next.config.ts .ebextensions/
+          cd .ebextensions
+          zip -r ../deployment.zip .
+          cd ..
+
+      - name: Deploy to Production
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name gymFuel \
+            --version-label "prod-v${{ github.run_number }}-${{ github.sha }}" \
+            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/prod-deployment.zip"
+
+          aws elasticbeanstalk update-environment \
+            --environment-name production-gymFuel \
+            --version-label "prod-v${{ github.run_number }}-${{ github.sha }}"
+
+      - name: Wait for deployment
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names production-gymFuel
+
+      - name: Health check production
+        run: |
+          sleep 60
+          curl -f https://production-vibe.elasticbeanstalk.com/health || exit 1
+
+  # Job 5: Fail if staging is unhealthy (for production deployment)
+  fail-if-staging-unhealthy:
+    needs: [quality-checks, check-staging-health]
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      github.event.inputs.environment == 'production' &&
+      needs.check-staging-health.outputs.staging-healthy == 'false'
+
+    steps:
+      - name: Fail deployment
+        run: |
+          echo "❌ Cannot deploy to production: Staging environment is unhealthy"
+          echo "Please fix staging environment before deploying to production"
+          exit 1
