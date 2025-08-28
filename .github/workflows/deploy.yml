@@ -51,7 +51,7 @@ jobs:
   deploy-staging:
     needs: quality-checks
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/aws-stg'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/aws-stg'
     environment: staging
 
     steps:
@@ -106,7 +106,7 @@ jobs:
       - name: Health check staging
         run: |
           sleep 60
-          curl -f https://staging-vibe.elasticbeanstalk.com/health || exit 1
+          curl -f https://staging-gymfuel.elasticbeanstalk.com/health || exit 1
 
   # Job 3: Check Staging Health (Required for Production)
   check-staging-health:
@@ -137,7 +137,7 @@ jobs:
       - name: Test staging application
         run: |
           # Additional health check via HTTP
-          curl -f https://staging-vibe.elasticbeanstalk.com/health || exit 1
+          curl -f https://staging-gymFuel.elasticbeanstalk.com/health || exit 1
           echo "✅ Staging application is responding"
 
   # Job 4: Manual Production Deployment (Only if staging is healthy)
@@ -201,7 +201,7 @@ jobs:
       - name: Health check production
         run: |
           sleep 60
-          curl -f https://production-vibe.elasticbeanstalk.com/health || exit 1
+          curl -f https://production-gymFuel.elasticbeanstalk.com/health || exit 1
 
   # Job 5: Fail if staging is unhealthy (for production deployment)
   fail-if-staging-unhealthy:
