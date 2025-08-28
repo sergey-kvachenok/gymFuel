@@ -67,11 +67,16 @@ jobs:
 
       - name: Deploy to Staging
         run: |
+          # Step 1: Upload to S3
+          aws s3 cp deployment.zip s3://${{ secrets.AWS_S3_BUCKET_STAGING }}/deployments/staging-deployment.zip
+
+          # Step 2: Create application version (references the uploaded file)
           aws elasticbeanstalk create-application-version \
             --application-name gymFuel \
             --version-label "staging-v${{ github.run_number }}-${{ github.sha }}" \
             --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/staging-deployment.zip"
 
+          # Step 3: Deploy the version
           aws elasticbeanstalk update-environment \
             --environment-name staging-gymFuel \
             --version-label "staging-v${{ github.run_number }}-${{ github.sha }}"
@@ -162,11 +167,16 @@ jobs:
 
       - name: Deploy to Production
         run: |
+          # Step 1: Upload to S3 FIRST
+          aws s3 cp deployment.zip s3://${{ secrets.AWS_S3_BUCKET_PRODUCTION }}/deployments/prod-deployment.zip
+
+          # Step 2: Create application version (references the uploaded file)
           aws elasticbeanstalk create-application-version \
             --application-name gymFuel \
             --version-label "prod-v${{ github.run_number }}-${{ github.sha }}" \
             --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/prod-deployment.zip"
 
+          # Step 3: Deploy the version
           aws elasticbeanstalk update-environment \
             --environment-name production-gymFuel \
             --version-label "prod-v${{ github.run_number }}-${{ github.sha }}"
