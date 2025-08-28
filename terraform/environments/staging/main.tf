@@ -36,6 +36,13 @@ module "rds" {
   app_name = "gymFuel"
 }
 
+module "s3" {
+  source = "../../modules/s3"
+  environment = "staging"
+  app_name = "gymFuel"
+}
+
+
 # Step 1: Create Elastic Beanstalk environment without nextauth_url
 module "elastic_beanstalk" {
   source = "../../modules/elastic-beanstalk"
@@ -99,4 +106,9 @@ output "elastic_beanstalk_environment_name" {
 output "elastic_beanstalk_cname" {
   description = "Elastic Beanstalk CNAME"
   value       = module.elastic_beanstalk.cname
+}
+
+output "deployment_bucket" {
+  description = "S3 bucket for deployment artifacts"
+  value       = module.s3.bucket_name
 }
