@@ -74,7 +74,7 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name gymFuel \
             --version-label "staging-v${{ github.run_number }}-${{ github.sha }}" \
-            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/staging-deployment.zip"
+            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET_STAGING }},S3Key=deployments/staging-deployment.zip"
 
           # Step 3: Deploy the version
           aws elasticbeanstalk update-environment \
@@ -174,7 +174,7 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name gymFuel \
             --version-label "prod-v${{ github.run_number }}-${{ github.sha }}" \
-            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET }},S3Key=deployments/prod-deployment.zip"
+            --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET_PRODUCTION }},S3Key=deployments/prod-deployment.zip"
 
           # Step 3: Deploy the version
           aws elasticbeanstalk update-environment \
