@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - aws-stg # Staging deployment (automatic)
-  pull_request:
-    branches:
-      - aws-prod
-      - aws-stg
   workflow_dispatch: # Manual trigger
     inputs:
       environment:
@@ -25,27 +21,9 @@ env:
 jobs:
   # Job 1: Code Quality Checks
   quality-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build application
-        run: npm run build
+    uses: ./.github/workflows/quality-checks.yml
+    with:
+      node-version: '20'
 
   # Job 2: Deploy to Staging (Automatic)
   deploy-staging:
