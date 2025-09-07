@@ -71,12 +71,12 @@ jobs:
           mkdir -p deployment-package/.ebextensions
 
           # Create Node.js configuration
-            cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
-            option_settings:
-              aws:elasticbeanstalk:container:nodejs:
-                NodeCommand: "npm start"
-                NodeVersion: "20.19.4"
-              aws:elasticbeanstalk:application:environment:
+          cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
+          option_settings:
+            aws:elasticbeanstalk:container:nodejs:
+              NodeCommand: "npm start"
+              NodeVersion: "20.19.4"
+            aws:elasticbeanstalk:application:environment:
               NODE_ENV: production
               NODE_OPTIONS: --max_old_space_size=4096
             aws:elasticbeanstalk:environment:proxy:staticfiles:
@@ -101,12 +101,12 @@ jobs:
             --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET_STAGING }},S3Key=deployments/staging-deployment.zip"
 
           # Step 3: Check if environment exists and create/update accordingly
-          ENV_EXISTS=$(aws elasticbeanstalk describe-environments \
+          ENV_COUNT=$(aws elasticbeanstalk describe-environments \
             --environment-names staging-gymFuel \
-            --query 'Environments[0].EnvironmentName' \
-            --output text 2>/dev/null || echo "None")
+            --query 'length(Environments)' \
+            --output text 2>/dev/null || echo "0")
 
-          if [ "$ENV_EXISTS" = "staging-gymFuel" ]; then
+          if [ "$ENV_COUNT" = "1" ]; then
             echo "Environment exists, updating..."
             aws elasticbeanstalk update-environment \
               --environment-name staging-gymFuel \
@@ -231,12 +231,12 @@ jobs:
           mkdir -p deployment-package/.ebextensions
 
           # Create Node.js configuration
-            cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
-            option_settings:
-              aws:elasticbeanstalk:container:nodejs:
-                NodeCommand: "npm start"
-                NodeVersion: "20.19.4"
-              aws:elasticbeanstalk:application:environment:
+          cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
+          option_settings:
+            aws:elasticbeanstalk:container:nodejs:
+              NodeCommand: "npm start"
+              NodeVersion: "20.19.4"
+            aws:elasticbeanstalk:application:environment:
               NODE_ENV: production
               NODE_OPTIONS: --max_old_space_size=4096
             aws:elasticbeanstalk:environment:proxy:staticfiles:
@@ -261,12 +261,12 @@ jobs:
             --source-bundle S3Bucket="${{ secrets.AWS_S3_BUCKET_PRODUCTION }},S3Key=deployments/prod-deployment.zip"
 
           # Step 3: Check if environment exists and create/update accordingly
-          ENV_EXISTS=$(aws elasticbeanstalk describe-environments \
+          ENV_COUNT=$(aws elasticbeanstalk describe-environments \
             --environment-names production-gymFuel \
-            --query 'Environments[0].EnvironmentName' \
-            --output text 2>/dev/null || echo "None")
+            --query 'length(Environments)' \
+            --output text 2>/dev/null || echo "0")
 
-          if [ "$ENV_EXISTS" = "production-gymFuel" ]; then
+          if [ "$ENV_COUNT" = "1" ]; then
             echo "Environment exists, updating..."
             aws elasticbeanstalk update-environment \
               --environment-name production-gymFuel \
