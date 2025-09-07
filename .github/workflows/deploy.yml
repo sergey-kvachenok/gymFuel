@@ -73,9 +73,6 @@ jobs:
           # Create Node.js configuration
           cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
           option_settings:
-            aws:elasticbeanstalk:container:nodejs:
-              NodeCommand: "npm start"
-              NodeVersion: 20.18.0
             aws:elasticbeanstalk:application:environment:
               NODE_ENV: production
               NODE_OPTIONS: --max_old_space_size=4096
@@ -215,9 +212,6 @@ jobs:
           # Create Node.js configuration
           cat > deployment-package/.ebextensions/01_node_setup.config << 'EOF'
           option_settings:
-            aws:elasticbeanstalk:container:nodejs:
-              NodeCommand: "npm start"
-              NodeVersion: 20.18.0
             aws:elasticbeanstalk:application:environment:
               NODE_ENV: production
               NODE_OPTIONS: --max_old_space_size=4096
