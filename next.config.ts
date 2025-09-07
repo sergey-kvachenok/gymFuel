@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Elastic Beanstalk
+  output: 'standalone',
+
   // Environment-specific configuration
   env: {
     // These will be available on both client and server

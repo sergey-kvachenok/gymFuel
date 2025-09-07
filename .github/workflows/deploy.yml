@@ -113,7 +113,13 @@ jobs:
       - name: Health check staging
         run: |
           sleep 60
-          curl -f https://staging-gymfuel.elasticbeanstalk.com/health || exit 1
+          # Get the actual CNAME from the environment
+          STAGING_CNAME=$(aws elasticbeanstalk describe-environments \
+            --environment-names staging-gymFuel \
+            --query 'Environments[0].CNAME' \
+            --output text)
+          echo "Testing health at: https://$STAGING_CNAME/health"
+          curl -f "https://$STAGING_CNAME/health" || exit 1
 
   # Job 3: Check Staging Health (Required for Production)
   check-staging-health:
@@ -151,7 +157,12 @@ jobs:
       - name: Test staging application
         run: |
           # Additional health check via HTTP
-          curl -f https://staging-gymFuel.elasticbeanstalk.com/health || exit 1
+          STAGING_CNAME=$(aws elasticbeanstalk describe-environments \
+            --environment-names staging-gymFuel \
+            --query 'Environments[0].CNAME' \
+            --output text)
+          echo "Testing staging application at: https://$STAGING_CNAME/health"
+          curl -f "https://$STAGING_CNAME/health" || exit 1
           echo "✅ Staging application is responding"
 
   # Job 4: Manual Production Deployment (Only if staging is healthy)
@@ -244,7 +255,13 @@ jobs:
       - name: Health check production
         run: |
           sleep 60
-          curl -f https://production-gymFuel.elasticbeanstalk.com/health || exit 1
+          # Get the actual CNAME from the environment
+          PROD_CNAME=$(aws elasticbeanstalk describe-environments \
+            --environment-names production-gymFuel \
+            --query 'Environments[0].CNAME' \
+            --output text)
+          echo "Testing health at: https://$PROD_CNAME/health"
+          curl -f "https://$PROD_CNAME/health" || exit 1
 
   # Job 5: Fail if staging is unhealthy (for production deployment)
   fail-if-staging-unhealthy:
