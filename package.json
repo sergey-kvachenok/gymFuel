@@ -12,7 +12,7 @@
     "build:staging": "dotenv -e .env.staging -- npm run build",
     "build:prod": "npm run build",
     "postinstall": "prisma generate",
-    "start": "next start",
+    "start": "next start -p $PORT",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
