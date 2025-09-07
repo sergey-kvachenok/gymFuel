@@ -59,23 +59,6 @@ module "elastic_beanstalk" {
   max_size = "2"
 }
 
-# Step 2: Update the environment with the correct URL
-resource "null_resource" "update_nextauth_url" {
-  triggers = {
-    environment_id = module.elastic_beanstalk.environment_id
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      aws elasticbeanstalk update-environment \
-        --environment-name ${module.elastic_beanstalk.environment_name} \
-        --option-settings Namespace=aws:elasticbeanstalk:application:environment,OptionName=NEXTAUTH_URL,Value=https://${module.elastic_beanstalk.cname}
-    EOT
-  }
-
-  depends_on = [module.elastic_beanstalk]
-}
-
 # Outputs
 output "vpc_id" {
   description = "VPC ID"
@@ -96,16 +79,6 @@ output "database_url" {
   description = "Database connection URL"
   value       = module.rds.database_url
   sensitive   = true
-}
-
-output "elastic_beanstalk_environment_name" {
-  description = "Elastic Beanstalk environment name"
-  value       = module.elastic_beanstalk.environment_name
-}
-
-output "elastic_beanstalk_cname" {
-  description = "Elastic Beanstalk CNAME"
-  value       = module.elastic_beanstalk.cname
 }
 
 output "deployment_bucket" {
